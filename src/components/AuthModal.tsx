@@ -1,16 +1,21 @@
 import React, { useState } from 'react';
 import { UserAccount } from '../types';
+import { auth, db } from '../firebase';
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+} from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import {
   X,
-  User,
-  Mail,
   Lock,
-  ArrowRight,
+  Mail,
+  User,
   ShieldCheck,
-  Sparkles,
   LogOut,
-  Camera,
-  Check,
+  Sparkles,
+  AlertCircle,
 } from 'lucide-react';
 
 interface AuthModalProps {
@@ -19,6 +24,7 @@ interface AuthModalProps {
   currentUser: UserAccount | null;
   onLogin: (user: UserAccount) => void;
   onLogout: () => void;
+  required?: boolean;
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({
@@ -27,6 +33,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   currentUser,
   onLogin,
   onLogout,
+  required = false,
 }) => {
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [name, setName] = useState('');
@@ -34,107 +41,165 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [password, setPassword] = useState('');
   const [selectedAvatar, setSelectedAvatar] = useState('👑');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
 
   const avatarOptions = ['👑', '⚡', '💎', '🦁', '🦅', '🪐', '🛡️', '✨'];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const ADMIN_EMAIL = 'tizsedoff@gmail.com';
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
-    if (mode === 'register') {
-      if (!name.trim()) {
-        setError('Por favor ingresa tu nombre o alias');
-        return;
-      }
-      if (!email.trim() || !email.includes('@')) {
-        setError('Por favor ingresa un correo electrónico válido');
-        return;
-      }
-      if (password.length < 4) {
-        setError('La contraseña debe tener al menos 4 caracteres');
-        return;
-      }
+    try {
+      const cleanEmail = email.trim().toLowerCase();
+      const isAdminUser = cleanEmail === ADMIN_EMAIL;
+      const membershipTitle = isAdminUser
+        ? 'ADMINISTRADOR SUPREMO'
+        : 'APS INTELLIGENCE PRO';
 
-      const newUser: UserAccount = {
-        id: `usr_${Date.now()}`,
-        name: name.trim(),
-        email: email.trim(),
-        avatar: selectedAvatar,
-      };
+      if (mode === 'register') {
+        if (!name.trim()) {
+          throw new Error('Por favor ingresa tu nombre o alias');
+        }
+        if (!cleanEmail || !cleanEmail.includes('@')) {
+          throw new Error('Por favor ingresa un correo electrónico válido');
+        }
+        if (password.length < 6) {
+          throw new Error('La contraseña debe tener al menos 6 caracteres');
+        }
 
-      localStorage.setItem('aps_user', JSON.stringify(newUser));
-      onLogin(newUser);
-      onClose();
-    } else {
-      // Login
-      if (!email.trim()) {
-        setError('Por favor ingresa tu correo');
-        return;
-      }
-      if (!password) {
-        setError('Por favor ingresa tu contraseña');
-        return;
-      }
+        const credential = await createUserWithEmailAndPassword(
+          auth,
+          cleanEmail,
+          password
+        );
+        const firebaseUser = credential.user;
 
-      // Check existing or create session
-      const savedUserStr = localStorage.getItem('aps_user');
-      let user: UserAccount;
-      if (savedUserStr) {
-        user = JSON.parse(savedUserStr);
-      } else {
-        const inferredName = email.split('@')[0] || 'Usuario';
-        user = {
-          id: `usr_${Date.now()}`,
-          name: inferredName.charAt(0).toUpperCase() + inferredName.slice(1),
-          email: email.trim(),
+        const userAccount: UserAccount = {
+          id: firebaseUser.uid,
+          name: name.trim(),
+          email: cleanEmail,
           avatar: selectedAvatar,
+          membership: membershipTitle,
+          isAdmin: isAdminUser,
         };
-        localStorage.setItem('aps_user', JSON.stringify(user));
-      }
 
-      onLogin(user);
-      onClose();
+        // Save to Firestore
+        await setDoc(doc(db, 'users', firebaseUser.uid), userAccount);
+
+        onLogin(userAccount);
+        onClose();
+      } else {
+        // Login
+        if (!cleanEmail) {
+          throw new Error('Por favor ingresa tu correo electrónico');
+        }
+        if (!password) {
+          throw new Error('Por favor ingresa tu contraseña');
+        }
+
+        const credential = await signInWithEmailAndPassword(
+          auth,
+          cleanEmail,
+          password
+        );
+        const firebaseUser = credential.user;
+
+        // Fetch user doc from Firestore
+        const userDocRef = doc(db, 'users', firebaseUser.uid);
+        const userDocSnap = await getDoc(userDocRef);
+
+        let userAccount: UserAccount;
+        if (userDocSnap.exists()) {
+          const data = userDocSnap.data() as UserAccount;
+          // Ensure correct admin status for tizsedoff@gmail.com
+          userAccount = {
+            ...data,
+            isAdmin: cleanEmail === ADMIN_EMAIL,
+            membership:
+              cleanEmail === ADMIN_EMAIL
+                ? 'ADMINISTRADOR SUPREMO'
+                : data.membership || 'APS INTELLIGENCE PRO',
+          };
+        } else {
+          // Fallback if doc doesn't exist yet
+          const inferredName = cleanEmail.split('@')[0] || 'Usuario';
+          userAccount = {
+            id: firebaseUser.uid,
+            name: inferredName.charAt(0).toUpperCase() + inferredName.slice(1),
+            email: cleanEmail,
+            avatar: selectedAvatar,
+            membership: membershipTitle,
+            isAdmin: isAdminUser,
+          };
+          await setDoc(userDocRef, userAccount);
+        }
+
+        onLogin(userAccount);
+        onClose();
+      }
+    } catch (err: any) {
+      console.error('Auth error:', err);
+      let msg = err.message || 'Error de autenticación';
+      if (msg.includes('auth/invalid-credential') || msg.includes('auth/wrong-password') || msg.includes('auth/user-not-found')) {
+        msg = 'Correo o contraseña incorrectos.';
+      } else if (msg.includes('auth/email-already-in-use')) {
+        msg = 'Este correo ya está registrado. Inicia sesión.';
+      } else if (msg.includes('auth/weak-password')) {
+        msg = 'La contraseña es muy débil (mínimo 6 caracteres).';
+      }
+      setError(msg);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleGuestQuickStart = (guestName = 'Tiziano') => {
-    const guest: UserAccount = {
-      id: `guest_${Date.now()}`,
-      name: guestName,
-      email: `${guestName.toLowerCase()}@aps.intelligence`,
-      avatar: '👑',
-    };
-    localStorage.setItem('aps_user', JSON.stringify(guest));
-    onLogin(guest);
-    onClose();
+  const handleLogoutClick = async () => {
+    try {
+      await signOut(auth);
+      onLogout();
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity"
-        onClick={onClose}
+        className="fixed inset-0 bg-black/85 backdrop-blur-md transition-opacity"
+        onClick={() => {
+          if (!required && currentUser) onClose();
+        }}
       />
 
       {/* Modal Box */}
-      <div className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border border-[#c5a059]/30 bg-[#09110c]/95 p-6 shadow-2xl backdrop-blur-2xl">
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute right-5 top-5 rounded-xl p-1.5 text-[#8e9c8c] hover:bg-white/10 hover:text-white transition-colors"
-        >
-          <X className="h-5 w-5" />
-        </button>
+      <div className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border border-[#c5a059]/40 bg-[#070d0a]/95 p-6 shadow-2xl backdrop-blur-2xl">
+        {/* Close Button (only if not required or user is logged in) && currentUser */}
+        {!required && currentUser && (
+          <button
+            onClick={onClose}
+            className="absolute right-5 top-5 rounded-xl p-1.5 text-[#8e9c8c] hover:bg-white/10 hover:text-white transition-colors"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        )}
 
         {/* If user is already logged in: Profile View */}
         {currentUser ? (
           <div className="space-y-6 text-center">
-            <div className="relative mx-auto flex h-20 w-20 items-center justify-center rounded-3xl border-2 border-[#c5a059]/50 bg-gradient-to-br from-[#1b2b20] to-[#0a140f] text-4xl shadow-xl">
+            <div className="relative mx-auto flex h-20 w-20 items-center justify-center rounded-3xl border-2 border-[#c5a059]/60 bg-gradient-to-br from-[#1b2b20] to-[#0a140f] text-4xl shadow-xl">
               {currentUser.avatar || '👑'}
-              <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-[#c5a059]/30 to-emerald-500/20 blur-md -z-10" />
+              <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-[#c5a059]/40 to-emerald-500/20 blur-md -z-10" />
+              {currentUser.isAdmin && (
+                <div className="absolute -bottom-2 -right-2 rounded-full bg-[#c5a059] p-1 text-[#070c09] shadow-md" title="Administrador Supremo">
+                  <ShieldCheck className="h-4 w-4" />
+                </div>
+              )}
             </div>
 
             <div>
@@ -144,23 +209,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <p className="text-xs font-mono-code text-[#8e9c8c]">{currentUser.email}</p>
             </div>
 
-            <div className="rounded-2xl border border-[#c5a059]/20 bg-[#0e1a14]/80 p-4 text-left space-y-2 text-xs">
+            <div className="rounded-2xl border border-[#c5a059]/20 bg-[#0e1a14]/90 p-4 text-left space-y-2.5 text-xs">
               <div className="flex justify-between text-[#8e9c8c]">
                 <span>Membresía:</span>
-                <span className="font-semibold text-[#f4e2b8]">APS INTELLIGENCE PRO</span>
+                <span className="font-semibold text-[#f4e2b8]">{currentUser.membership}</span>
               </div>
               <div className="flex justify-between text-[#8e9c8c]">
-                <span>Sesión activa:</span>
-                <span className="text-emerald-400 font-mono-code">Autenticado ✔</span>
+                <span>Rol de Sistema:</span>
+                <span className={currentUser.isAdmin ? 'text-amber-400 font-bold font-mono-code' : 'text-emerald-400 font-mono-code'}>
+                  {currentUser.isAdmin ? '★ ADMINISTRADOR (tizsedoff@gmail.com)' : 'Usuario Conectado'}
+                </span>
+              </div>
+              <div className="flex justify-between text-[#8e9c8c]">
+                <span>Estado de Conexión:</span>
+                <span className="text-emerald-400 font-mono-code">Firebase Auth Activo ✔</span>
               </div>
             </div>
 
             <div className="flex gap-3">
               <button
-                onClick={() => {
-                  onLogout();
-                  localStorage.removeItem('aps_user');
-                }}
+                onClick={handleLogoutClick}
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-950/30 py-2.5 text-xs font-medium text-red-300 hover:bg-red-900/40 transition-colors"
               >
                 <LogOut className="h-4 w-4" />
@@ -185,9 +253,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </div>
               <div>
                 <h3 className="font-serif-luxury text-base font-bold tracking-wider text-[#f4e2b8]">
-                  {mode === 'login' ? 'INICIAR SESIÓN' : 'CREAR CUENTA'}
+                  {mode === 'login' ? 'INICIAR SESIÓN (FIREBASE)' : 'REGISTRO DE USUARIO'}
                 </h3>
-                <p className="text-[11px] text-[#8e9c8c]">APS INTELLIGENCE · Acceso Seguro</p>
+                <p className="text-[11px] text-[#8e9c8c]">
+                  {required ? 'Acceso obligatorio para entrar a APS' : 'Autenticación segura requerida'}
+                </p>
               </div>
             </div>
 
@@ -199,10 +269,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   setMode('login');
                   setError('');
                 }}
-                className={`flex-1 rounded-lg py-1.5 text-xs font-medium transition-all ${
+                className={`flex-1 rounded-lg py-2 text-xs font-medium transition-all ${
                   mode === 'login'
-                    ? 'border border-[#c5a059]/40 bg-[#c5a059]/25 text-[#fbf5e8] font-bold shadow'
-                    : 'text-[#8e9c8c] hover:text-[#d8b66f]'
+                    ? 'bg-[#16271c] text-[#f4e2b8] shadow border border-[#c5a059]/30'
+                    : 'text-[#8e9c8c] hover:text-white'
                 }`}
               >
                 Iniciar Sesión
@@ -213,51 +283,57 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   setMode('register');
                   setError('');
                 }}
-                className={`flex-1 rounded-lg py-1.5 text-xs font-medium transition-all ${
+                className={`flex-1 rounded-lg py-2 text-xs font-medium transition-all ${
                   mode === 'register'
-                    ? 'border border-[#c5a059]/40 bg-[#c5a059]/25 text-[#fbf5e8] font-bold shadow'
-                    : 'text-[#8e9c8c] hover:text-[#d8b66f]'
+                    ? 'bg-[#16271c] text-[#f4e2b8] shadow border border-[#c5a059]/30'
+                    : 'text-[#8e9c8c] hover:text-white'
                 }`}
               >
-                Registrarse
+                Crear Cuenta
               </button>
             </div>
 
             {error && (
-              <div className="rounded-xl border border-red-500/30 bg-red-950/40 p-2.5 text-xs text-red-300">
-                {error}
+              <div className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-950/40 p-3 text-xs text-red-300">
+                <AlertCircle className="h-4 w-4 shrink-0 text-red-400" />
+                <span>{error}</span>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-3.5">
+            <form onSubmit={handleSubmit} className="space-y-4">
               {mode === 'register' && (
                 <>
                   <div>
-                    <label className="text-xs text-[#a7b3a5] block mb-1">Nombre o Alias</label>
-                    <div className="relative flex items-center">
-                      <User className="absolute left-3 h-4 w-4 text-[#8e9c8c]" />
+                    <label className="block text-[11px] font-medium text-[#8e9c8c] mb-1">
+                      Nombre o Alias
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3.5 top-3 h-4 w-4 text-[#8e9c8c]" />
                       <input
                         type="text"
+                        required
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        placeholder="Ej. Tiziano"
-                        className="w-full rounded-xl border border-[#c5a059]/25 bg-[#0e1913] py-2 pl-9 pr-3 text-xs text-[#f4e2b8] placeholder-[#576654] focus:border-[#c5a059] focus:outline-none"
+                        placeholder="Tu Nombre"
+                        className="w-full rounded-xl border border-[#c5a059]/35 bg-[#0b1410] pl-10 pr-4 py-2.5 text-xs text-[#f4e2b8] placeholder-[#556655] focus:border-[#c5a059] focus:outline-none"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="text-xs text-[#a7b3a5] block mb-1">Selecciona tu Avatar</label>
-                    <div className="flex gap-1.5 overflow-x-auto py-1">
+                    <label className="block text-[11px] font-medium text-[#8e9c8c] mb-1">
+                      Selecciona tu Avatar
+                    </label>
+                    <div className="flex gap-2 overflow-x-auto pb-1">
                       {avatarOptions.map((av) => (
                         <button
                           key={av}
                           type="button"
                           onClick={() => setSelectedAvatar(av)}
-                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border text-base transition-transform ${
+                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition-all text-lg ${
                             selectedAvatar === av
-                              ? 'border-[#c5a059] bg-[#c5a059]/30 scale-110 shadow'
-                              : 'border-white/10 bg-white/5 hover:bg-white/10'
+                              ? 'border-[#c5a059] bg-[#1d3324] scale-105 shadow-md'
+                              : 'border-[#c5a059]/20 bg-[#0b1410] hover:border-[#c5a059]/50'
                           }`}
                         >
                           {av}
@@ -269,51 +345,59 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               )}
 
               <div>
-                <label className="text-xs text-[#a7b3a5] block mb-1">Correo Electrónico</label>
-                <div className="relative flex items-center">
-                  <Mail className="absolute left-3 h-4 w-4 text-[#8e9c8c]" />
+                <label className="block text-[11px] font-medium text-[#8e9c8c] mb-1">
+                  Correo Electrónico
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3.5 top-3 h-4 w-4 text-[#8e9c8c]" />
                   <input
                     type="email"
+                    required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="tu@correo.com"
-                    className="w-full rounded-xl border border-[#c5a059]/25 bg-[#0e1913] py-2 pl-9 pr-3 text-xs text-[#f4e2b8] placeholder-[#576654] focus:border-[#c5a059] focus:outline-none"
+                    placeholder="tizsedoff@gmail.com"
+                    className="w-full rounded-xl border border-[#c5a059]/35 bg-[#0b1410] pl-10 pr-4 py-2.5 text-xs text-[#f4e2b8] placeholder-[#556655] focus:border-[#c5a059] focus:outline-none"
                   />
                 </div>
+                {email.trim().toLowerCase() === ADMIN_EMAIL && (
+                  <p className="mt-1 text-[10px] text-amber-400 font-mono-code">
+                    ★ Reconocido como Administrador Supremo (tizsedoff@gmail.com)
+                  </p>
+                )}
               </div>
 
               <div>
-                <label className="text-xs text-[#a7b3a5] block mb-1">Contraseña</label>
-                <div className="relative flex items-center">
-                  <Lock className="absolute left-3 h-4 w-4 text-[#8e9c8c]" />
+                <label className="block text-[11px] font-medium text-[#8e9c8c] mb-1">
+                  Contraseña
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3.5 top-3 h-4 w-4 text-[#8e9c8c]" />
                   <input
                     type="password"
+                    required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full rounded-xl border border-[#c5a059]/25 bg-[#0e1913] py-2 pl-9 pr-3 text-xs text-[#f4e2b8] placeholder-[#576654] focus:border-[#c5a059] focus:outline-none"
+                    className="w-full rounded-xl border border-[#c5a059]/35 bg-[#0b1410] pl-10 pr-4 py-2.5 text-xs text-[#f4e2b8] placeholder-[#556655] focus:border-[#c5a059] focus:outline-none"
                   />
                 </div>
               </div>
 
               <button
                 type="submit"
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#c5a059]/50 bg-gradient-to-r from-[#c5a059] to-[#d8b66f] py-2.5 text-xs font-serif-luxury font-bold text-[#070c09] shadow-lg hover:brightness-110 transition-all active:scale-95"
+                disabled={loading}
+                className="w-full rounded-xl border border-[#c5a059]/60 bg-gradient-to-r from-[#c5a059] via-[#e2c178] to-[#c5a059] py-3 text-xs font-serif-luxury font-bold text-[#070c09] shadow-lg hover:brightness-110 active:scale-[0.99] transition-all disabled:opacity-50"
               >
-                <span>{mode === 'login' ? 'Ingresar a APS' : 'Registrar Cuenta'}</span>
-                <ArrowRight className="h-4 w-4" />
+                {loading
+                  ? 'Conectando con Firebase...'
+                  : mode === 'login'
+                  ? 'INICIAR SESIÓN'
+                  : 'CREAR CUENTA'}
               </button>
             </form>
 
-            {/* Quick Guest / Demo Option */}
-            <div className="border-t border-white/10 pt-3 text-center">
-              <button
-                type="button"
-                onClick={() => handleGuestQuickStart('Tiziano')}
-                className="text-xs text-[#c5a059] hover:underline"
-              >
-                O continuar como usuario rápido (Tiziano)
-              </button>
+            <div className="rounded-xl border border-[#c5a059]/15 bg-[#0e1a14]/60 p-3 text-[11px] text-[#8e9c8c] text-center">
+              Acceso seguro protegido por Firebase Auth. Cada usuario posee su perfil y membresía exclusiva.
             </div>
           </div>
         )}

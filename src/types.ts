@@ -84,6 +84,8 @@ export interface UserAccount {
   email: string;
   avatar?: string;
   token?: string;
+  membership: string;
+  isAdmin: boolean;
 }
 
 export interface CookiePreferences {

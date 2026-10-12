@@ -1,4 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { auth, db } from './firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import {
   ApsModelId,
   InteractionMode,
@@ -73,24 +76,56 @@ export default function App() {
     localStorage.removeItem('aps_customization');
   };
 
-  // 2. User Authentication State
-  const [currentUser, setCurrentUser] = useState<UserAccount | null>(() => {
-    const saved = localStorage.getItem('aps_user');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        // ignore
+  // 2. User Authentication State (Firebase connected)
+  const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        const email = firebaseUser.email?.toLowerCase() || '';
+        const isAdmin = email === 'tizsedoff@gmail.com';
+        try {
+          const userDocRef = doc(db, 'users', firebaseUser.uid);
+          const userDocSnap = await getDoc(userDocRef);
+
+          if (userDocSnap.exists()) {
+            const data = userDocSnap.data() as UserAccount;
+            setCurrentUser({
+              ...data,
+              isAdmin: email === 'tizsedoff@gmail.com',
+              membership: email === 'tizsedoff@gmail.com' ? 'ADMINISTRADOR SUPREMO' : data.membership || 'APS INTELLIGENCE PRO',
+            });
+          } else {
+            const inferredName = email.split('@')[0] || 'Usuario';
+            const newUser: UserAccount = {
+              id: firebaseUser.uid,
+              name: inferredName.charAt(0).toUpperCase() + inferredName.slice(1),
+              email,
+              avatar: '👑',
+              membership: isAdmin ? 'ADMINISTRADOR SUPREMO' : 'APS INTELLIGENCE PRO',
+              isAdmin,
+            };
+            setCurrentUser(newUser);
+          }
+        } catch (e) {
+          console.error('Error fetching user profile:', e);
+          setCurrentUser({
+            id: firebaseUser.uid,
+            name: email.split('@')[0] || 'Usuario',
+            email,
+            avatar: '👑',
+            membership: isAdmin ? 'ADMINISTRADOR SUPREMO' : 'APS INTELLIGENCE PRO',
+            isAdmin,
+          });
+        }
+        setIsAuthOpen(false);
+      } else {
+        setCurrentUser(null);
+        setIsAuthOpen(true);
       }
-    }
-    // Default demo user so greeting displays 'HOLA TIZIANO' as in user's prompt/mockup
-    return {
-      id: 'usr_tiziano',
-      name: 'Tiziano',
-      email: 'tiziano@aps.intelligence',
-      avatar: '👑',
-    };
-  });
+    });
+    return () => unsubscribe();
+  }, []);
 
   // 3. Cookie Preferences State
   const [cookiePrefs, setCookiePrefs] = useState<CookiePreferences>(() => {
@@ -521,10 +556,19 @@ export default function App() {
       {/* Authentication Modal */}
       <AuthModal
         isOpen={isAuthOpen}
-        onClose={() => setIsAuthOpen(false)}
+        onClose={() => {
+          if (currentUser) setIsAuthOpen(false);
+        }}
         currentUser={currentUser}
-        onLogin={(user) => setCurrentUser(user)}
-        onLogout={() => setCurrentUser(null)}
+        onLogin={(user) => {
+          setCurrentUser(user);
+          setIsAuthOpen(false);
+        }}
+        onLogout={() => {
+          setCurrentUser(null);
+          setIsAuthOpen(true);
+        }}
+        required={!currentUser}
       />
 
       {/* Legal & Cookie Modals */}
