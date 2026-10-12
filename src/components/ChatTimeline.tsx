@@ -109,37 +109,37 @@ export const ChatTimeline: React.FC<ChatTimelineProps> = ({
   const sampleIdeas = getSampleIdeas();
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-6 md:px-8">
-      <div className="mx-auto max-w-4xl space-y-6">
+    <div className="flex-1 overflow-y-auto px-2.5 sm:px-4 py-4 sm:py-6 md:px-8">
+      <div className="mx-auto max-w-4xl space-y-4 sm:space-y-6">
         {/* EMPTY STATE — Exactly as shown in Reference Mockup J.png */}
         {messages.length === 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: 'easeOut' }}
-            className="flex min-h-[60vh] flex-col items-center justify-center text-center space-y-4"
+            className="flex min-h-[55vh] sm:min-h-[60vh] flex-col items-center justify-center text-center space-y-3 sm:space-y-4 px-2"
           >
             {/* HOLA (NOMBRE) */}
-            <h1 className="text-3xl md:text-5xl font-extrabold tracking-wider bg-gradient-to-r from-[#00cec9] via-[#0984e3] to-[#a29bfe] bg-clip-text text-transparent drop-shadow-[0_0_25px_rgba(0,206,201,0.4)]">
+            <h1 className="text-2xl sm:text-3xl md:text-5xl font-extrabold tracking-wider bg-gradient-to-r from-[#00cec9] via-[#0984e3] to-[#a29bfe] bg-clip-text text-transparent drop-shadow-[0_0_25px_rgba(0,206,201,0.4)]">
               HOLA <span className="text-[#a29bfe]">{displayName}</span>
             </h1>
 
             {/* DIME TU IDEA Y LA HACEMOS REALIDAD */}
-            <h2 className="text-xl md:text-3xl font-extrabold italic tracking-wide text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+            <h2 className="text-lg sm:text-xl md:text-3xl font-extrabold italic tracking-wide text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
               DIME TU <span className="text-[#00cec9]">IDEA</span> Y LA HACEMOS REALIDAD
             </h2>
 
-            <p className="max-w-md text-xs md:text-sm text-[#8e9c8c] pt-2">
+            <p className="max-w-md text-xs md:text-sm text-[#8e9c8c] pt-1 sm:pt-2">
               Modelos de alta inferencia APS con procesamiento de archivos, generación de código en tiempo real y pensamiento extendido.
             </p>
 
             {/* Quick Idea Starters */}
-            <div className="flex flex-wrap justify-center gap-2 pt-6 max-w-2xl">
+            <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2 pt-4 sm:pt-6 max-w-2xl">
               {sampleIdeas.map((idea) => (
                 <button
                   key={idea.title}
                   onClick={() => onSelectPrompt(idea.prompt)}
-                  className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-medium text-[#fbf5e8] hover:border-[#c5a059]/60 hover:bg-[#c5a059]/15 hover:scale-105 transition-all shadow-md backdrop-blur-md"
+                  className="rounded-full border border-white/15 bg-white/5 px-3 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-xs font-medium text-[#fbf5e8] hover:border-[#c5a059]/60 hover:bg-[#c5a059]/15 hover:scale-105 active:scale-95 transition-all shadow-md backdrop-blur-md"
                 >
                   <span className="text-[#00cec9] font-bold mr-1">✦</span>
                   {idea.title}
@@ -161,7 +161,7 @@ export const ChatTimeline: React.FC<ChatTimelineProps> = ({
             >
               {/* USER MESSAGE BUBBLE */}
               {msg.role === 'user' ? (
-                <div className="max-w-[85%] sm:max-w-[75%] space-y-2">
+                <div className="max-w-[88%] sm:max-w-[75%] space-y-2">
                   {/* Attachments if any */}
                   {msg.attachments && msg.attachments.length > 0 && (
                     <div className="flex flex-wrap justify-end gap-2 mb-1.5">
@@ -176,16 +176,16 @@ export const ChatTimeline: React.FC<ChatTimelineProps> = ({
                               <img
                                 src={att.previewUrl}
                                 alt={att.name}
-                                className="h-28 w-28 object-cover transition-transform group-hover:scale-105"
+                                className="h-24 w-24 sm:h-28 sm:w-28 object-cover transition-transform group-hover:scale-105"
                               />
                               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                 <Maximize2 className="h-4 w-4 text-white" />
                               </div>
                             </div>
                           ) : (
-                            <div className="flex items-center gap-2 p-2.5 text-xs text-white">
+                            <div className="flex items-center gap-2 p-2 sm:p-2.5 text-xs text-white">
                               <FileText className="h-4 w-4 text-[#00cec9]" />
-                              <span className="max-w-[120px] truncate">{att.name}</span>
+                              <span className="max-w-[100px] sm:max-w-[120px] truncate">{att.name}</span>
                             </div>
                           )}
                         </div>
@@ -195,7 +195,7 @@ export const ChatTimeline: React.FC<ChatTimelineProps> = ({
 
                   {/* Bubble body with customizable gradient, radius, text color */}
                   <div
-                    className="px-5 py-3 text-sm md:text-base font-semibold leading-relaxed shadow-2xl backdrop-blur-xl border border-white/15"
+                    className="px-3.5 sm:px-5 py-2.5 sm:py-3 text-sm md:text-base font-semibold leading-relaxed shadow-2xl backdrop-blur-xl border border-white/15"
                     style={{
                       background: customization.userBubbleGradient,
                       color: customization.userBubbleTextColor,
@@ -205,7 +205,7 @@ export const ChatTimeline: React.FC<ChatTimelineProps> = ({
                         : 'none',
                     }}
                   >
-                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                    <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                   </div>
 
                   <div className="flex items-center justify-end gap-1 px-1 text-[10px] font-mono-code text-[#738271]">
@@ -221,15 +221,15 @@ export const ChatTimeline: React.FC<ChatTimelineProps> = ({
               ) : (
                 /* MODEL MESSAGE BUBBLE */
                 <div className="w-full space-y-2">
-                  <div className="flex items-center gap-2.5 px-1">
-                    <div className="flex h-6 w-6 items-center justify-center rounded-lg border border-white/20 bg-[#16271c] text-[10px] font-serif-luxury font-bold text-[#f4e2b8] shadow">
+                  <div className="flex items-center gap-2 sm:gap-2.5 px-1 flex-wrap">
+                    <div className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-lg border border-white/20 bg-[#16271c] text-[9px] sm:text-[10px] font-serif-luxury font-bold text-[#f4e2b8] shadow">
                       APS
                     </div>
-                    <span className="font-serif-luxury text-xs font-semibold tracking-wider text-[#f4e2b8]">
+                    <span className="font-serif-luxury text-[11px] sm:text-xs font-semibold tracking-wider text-[#f4e2b8]">
                       {msg.model || currentModel}
                     </span>
-                    <span className="rounded-full border border-[#00cec9]/40 bg-[#00cec9]/15 px-2 py-0.5 text-[9px] font-mono-code uppercase tracking-wider text-[#00cec9]">
-                      {msg.mode === 'code' ? 'Modo Código' : msg.mode === 'teens' ? 'Modo Teens' : 'Modo Adultos'}
+                    <span className="rounded-full border border-[#00cec9]/40 bg-[#00cec9]/15 px-2 py-0.5 text-[8px] sm:text-[9px] font-mono-code uppercase tracking-wider text-[#00cec9]">
+                      {msg.mode === 'code' ? 'Código' : msg.mode === 'teens' ? 'Teens' : 'Adultos'}
                     </span>
                     <span className="text-[10px] font-mono-code text-[#738271]">
                       ·{' '}
@@ -242,7 +242,7 @@ export const ChatTimeline: React.FC<ChatTimelineProps> = ({
 
                   {/* Model Bubble Container with customizable gradient & liquid glass real */}
                   <div
-                    className="relative overflow-hidden p-5 shadow-2xl backdrop-blur-2xl border border-white/15"
+                    className="relative overflow-hidden p-3.5 sm:p-5 shadow-2xl backdrop-blur-2xl border border-white/15"
                     style={{
                       background: customization.modelBubbleGradient,
                       color: customization.modelBubbleTextColor,

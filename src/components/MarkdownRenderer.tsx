@@ -61,7 +61,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, onS
                   title="Abrir en la consola CLI de APS Hard Work"
                 >
                   <Terminal className="h-3.5 w-3.5 text-[#c5a059]" />
-                  <span>Cargar en CLI</span>
+                  <span className="hidden sm:inline">Cargar en </span>
+                  <span>CLI</span>
                 </button>
               )}
               <button

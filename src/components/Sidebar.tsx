@@ -130,7 +130,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </button>
                 <button
                   onClick={() => onDeleteSession(s.id)}
-                  className="opacity-0 group-hover:opacity-100 p-1 text-[#8e9c8c] hover:text-red-400 transition-opacity"
+                  className="opacity-70 sm:opacity-0 sm:group-hover:opacity-100 p-1.5 text-[#8e9c8c] hover:text-red-400 active:scale-95 transition-opacity"
                   title="Eliminar conversación"
                 >
                   <Trash2 className="h-3.5 w-3.5" />

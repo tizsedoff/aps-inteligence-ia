@@ -486,21 +486,21 @@ console.log('✔ Consola lista para recibir órdenes. Escribe abajo lo que quier
   };
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden p-3 md:p-6">
-      <div className="mx-auto flex h-full w-full max-w-7xl flex-col overflow-hidden rounded-2xl border border-[#c5a059]/30 bg-[#070d09]/95 shadow-2xl backdrop-blur-2xl">
+    <div className="flex flex-1 flex-col overflow-hidden p-1.5 sm:p-3 md:p-6">
+      <div className="mx-auto flex h-full w-full max-w-7xl flex-col overflow-hidden rounded-xl sm:rounded-2xl border border-[#c5a059]/30 bg-[#070d09]/95 shadow-2xl backdrop-blur-2xl">
         {/* Top Liquid Chrome Header */}
-        <div className="flex flex-wrap items-center justify-between border-b border-[#c5a059]/20 bg-[#0c1611]/90 px-4 py-2.5 gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#c5a059]/20 bg-[#0c1611]/90 px-2.5 sm:px-4 py-2 sm:py-2.5 gap-2">
           {/* Left: Engine Badge & File Tabs */}
-          <div className="flex items-center gap-3 overflow-x-auto scrollbar-none">
-            <div className="flex items-center gap-2 pr-2 border-r border-[#c5a059]/20">
-              <span className="flex h-2.5 w-2.5 rounded-full bg-[#c5a059] shadow-[0_0_8px_#c5a059]" />
-              <span className="font-serif-luxury text-xs font-bold tracking-wider text-[#f4e2b8]">
-                APS HARD WORK CLI
+          <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto scrollbar-none pb-0.5 sm:pb-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 pr-2 border-r border-[#c5a059]/20 shrink-0">
+              <span className="flex h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full bg-[#c5a059] shadow-[0_0_8px_#c5a059]" />
+              <span className="font-serif-luxury text-[11px] sm:text-xs font-bold tracking-wider text-[#f4e2b8] whitespace-nowrap">
+                <span className="hidden xs:inline sm:inline">APS HARD WORK </span>CLI
               </span>
             </div>
 
             {/* File Tabs */}
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 shrink-0">
               {files.map((file, idx) => (
                 <div
                   key={file.filename}
@@ -508,13 +508,13 @@ console.log('✔ Consola lista para recibir órdenes. Escribe abajo lo que quier
                     setActiveFileIndex(idx);
                     setActiveTab('editor');
                   }}
-                  className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-mono-code transition-all cursor-pointer ${
+                  className={`flex items-center gap-1 sm:gap-1.5 rounded-lg px-2 sm:px-2.5 py-1 text-[11px] sm:text-xs font-mono-code transition-all cursor-pointer whitespace-nowrap ${
                     activeFileIndex === idx
                       ? 'border border-[#c5a059]/40 bg-[#c5a059]/20 text-[#fbf5e8] shadow-sm font-semibold'
                       : 'text-[#8e9c8c] hover:bg-white/5 hover:text-[#d8b66f]'
                   }`}
                 >
-                  <FileCode className="h-3.5 w-3.5 text-[#c5a059]" />
+                  <FileCode className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-[#c5a059]" />
                   <span>{file.filename}</span>
                   {files.length > 1 && (
                     <button
@@ -529,7 +529,7 @@ console.log('✔ Consola lista para recibir órdenes. Escribe abajo lo que quier
               ))}
               <button
                 onClick={handleAddNewFile}
-                className="flex items-center gap-1 rounded-lg border border-dashed border-[#c5a059]/30 px-2 py-1 text-[11px] font-mono-code text-[#c5a059] hover:bg-[#c5a059]/10 transition-colors"
+                className="flex items-center gap-1 rounded-lg border border-dashed border-[#c5a059]/30 px-2 py-1 text-[10px] sm:text-[11px] font-mono-code text-[#c5a059] hover:bg-[#c5a059]/10 transition-colors whitespace-nowrap"
                 title="Crear nuevo archivo en el workspace"
               >
                 <span>+ Nuevo</span>
@@ -538,69 +538,75 @@ console.log('✔ Consola lista para recibir órdenes. Escribe abajo lo que quier
           </div>
 
           {/* Right: View Toggles & Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between sm:justify-end gap-1.5 sm:gap-2">
             {/* View switcher */}
             <div className="flex items-center rounded-lg border border-[#c5a059]/20 bg-[#060c08] p-0.5 text-xs">
               <button
                 onClick={() => setActiveTab('editor')}
-                className={`flex items-center gap-1 rounded-md px-2.5 py-1 transition-all ${
+                className={`flex items-center gap-1 rounded-md px-2 sm:px-2.5 py-1 transition-all ${
                   activeTab === 'editor'
                     ? 'bg-[#c5a059]/20 text-[#f4e2b8] font-medium'
                     : 'text-[#8e9c8c] hover:text-[#f4e2b8]'
                 }`}
               >
                 <Code2 className="h-3.5 w-3.5" />
-                <span>Editor</span>
+                <span className="text-[11px] sm:text-xs">Editor</span>
               </button>
               <button
                 onClick={() => setActiveTab('terminal')}
-                className={`flex items-center gap-1 rounded-md px-2.5 py-1 transition-all ${
+                className={`flex items-center gap-1 rounded-md px-2 sm:px-2.5 py-1 transition-all ${
                   activeTab === 'terminal'
                     ? 'bg-[#c5a059]/20 text-[#f4e2b8] font-medium'
                     : 'text-[#8e9c8c] hover:text-[#f4e2b8]'
                 }`}
               >
                 <TerminalIcon className="h-3.5 w-3.5" />
-                <span>Consola ({terminalLogs.length})</span>
+                <span className="text-[11px] sm:text-xs">
+                  Consola <span className="hidden sm:inline">({terminalLogs.length})</span>
+                </span>
               </button>
               <button
                 onClick={() => setActiveTab('preview')}
-                className={`flex items-center gap-1 rounded-md px-2.5 py-1 transition-all ${
+                className={`flex items-center gap-1 rounded-md px-2 sm:px-2.5 py-1 transition-all ${
                   activeTab === 'preview'
                     ? 'bg-[#c5a059]/20 text-[#f4e2b8] font-medium'
                     : 'text-[#8e9c8c] hover:text-[#f4e2b8]'
                 }`}
               >
                 <Eye className="h-3.5 w-3.5" />
-                <span>Vista Previa</span>
+                <span className="text-[11px] sm:text-xs">
+                  <span className="hidden sm:inline">Vista </span>Previa
+                </span>
               </button>
             </div>
 
-            {/* Run Button */}
-            <button
-              onClick={executeActiveCode}
-              className="flex items-center gap-1.5 rounded-lg border border-[#c5a059]/40 bg-gradient-to-r from-[#c5a059]/30 to-emerald-600/30 px-3 py-1 text-xs font-serif-luxury font-semibold text-[#fbf5e8] shadow-sm hover:brightness-110 active:scale-95 transition-all"
-              title="Ejecutar archivo en sandbox de tiempo real"
-            >
-              <Play className="h-3 w-3 fill-current text-[#f4e2b8]" />
-              <span>Ejecutar</span>
-            </button>
+            <div className="flex items-center gap-1 sm:gap-1.5">
+              {/* Run Button */}
+              <button
+                onClick={executeActiveCode}
+                className="flex items-center gap-1 sm:gap-1.5 rounded-lg border border-[#c5a059]/40 bg-gradient-to-r from-[#c5a059]/30 to-emerald-600/30 px-2.5 sm:px-3 py-1 text-xs font-serif-luxury font-semibold text-[#fbf5e8] shadow-sm hover:brightness-110 active:scale-95 transition-all"
+                title="Ejecutar archivo en sandbox de tiempo real"
+              >
+                <Play className="h-3 w-3 fill-current text-[#f4e2b8]" />
+                <span className="text-[11px] sm:text-xs">Ejecutar</span>
+              </button>
 
-            <button
-              onClick={handleCopyCode}
-              className="rounded-lg border border-[#c5a059]/20 p-1.5 text-[#8e9c8c] hover:bg-[#c5a059]/10 hover:text-[#f4e2b8] transition-colors"
-              title="Copiar código actual"
-            >
-              {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
-            </button>
+              <button
+                onClick={handleCopyCode}
+                className="rounded-lg border border-[#c5a059]/20 p-1.5 text-[#8e9c8c] hover:bg-[#c5a059]/10 hover:text-[#f4e2b8] transition-colors"
+                title="Copiar código actual"
+              >
+                {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+              </button>
 
-            <button
-              onClick={handleDownloadCode}
-              className="rounded-lg border border-[#c5a059]/20 p-1.5 text-[#8e9c8c] hover:bg-[#c5a059]/10 hover:text-[#f4e2b8] transition-colors"
-              title="Descargar archivo"
-            >
-              <Download className="h-3.5 w-3.5" />
-            </button>
+              <button
+                onClick={handleDownloadCode}
+                className="rounded-lg border border-[#c5a059]/20 p-1.5 text-[#8e9c8c] hover:bg-[#c5a059]/10 hover:text-[#f4e2b8] transition-colors"
+                title="Descargar archivo"
+              >
+                <Download className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -708,7 +714,7 @@ console.log('✔ Consola lista para recibir órdenes. Escribe abajo lo que quier
         </div>
 
         {/* Bottom CLI Prompt Input Bar */}
-        <div className="border-t border-[#c5a059]/25 bg-[#0a140f] p-3">
+        <div className="border-t border-[#c5a059]/25 bg-[#0a140f] p-2 sm:p-3 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
           {/* Uploaded attachments in CLI */}
           <input
             ref={fileInputRef}
@@ -719,13 +725,13 @@ console.log('✔ Consola lista para recibir órdenes. Escribe abajo lo que quier
           />
 
           {cliAttachments.length > 0 && (
-            <div className="mb-2 flex flex-wrap gap-2">
+            <div className="mb-2 flex flex-wrap gap-1.5 sm:gap-2">
               {cliAttachments.map((att) => (
                 <div
                   key={att.id}
                   className="flex items-center gap-1.5 rounded-md border border-[#c5a059]/30 bg-[#122218] px-2 py-0.5 text-xs text-[#f4e2b8]"
                 >
-                  <span className="truncate max-w-[120px]">{att.name}</span>
+                  <span className="truncate max-w-[100px] sm:max-w-[120px]">{att.name}</span>
                   <button
                     onClick={() =>
                       setCliAttachments((prev) => prev.filter((a) => a.id !== att.id))
@@ -739,7 +745,7 @@ console.log('✔ Consola lista para recibir órdenes. Escribe abajo lo que quier
             </div>
           )}
 
-          <div className="flex items-center gap-2 rounded-xl border border-[#c5a059]/30 bg-[#060b08] px-3 py-2 shadow-inner">
+          <div className="flex items-center gap-1.5 sm:gap-2 rounded-xl border border-[#c5a059]/30 bg-[#060b08] px-2.5 sm:px-3 py-1.5 sm:py-2 shadow-inner">
             <button
               onClick={() => fileInputRef.current?.click()}
               className="rounded-lg p-1 text-[#8e9c8c] hover:bg-white/10 hover:text-[#d8b66f]"
@@ -748,8 +754,11 @@ console.log('✔ Consola lista para recibir órdenes. Escribe abajo lo que quier
               <Paperclip className="h-4 w-4" />
             </button>
 
-            <span className="font-mono-code text-xs font-bold text-[#c5a059]">
+            <span className="font-mono-code text-xs font-bold text-[#c5a059] hidden sm:inline shrink-0">
               aps@hardwork:~$
+            </span>
+            <span className="font-mono-code text-xs font-bold text-[#c5a059] sm:hidden shrink-0">
+              ~$
             </span>
 
             <input
@@ -758,21 +767,22 @@ console.log('✔ Consola lista para recibir órdenes. Escribe abajo lo que quier
               value={command}
               onChange={(e) => setCommand(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Escribe una orden a la IA (ej: 'crea un juego de snake', 'haz una calculadora', 'agrega X')..."
-              className="flex-1 bg-transparent font-mono-code text-xs md:text-sm text-[#f4e2b8] placeholder-[#576954] focus:outline-none"
+              placeholder="Orden a la IA (ej: 'crea un juego de snake', 'calculadora')..."
+              className="flex-1 min-w-0 bg-transparent font-mono-code text-xs sm:text-sm text-[#f4e2b8] placeholder-[#576954] focus:outline-none"
             />
 
             <button
               onClick={() => handleExecuteCommand()}
               disabled={isProcessing || !command.trim()}
-              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-mono-code font-semibold transition-all ${
+              className={`flex items-center gap-1 sm:gap-1.5 rounded-lg px-2.5 sm:px-3 py-1.5 text-xs font-mono-code font-semibold transition-all shrink-0 ${
                 command.trim() && !isProcessing
                   ? 'border border-[#c5a059]/50 bg-[#c5a059]/30 text-[#fbf5e8] shadow-sm hover:bg-[#c5a059]/50 hover:scale-105 active:scale-95'
                   : 'text-[#485746] cursor-not-allowed'
               }`}
             >
               <CornerDownLeft className="h-3.5 w-3.5" />
-              <span>Enviar Orden</span>
+              <span className="hidden sm:inline">Enviar Orden</span>
+              <span className="sm:hidden">Enviar</span>
             </button>
           </div>
         </div>

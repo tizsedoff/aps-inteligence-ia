@@ -117,7 +117,7 @@ export const InputDock: React.FC<InputDockProps> = ({
   };
 
   return (
-    <div className="relative w-full max-w-4xl mx-auto px-4 pb-6 pt-2">
+    <div className="relative w-full max-w-4xl mx-auto px-2.5 sm:px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-1 sm:pt-2">
       {/* Hidden File Input */}
       <input
         ref={fileInputRef}
@@ -138,7 +138,7 @@ export const InputDock: React.FC<InputDockProps> = ({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className="relative overflow-hidden rounded-full border border-white/20 transition-all duration-300 backdrop-blur-2xl p-1.5"
+        className="relative overflow-hidden rounded-full border border-white/20 transition-all duration-300 backdrop-blur-2xl p-1 sm:p-1.5"
         style={{
           background: customization.inputBarGradient,
         }}
@@ -153,12 +153,12 @@ export const InputDock: React.FC<InputDockProps> = ({
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="flex flex-wrap gap-2 px-4 py-2 border-b border-white/10 mb-1"
+              className="flex flex-wrap gap-2 px-3 sm:px-4 py-1.5 border-b border-white/10 mb-1"
             >
               {attachments.map((att) => (
                 <div
                   key={att.id}
-                  className="flex items-center gap-1.5 rounded-full border border-white/30 bg-black/60 px-3 py-1 text-xs text-white shadow-md"
+                  className="flex items-center gap-1.5 rounded-full border border-white/30 bg-black/60 px-2.5 py-1 text-xs text-white shadow-md"
                 >
                   {att.previewUrl ? (
                     <img
@@ -169,7 +169,7 @@ export const InputDock: React.FC<InputDockProps> = ({
                   ) : (
                     <FileText className="h-3.5 w-3.5 text-[#00cec9]" />
                   )}
-                  <span className="truncate max-w-[120px] font-mono-code text-[11px]">
+                  <span className="truncate max-w-[100px] sm:max-w-[120px] font-mono-code text-[11px]">
                     {att.name}
                   </span>
                   <button
@@ -185,21 +185,21 @@ export const InputDock: React.FC<InputDockProps> = ({
         </AnimatePresence>
 
         {/* The Mockup Pill Bar: Image Button | Divider | Textarea | Send Button */}
-        <div className="flex items-center gap-3 px-2 py-1">
+        <div className="flex items-center gap-2 sm:gap-3 px-1.5 sm:px-2 py-0.5 sm:py-1">
           {/* Left: Image/File Upload Icon Button (Gray rounded square as in mockup) */}
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-black/35 text-white/90 hover:bg-black/50 hover:scale-105 transition-all shadow-inner border border-white/15"
+            className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl sm:rounded-2xl bg-black/35 text-white/90 hover:bg-black/50 hover:scale-105 active:scale-95 transition-all shadow-inner border border-white/15"
             title="Subir foto o archivo para procesamiento"
           >
-            <ImageIcon className="h-5 w-5" />
+            <ImageIcon className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
           </button>
 
           {/* Thin vertical divider line */}
-          <div className="h-7 w-px bg-white/30 shrink-0" />
+          <div className="h-6 sm:h-7 w-px bg-white/30 shrink-0" />
 
           {/* Center: Textarea with DESCRIBE TU IDEA */}
-          <div className="flex flex-1 items-center">
+          <div className="flex flex-1 items-center min-w-0">
             <textarea
               ref={textareaRef}
               value={text}
@@ -209,14 +209,14 @@ export const InputDock: React.FC<InputDockProps> = ({
               onKeyDown={handleKeyDown}
               placeholder="DESCRIBE TU IDEA"
               rows={1}
-              className="w-full resize-none bg-transparent text-sm md:text-base font-extrabold uppercase tracking-wide text-white placeholder-white/70 focus:outline-none placeholder:font-extrabold"
+              className="w-full resize-none bg-transparent text-[15px] sm:text-base font-extrabold uppercase tracking-wide text-white placeholder-white/70 focus:outline-none placeholder:font-extrabold"
             />
           </div>
 
           {/* Extended Thinking Quick Indicator Toggle */}
           <button
             onClick={onToggleExtendedThinking}
-            className={`hidden sm:flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold uppercase transition-all ${
+            className={`hidden md:flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold uppercase transition-all ${
               extendedThinking || currentModel === 'APS HARD WORK'
                 ? 'bg-black/50 text-[#00cec9] border border-[#00cec9]/40 shadow-[0_0_10px_rgba(0,206,201,0.3)]'
                 : 'bg-black/25 text-white/70 hover:text-white'
@@ -231,7 +231,7 @@ export const InputDock: React.FC<InputDockProps> = ({
           {isLoading ? (
             <button
               onClick={onStopGeneration}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-600 text-white shadow-lg hover:scale-105 active:scale-95 transition-all"
+              className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-full bg-red-600 text-white shadow-lg hover:scale-105 active:scale-95 transition-all"
               title="Detener generación"
             >
               <StopCircle className="h-5 w-5 animate-spin" />
@@ -240,14 +240,14 @@ export const InputDock: React.FC<InputDockProps> = ({
             <button
               onClick={handleSubmit}
               disabled={!text.trim() && attachments.length === 0}
-              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full shadow-xl transition-all duration-300 ${
+              className={`flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-full shadow-xl transition-all duration-300 ${
                 text.trim() || attachments.length > 0
                   ? 'bg-[#00cec9] text-[#070c09] hover:scale-110 active:scale-95 shadow-[0_0_20px_rgba(0,206,201,0.6)] cursor-pointer'
                   : 'bg-[#00cec9]/70 text-[#070c09]/80 cursor-not-allowed opacity-80'
               }`}
               title="Enviar idea"
             >
-              <ArrowUp className="h-6 w-6 stroke-[3]" />
+              <ArrowUp className="h-5 w-5 sm:h-6 sm:w-6 stroke-[3]" />
             </button>
           )}
         </div>

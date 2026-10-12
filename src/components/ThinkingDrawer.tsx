@@ -36,10 +36,10 @@ export const ThinkingDrawer: React.FC<ThinkingDrawerProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="font-serif-luxury tracking-wider text-[#f4e2b8] font-semibold">
+            <span className="font-serif-luxury tracking-wider text-[#f4e2b8] font-semibold text-[11px] sm:text-xs">
               PENSAMIENTO EXTENDIDO
             </span>
-            <span className="text-[#a7b3a5] font-mono-code text-[11px]">
+            <span className="hidden sm:inline text-[#a7b3a5] font-mono-code text-[11px]">
               {isActive ? '· Razonando en profundidad...' : '· Análisis completado'}
             </span>
           </div>

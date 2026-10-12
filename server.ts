@@ -120,8 +120,8 @@ REGLAS OBLIGATORIAS:
 - Responde de forma orgánica, fluida y directa a lo que el usuario pida.`;
 }
 
-// SSE Streaming Chat Endpoint
-app.post('/api/chat/stream', async (req: Request, res: Response) => {
+// SSE Streaming Chat Endpoint (supports direct and rewrite routes on Vercel & local)
+app.post(['/api/chat/stream', '/chat/stream'], async (req: Request, res: Response) => {
   // Set SSE headers
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
   res.setHeader('Cache-Control', 'no-cache, no-transform');
@@ -305,7 +305,7 @@ app.post('/api/chat/stream', async (req: Request, res: Response) => {
 });
 
 // APS Hard Work Exclusive CLI Code Generator & Processor
-app.post('/api/cli/execute', async (req: Request, res: Response) => {
+app.post(['/api/cli/execute', '/cli/execute'], async (req: Request, res: Response) => {
   try {
     const { command, files = [], activeFilename = '', attachments = [], language = 'typescript' } = req.body;
     const ai = getGenAI();
@@ -426,6 +426,15 @@ Escribe el código completo ahora en JSON estricto:`;
   }
 });
 
+// Healthcheck endpoint
+app.get(['/api/health', '/health'], (_req: Request, res: Response) => {
+  res.json({
+    status: 'ok',
+    app: 'APS INTELLIGENCE',
+    timestamp: Date.now(),
+  });
+});
+
 // Setup Vite middlewares in development or static serve in production
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
@@ -448,4 +457,10 @@ async function startServer() {
   });
 }
 
-startServer();
+// In standard Node/dev environments, start the listener. In Vercel serverless, Vercel invokes the exported app.
+if (!process.env.VERCEL) {
+  startServer();
+}
+
+export default app;
+export { app };

@@ -82,22 +82,22 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="relative z-30 flex flex-col w-full border-b border-white/10 backdrop-blur-xl bg-black/40">
       {/* Top Row: Hamburger, Model Selector, Chat/Co-work, User */}
-      <div className="flex w-full items-center justify-between px-4 py-2.5 md:px-8">
+      <div className="flex w-full items-center justify-between px-2 sm:px-4 py-2 sm:py-2.5 md:px-8 gap-1.5 sm:gap-3">
         {/* LEFT: Hamburger + MODELO APS... Card */}
-        <div className="flex items-center gap-3 sm:gap-4">
+        <div className="flex items-center gap-1.5 sm:gap-4 shrink-0">
           {/* Hamburger Menu & Chats Recientes Pill */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <button
               onClick={onOpenSidebar}
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-[#fbf5e8] hover:bg-white/15 hover:border-white/30 transition-all shadow-md active:scale-95"
+              className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-[#fbf5e8] hover:bg-white/15 hover:border-white/30 transition-all shadow-md active:scale-95"
               title="Abrir panel lateral de chats recientes"
             >
-              <Menu className="h-5 w-5" />
+              <Menu className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
             </button>
 
             <button
               onClick={onOpenSidebar}
-              className="hidden sm:inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-mono-code font-bold uppercase tracking-wider text-white shadow-lg transition-all hover:scale-105 active:scale-95"
+              className="hidden md:inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-mono-code font-bold uppercase tracking-wider text-white shadow-lg transition-all hover:scale-105 active:scale-95"
               style={{
                 background: 'linear-gradient(135deg, #a29bfe 0%, #6c5ce7 50%, #e84393 100%)',
               }}
@@ -112,21 +112,21 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="relative">
             <button
               onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
-              className="group flex items-center gap-3 rounded-2xl px-4 py-2 text-left shadow-2xl transition-all duration-300 hover:brightness-110 active:scale-95 border border-white/20"
+              className="group flex items-center gap-1.5 sm:gap-3 rounded-xl sm:rounded-2xl px-2.5 py-1 sm:px-4 sm:py-2 text-left shadow-2xl transition-all duration-300 hover:brightness-110 active:scale-95 border border-white/20"
               style={{
                 background: customization.modelSelectorGradient,
               }}
             >
               <div className="flex flex-col">
-                <span className="font-serif-luxury text-[10px] font-bold tracking-widest text-emerald-200 uppercase">
+                <span className="font-serif-luxury text-[8px] sm:text-[10px] font-bold tracking-widest text-emerald-200 uppercase">
                   MODELO
                 </span>
-                <span className="font-serif-luxury text-sm md:text-base font-extrabold tracking-wider text-white drop-shadow-md">
+                <span className="font-serif-luxury text-xs sm:text-base font-extrabold tracking-wider text-white drop-shadow-md whitespace-nowrap">
                   {currentModel}
                 </span>
               </div>
               <ChevronDown
-                className={`h-4 w-4 text-white transition-transform duration-200 ${
+                className={`h-3.5 w-3.5 sm:h-4 sm:w-4 text-white transition-transform duration-200 shrink-0 ${
                   modelDropdownOpen ? 'rotate-180' : ''
                 }`}
               />
@@ -140,7 +140,7 @@ export const Header: React.FC<HeaderProps> = ({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 8, scale: 0.95 }}
                   transition={{ duration: 0.18 }}
-                  className="absolute left-0 top-full mt-2 w-72 overflow-hidden rounded-2xl border border-[#c5a059]/30 bg-[#09110c]/95 p-2 shadow-2xl backdrop-blur-2xl z-50"
+                  className="absolute left-0 top-full mt-2 w-64 sm:w-72 overflow-hidden rounded-2xl border border-[#c5a059]/30 bg-[#09110c]/95 p-2 shadow-2xl backdrop-blur-2xl z-50"
                 >
                   <div className="p-2 border-b border-white/10 text-[10px] font-mono-code uppercase tracking-wider text-[#c5a059]">
                     Seleccionar Inteligencia APS
@@ -178,16 +178,16 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* CENTER: CHAT | CO-WORK Pill Tab Switcher */}
-        <div className="flex items-center rounded-full border border-white/20 bg-black/60 p-1 shadow-inner backdrop-blur-xl">
+        <div className="flex items-center rounded-full border border-white/20 bg-black/60 p-0.5 sm:p-1 shadow-inner backdrop-blur-xl shrink-0">
           <button
             onClick={() => onSelectView('chat')}
-            className={`flex items-center gap-1.5 rounded-full px-4 sm:px-5 py-1.5 text-xs font-serif-luxury font-bold tracking-wider transition-all duration-300 ${
+            className={`flex items-center gap-1 sm:gap-1.5 rounded-full px-2.5 sm:px-5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-serif-luxury font-bold tracking-wider transition-all duration-300 ${
               activeView === 'chat'
                 ? 'bg-gradient-to-r from-[#d4af37] to-[#e67e22] text-[#070c09] shadow-lg scale-105'
                 : 'text-[#8e9c8c] hover:text-white'
             }`}
           >
-            <MessageSquare className="h-3.5 w-3.5" />
+            <MessageSquare className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
             <span>CHAT</span>
           </button>
 
@@ -198,19 +198,20 @@ export const Header: React.FC<HeaderProps> = ({
                 onSelectModel('APS HARD WORK');
               }
             }}
-            className={`flex items-center gap-1.5 rounded-full px-4 sm:px-5 py-1.5 text-xs font-serif-luxury font-bold tracking-wider transition-all duration-300 ${
+            className={`flex items-center gap-1 sm:gap-1.5 rounded-full px-2.5 sm:px-5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-serif-luxury font-bold tracking-wider transition-all duration-300 ${
               activeView === 'cli'
                 ? 'bg-gradient-to-r from-[#d4af37] to-[#e67e22] text-[#070c09] shadow-lg scale-105'
                 : 'text-[#8e9c8c] hover:text-white'
             }`}
           >
-            <Terminal className="h-3.5 w-3.5" />
-            <span>CO-WORK</span>
+            <Terminal className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+            <span className="hidden xs:inline sm:inline">CO-WORK</span>
+            <span className="xs:hidden sm:hidden">CLI</span>
           </button>
         </div>
 
         {/* RIGHT: Actions, Studio Customizer, Terms & User Avatar */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           {/* New Session Button */}
           <button
             onClick={onNewChat}
@@ -224,10 +225,10 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Visual Customization Studio Button */}
           <button
             onClick={onOpenCustomizer}
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#c5a059]/40 bg-[#c5a059]/15 text-[#f4e2b8] hover:bg-[#c5a059]/30 hover:scale-105 transition-all shadow-md"
+            className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-[#c5a059]/40 bg-[#c5a059]/15 text-[#f4e2b8] hover:bg-[#c5a059]/30 hover:scale-105 transition-all shadow-md active:scale-95"
             title="Personalizar cualquier aspecto visual"
           >
-            <Palette className="h-4 w-4 text-[#c5a059]" />
+            <Palette className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-[#c5a059]" />
           </button>
 
           {/* Terms & Conditions quick button */}
@@ -242,22 +243,22 @@ export const Header: React.FC<HeaderProps> = ({
           {/* User Circular Profile Avatar */}
           <button
             onClick={onOpenAuth}
-            className="group relative flex h-11 w-11 items-center justify-center rounded-full border-2 border-white/40 bg-gradient-to-br from-[#2c3e50] to-[#000000] text-white shadow-xl transition-transform hover:scale-105 active:scale-95"
+            className="group relative flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-full border-2 border-white/40 bg-gradient-to-br from-[#2c3e50] to-[#000000] text-white shadow-xl transition-transform hover:scale-105 active:scale-95"
             title={currentUser ? `Perfil: ${currentUser.name}` : 'Iniciar Sesión / Registro'}
           >
             {currentUser?.avatar ? (
-              <span className="text-xl">{currentUser.avatar}</span>
+              <span className="text-base sm:text-xl">{currentUser.avatar}</span>
             ) : (
-              <User className="h-5 w-5 text-white/90" />
+              <User className="h-4 w-4 sm:h-5 sm:w-5 text-white/90" />
             )}
-            <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-black bg-emerald-400" />
+            <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full border-2 border-black bg-emerald-400" />
           </button>
         </div>
       </div>
 
       {/* Sub-Header Bar: 3 INTERACTION MODES (Código, Adolescentes, Adultos) */}
-      <div className="flex items-center justify-between border-t border-white/10 bg-black/50 px-4 py-1.5 md:px-8 overflow-x-auto scrollbar-none">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between border-t border-white/10 bg-black/50 px-2 sm:px-4 py-1.5 md:px-8 overflow-x-auto scrollbar-none">
+        <div className="flex items-center gap-1.5 sm:gap-2 mx-auto sm:mx-0">
           <span className="text-[10px] font-mono-code uppercase tracking-wider text-[#a7b3a5] mr-1 hidden sm:inline">
             Modo de Interacción:
           </span>
@@ -269,14 +270,14 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                   key={m.id}
                   onClick={() => onSelectInteractionMode(m.id)}
-                  className={`flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-semibold transition-all ${
+                  className={`flex items-center gap-1 sm:gap-1.5 rounded-lg px-2 sm:px-3 py-1 text-[11px] sm:text-xs font-semibold transition-all ${
                     isActive
                       ? 'bg-gradient-to-r from-[#00cec9] to-[#0984e3] text-black shadow-md scale-105'
                       : 'text-[#8e9c8c] hover:text-white'
                   }`}
                   title={`Cambiar a ${m.label}`}
                 >
-                  <Icon className="h-3.5 w-3.5" />
+                  <Icon className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                   <span className="hidden sm:inline">{m.label}</span>
                   <span className="sm:hidden">{m.shortLabel}</span>
                 </button>
@@ -285,8 +286,8 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Small Active Mode Summary Badge */}
-        <div className="text-[11px] font-mono-code text-[#00cec9] flex items-center gap-1">
+        {/* Small Active Mode Summary Badge on desktop */}
+        <div className="hidden lg:flex text-[11px] font-mono-code text-[#00cec9] items-center gap-1">
           <span className="h-2 w-2 rounded-full bg-[#00cec9] animate-pulse" />
           <span>
             {interactionMode === 'code'
