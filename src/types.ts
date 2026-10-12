@@ -32,6 +32,26 @@ export interface CliFile {
   description?: string;
 }
 
+export interface TerminalLogEntry {
+  type: 'input' | 'stdout' | 'stderr' | 'system' | 'thinking';
+  text: string;
+  time: string;
+}
+
+export interface TerminalSessionState {
+  command: string;
+  history: string[];
+  isProcessing: boolean;
+  activeTab: 'terminal' | 'editor' | 'preview';
+  isFullScreenPreview: boolean;
+  isSplitView: boolean;
+  files: CliFile[];
+  activeFileIndex: number;
+  terminalLogs: TerminalLogEntry[];
+  lineProgress: { filename: string; current: number; total: number } | null;
+  lastActiveCommand?: string;
+}
+
 export interface CliExecutionResult {
   command: string;
   status: 'success' | 'error';
@@ -78,6 +98,14 @@ export interface VisualCustomization {
   fontScale: 'sm' | 'md' | 'lg';
 }
 
+export interface MemoryItem {
+  id: string;
+  fact: string;
+  category: 'preference' | 'personal' | 'project' | 'general';
+  source?: 'user' | 'auto';
+  timestamp: number;
+}
+
 export interface UserAccount {
   id: string;
   name: string;
@@ -86,6 +114,8 @@ export interface UserAccount {
   token?: string;
   membership: string;
   isAdmin: boolean;
+  customInstructions?: string; // Prompt / personalización directa para la IA
+  memories?: MemoryItem[]; // Lista de recuerdos y datos aprendidos
 }
 
 export interface CookiePreferences {

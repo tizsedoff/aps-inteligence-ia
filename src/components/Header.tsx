@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
 import { ApsModelId, InteractionMode, VisualCustomization, UserAccount } from '../types';
+import { UserAvatar } from './UserAvatar';
 import {
   Menu,
   MessageSquare,
-  Terminal,
-  User,
   Palette,
-  Sparkles,
   ChevronDown,
   Zap,
   Shield,
@@ -14,16 +12,14 @@ import {
   FileText,
   PlusCircle,
   Code2,
-  Smile,
-  Briefcase,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface HeaderProps {
   currentModel: ApsModelId;
   onSelectModel: (model: ApsModelId) => void;
-  interactionMode: InteractionMode;
-  onSelectInteractionMode: (mode: InteractionMode) => void;
+  interactionMode?: InteractionMode;
+  onSelectInteractionMode?: (mode: InteractionMode) => void;
   activeView: 'chat' | 'cli';
   onSelectView: (view: 'chat' | 'cli') => void;
   customization: VisualCustomization;
@@ -73,40 +69,20 @@ export const Header: React.FC<HeaderProps> = ({
     },
   ];
 
-  const modes: { id: InteractionMode; label: string; shortLabel: string; icon: any }[] = [
-    { id: 'code', label: 'Modo Código', shortLabel: 'Código', icon: Code2 },
-    { id: 'teens', label: 'Modo Adolescentes', shortLabel: 'Adolescentes', icon: Smile },
-    { id: 'adults', label: 'Modo Adultos', shortLabel: 'Adultos', icon: Briefcase },
-  ];
-
   return (
     <header className="relative z-30 flex flex-col w-full border-b border-white/10 backdrop-blur-xl bg-black/40">
-      {/* Top Row: Hamburger, Model Selector, Chat/Co-work, User */}
+      {/* Top Row: Hamburger, Model Selector, CODIGO / CHAT switcher, User */}
       <div className="flex w-full items-center justify-between px-2 sm:px-4 py-2 sm:py-2.5 md:px-8 gap-1.5 sm:gap-3">
         {/* LEFT: Hamburger + MODELO APS... Card */}
         <div className="flex items-center gap-1.5 sm:gap-4 shrink-0">
-          {/* Hamburger Menu & Chats Recientes Pill */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <button
-              onClick={onOpenSidebar}
-              className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-[#fbf5e8] hover:bg-white/15 hover:border-white/30 transition-all shadow-md active:scale-95"
-              title="Abrir panel lateral de chats recientes"
-            >
-              <Menu className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
-            </button>
-
-            <button
-              onClick={onOpenSidebar}
-              className="hidden md:inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-mono-code font-bold uppercase tracking-wider text-white shadow-lg transition-all hover:scale-105 active:scale-95"
-              style={{
-                background: 'linear-gradient(135deg, #a29bfe 0%, #6c5ce7 50%, #e84393 100%)',
-              }}
-              title="Ver historial de conversaciones"
-            >
-              <MessageSquare className="h-3 w-3" />
-              <span>CHATS RECIENTES</span>
-            </button>
-          </div>
+          {/* Hamburger Menu Icon */}
+          <button
+            onClick={onOpenSidebar}
+            className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-[#fbf5e8] hover:bg-white/15 hover:border-white/30 transition-all shadow-md active:scale-95"
+            title="Abrir panel lateral"
+          >
+            <Menu className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
+          </button>
 
           {/* Big Rounded 'MODELO APS...' Card */}
           <div className="relative">
@@ -177,36 +153,36 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* CENTER: CHAT | CO-WORK Pill Tab Switcher */}
-        <div className="flex items-center rounded-full border border-white/20 bg-black/60 p-0.5 sm:p-1 shadow-inner backdrop-blur-xl shrink-0">
+        {/* CENTER: Solo CODIGO o CHAT Selector */}
+        <div className="flex items-center rounded-2xl border border-white/20 bg-black/70 p-1 shadow-2xl backdrop-blur-2xl shrink-0">
           <button
             onClick={() => onSelectView('chat')}
-            className={`flex items-center gap-1 sm:gap-1.5 rounded-full px-2.5 sm:px-5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-serif-luxury font-bold tracking-wider transition-all duration-300 ${
+            className={`flex items-center gap-1.5 sm:gap-2 rounded-xl px-3 sm:px-5 py-1.5 text-xs sm:text-sm font-serif-luxury font-bold tracking-wider transition-all duration-300 ${
               activeView === 'chat'
-                ? 'bg-gradient-to-r from-[#d4af37] to-[#e67e22] text-[#070c09] shadow-lg scale-105'
-                : 'text-[#8e9c8c] hover:text-white'
+                ? 'bg-gradient-to-r from-[#00cec9] to-[#0984e3] text-black shadow-lg shadow-cyan-500/20 scale-105'
+                : 'text-[#8e9c8c] hover:text-white hover:bg-white/5'
             }`}
           >
-            <MessageSquare className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+            <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             <span>CHAT</span>
           </button>
 
           <button
             onClick={() => {
               onSelectView('cli');
-              if (currentModel !== 'APS HARD WORK') {
-                onSelectModel('APS HARD WORK');
+              onSelectModel('APS HARD WORK');
+              if (onSelectInteractionMode) {
+                onSelectInteractionMode('code');
               }
             }}
-            className={`flex items-center gap-1 sm:gap-1.5 rounded-full px-2.5 sm:px-5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-serif-luxury font-bold tracking-wider transition-all duration-300 ${
+            className={`flex items-center gap-1.5 sm:gap-2 rounded-xl px-3 sm:px-5 py-1.5 text-xs sm:text-sm font-serif-luxury font-bold tracking-wider transition-all duration-300 ${
               activeView === 'cli'
-                ? 'bg-gradient-to-r from-[#d4af37] to-[#e67e22] text-[#070c09] shadow-lg scale-105'
-                : 'text-[#8e9c8c] hover:text-white'
+                ? 'bg-gradient-to-r from-[#00cec9] to-[#0984e3] text-black shadow-lg shadow-cyan-500/20 scale-105'
+                : 'text-[#8e9c8c] hover:text-white hover:bg-white/5'
             }`}
           >
-            <Terminal className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-            <span className="hidden xs:inline sm:inline">CO-WORK</span>
-            <span className="xs:hidden sm:hidden">CLI</span>
+            <Code2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span>CODIGO</span>
           </button>
         </div>
 
@@ -243,59 +219,17 @@ export const Header: React.FC<HeaderProps> = ({
           {/* User Circular Profile Avatar */}
           <button
             onClick={onOpenAuth}
-            className="group relative flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-full border-2 border-white/40 bg-gradient-to-br from-[#2c3e50] to-[#000000] text-white shadow-xl transition-transform hover:scale-105 active:scale-95"
+            className="group relative flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-2xl border border-white/20 bg-gradient-to-br from-[#1b2b20] to-[#0a140f] text-white shadow-xl transition-transform hover:scale-105 active:scale-95"
             title={currentUser ? `Perfil: ${currentUser.name}` : 'Iniciar Sesión / Registro'}
           >
-            {currentUser?.avatar ? (
-              <span className="text-base sm:text-xl">{currentUser.avatar}</span>
-            ) : (
-              <User className="h-4 w-4 sm:h-5 sm:w-5 text-white/90" />
-            )}
+            <UserAvatar
+              avatar={currentUser?.avatar}
+              name={currentUser?.name}
+              isAdmin={currentUser?.isAdmin}
+              size="sm"
+            />
             <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full border-2 border-black bg-emerald-400" />
           </button>
-        </div>
-      </div>
-
-      {/* Sub-Header Bar: 3 INTERACTION MODES (Código, Adolescentes, Adultos) */}
-      <div className="flex items-center justify-between border-t border-white/10 bg-black/50 px-2 sm:px-4 py-1.5 md:px-8 overflow-x-auto scrollbar-none">
-        <div className="flex items-center gap-1.5 sm:gap-2 mx-auto sm:mx-0">
-          <span className="text-[10px] font-mono-code uppercase tracking-wider text-[#a7b3a5] mr-1 hidden sm:inline">
-            Modo de Interacción:
-          </span>
-          <div className="flex items-center rounded-xl border border-white/15 bg-black/60 p-0.5 shadow-sm">
-            {modes.map((m) => {
-              const Icon = m.icon;
-              const isActive = interactionMode === m.id;
-              return (
-                <button
-                  key={m.id}
-                  onClick={() => onSelectInteractionMode(m.id)}
-                  className={`flex items-center gap-1 sm:gap-1.5 rounded-lg px-2 sm:px-3 py-1 text-[11px] sm:text-xs font-semibold transition-all ${
-                    isActive
-                      ? 'bg-gradient-to-r from-[#00cec9] to-[#0984e3] text-black shadow-md scale-105'
-                      : 'text-[#8e9c8c] hover:text-white'
-                  }`}
-                  title={`Cambiar a ${m.label}`}
-                >
-                  <Icon className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                  <span className="hidden sm:inline">{m.label}</span>
-                  <span className="sm:hidden">{m.shortLabel}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Small Active Mode Summary Badge on desktop */}
-        <div className="hidden lg:flex text-[11px] font-mono-code text-[#00cec9] items-center gap-1">
-          <span className="h-2 w-2 rounded-full bg-[#00cec9] animate-pulse" />
-          <span>
-            {interactionMode === 'code'
-              ? 'Enfocado en Software Engineering'
-              : interactionMode === 'teens'
-              ? 'Tono Joven, Empático & Dinámico'
-              : 'Tono Profesional, Ejecutivo & Maduro'}
-          </span>
         </div>
       </div>
     </header>

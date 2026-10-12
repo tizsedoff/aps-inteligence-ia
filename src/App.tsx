@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { auth, db } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import {
   ApsModelId,
   InteractionMode,
@@ -11,6 +11,7 @@ import {
   UserAccount,
   CookiePreferences,
   AppSettings,
+  MemoryItem,
 } from './types';
 import { DEFAULT_CUSTOMIZATION } from './constants/themePresets';
 import { Header } from './components/Header';
@@ -20,6 +21,7 @@ import { CliConsole } from './components/CliConsole';
 import { Sidebar } from './components/Sidebar';
 import { CustomizerModal } from './components/CustomizerModal';
 import { AuthModal } from './components/AuthModal';
+import { AuthGateway } from './components/AuthGateway';
 import { LegalModals } from './components/LegalModals';
 
 export default function App() {
@@ -37,6 +39,14 @@ export default function App() {
     localStorage.setItem('aps_mode', mode);
   };
 
+  const handleSelectView = (view: 'chat' | 'cli') => {
+    setActiveView(view);
+    if (view === 'cli') {
+      setCurrentModel('APS HARD WORK');
+      setInteractionMode('code');
+    }
+  };
+
   // Modals state
   const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -45,6 +55,43 @@ export default function App() {
   // CLI Code state
   const [cliInitialCode, setCliInitialCode] = useState<string>('');
   const [cliInitialLang, setCliInitialLang] = useState<string>('typescript');
+
+  // Background Terminal Context State: persistent across views so switching to CHAT never stops CLI operations
+  const [terminalContext, setTerminalContext] = useState<{
+    files: { filename: string; language: string; code: string }[];
+    recentLogs: { type: string; text: string }[];
+    isExecuting: boolean;
+    lastCommand: string;
+  }>({
+    files: [],
+    recentLogs: [],
+    isExecuting: false,
+    lastCommand: '',
+  });
+
+  const handleTerminalStateUpdate = React.useCallback(
+    (cliState: {
+      files: any[];
+      terminalLogs: any[];
+      isProcessing: boolean;
+      lastCommand: string;
+    }) => {
+      setTerminalContext({
+        files: cliState.files.map((f: any) => ({
+          filename: f.filename,
+          language: f.language,
+          code: f.code,
+        })),
+        recentLogs: cliState.terminalLogs.slice(-15).map((l: any) => ({
+          type: l.type,
+          text: l.text,
+        })),
+        isExecuting: cliState.isProcessing,
+        lastCommand: cliState.lastCommand,
+      });
+    },
+    []
+  );
 
   // Mouse coords for liquid glass reflection
   const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
@@ -77,7 +124,37 @@ export default function App() {
   };
 
   // 2. User Authentication State (Firebase connected)
-  const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
+  const [currentUser, setCurrentUser] = useState<UserAccount | null>(() => {
+    const saved = localStorage.getItem('aps_current_user');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.email === 'tizsedoff@gmail.com') {
+          parsed.isAdmin = true;
+          parsed.membership = 'ADMINISTRADOR SUPREMO';
+        }
+        return parsed;
+      } catch {
+        // ignore
+      }
+    }
+    return null;
+  });
+
+  const handleLogin = (user: UserAccount) => {
+    setCurrentUser(user);
+    localStorage.setItem('aps_current_user', JSON.stringify(user));
+    setIsAuthOpen(false);
+  };
+
+  const handleLogout = () => {
+    try {
+      auth.signOut();
+    } catch {}
+    localStorage.removeItem('aps_current_user');
+    setCurrentUser(null);
+    setIsAuthOpen(false);
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -90,38 +167,45 @@ export default function App() {
 
           if (userDocSnap.exists()) {
             const data = userDocSnap.data() as UserAccount;
-            setCurrentUser({
+            const updated: UserAccount = {
               ...data,
-              isAdmin: email === 'tizsedoff@gmail.com',
-              membership: email === 'tizsedoff@gmail.com' ? 'ADMINISTRADOR SUPREMO' : data.membership || 'APS INTELLIGENCE PRO',
-            });
+              isAdmin,
+              membership: isAdmin ? 'ADMINISTRADOR SUPREMO' : data.membership || 'APS INTELLIGENCE PRO',
+            };
+            setCurrentUser(updated);
+            localStorage.setItem('aps_current_user', JSON.stringify(updated));
           } else {
             const inferredName = email.split('@')[0] || 'Usuario';
             const newUser: UserAccount = {
               id: firebaseUser.uid,
               name: inferredName.charAt(0).toUpperCase() + inferredName.slice(1),
               email,
-              avatar: '👑',
+              avatar: '',
               membership: isAdmin ? 'ADMINISTRADOR SUPREMO' : 'APS INTELLIGENCE PRO',
               isAdmin,
             };
             setCurrentUser(newUser);
+            localStorage.setItem('aps_current_user', JSON.stringify(newUser));
           }
         } catch (e) {
           console.error('Error fetching user profile:', e);
-          setCurrentUser({
+          const newUser: UserAccount = {
             id: firebaseUser.uid,
             name: email.split('@')[0] || 'Usuario',
             email,
-            avatar: '👑',
+            avatar: '',
             membership: isAdmin ? 'ADMINISTRADOR SUPREMO' : 'APS INTELLIGENCE PRO',
             isAdmin,
-          });
+          };
+          setCurrentUser(newUser);
+          localStorage.setItem('aps_current_user', JSON.stringify(newUser));
         }
         setIsAuthOpen(false);
       } else {
-        setCurrentUser(null);
-        setIsAuthOpen(true);
+        const saved = localStorage.getItem('aps_current_user');
+        if (!saved) {
+          setCurrentUser(null);
+        }
       }
     });
     return () => unsubscribe();
@@ -295,6 +379,9 @@ export default function App() {
             mimeType: a.mimeType,
           })),
           extendedThinking: extendedThinking || currentModel === 'APS HARD WORK',
+          terminalContext,
+          userMemories: currentUser?.memories || [],
+          customInstructions: currentUser?.customInstructions || '',
         }),
       });
 
@@ -307,6 +394,7 @@ export default function App() {
 
       const decoder = new TextDecoder('utf-8');
       let buffer = '';
+      let accumulatedModelText = '';
 
       while (true) {
         const { value, done } = await reader.read();
@@ -348,12 +436,14 @@ export default function App() {
                   )
                 );
               } else if (eventType === 'token') {
+                const chunk = parsed.chunk || '';
+                accumulatedModelText += chunk;
                 setMessages((prev) =>
                   prev.map((m) =>
                     m.id === modelMessageId
                       ? {
                           ...m,
-                          content: (m.content || '') + (parsed.chunk || ''),
+                          content: (m.content || '') + chunk,
                           isThinkingActive: false,
                         }
                       : m
@@ -372,6 +462,48 @@ export default function App() {
                       : m
                   )
                 );
+
+                // Auto Memory Learning: If user is logged in, extract new facts from turn and store in memories
+                if (currentUser && text.length > 5) {
+                  try {
+                    fetch('/api/memory/extract', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        userText: text,
+                        modelReply: accumulatedModelText,
+                        existingMemories: currentUser.memories || [],
+                      }),
+                    })
+                      .then((r) => r.json())
+                      .then(async (data) => {
+                        if (data.success && Array.isArray(data.newMemories) && data.newMemories.length > 0) {
+                          const existing = currentUser.memories || [];
+                          // Filter duplicates
+                          const uniqueNew = data.newMemories.filter(
+                            (nm: MemoryItem) =>
+                              !existing.some((em) => em.fact.toLowerCase() === nm.fact.toLowerCase())
+                          );
+                          if (uniqueNew.length > 0) {
+                            const updatedMemories = [...uniqueNew, ...existing];
+                            const updatedUser: UserAccount = {
+                              ...currentUser,
+                              memories: updatedMemories,
+                            };
+                            setCurrentUser(updatedUser);
+                            localStorage.setItem('aps_current_user', JSON.stringify(updatedUser));
+                            try {
+                              const userRef = doc(db, 'users', currentUser.id);
+                              await updateDoc(userRef, { memories: updatedMemories });
+                            } catch (e) {
+                              console.warn('Firestore auto-memory update note:', e);
+                            }
+                          }
+                        }
+                      })
+                      .catch(() => {});
+                  } catch {}
+                }
               } else if (eventType === 'error') {
                 let cleanMsg = parsed.message || 'Error temporal en los servidores de inferencia.';
                 if (typeof cleanMsg === 'string' && (cleanMsg.includes('503') || cleanMsg.includes('high demand') || cleanMsg.includes('UNAVAILABLE'))) {
@@ -455,6 +587,23 @@ export default function App() {
         : 'none',
   } as React.CSSProperties;
 
+  if (!currentUser) {
+    return (
+      <div className="relative min-h-screen w-screen overflow-x-hidden bg-[#050806] text-[#e8ebe4] font-sans">
+        <AuthGateway
+          onLogin={handleLogin}
+          onOpenTerms={() => setIsTermsOpen(true)}
+        />
+        <LegalModals
+          isTermsOpen={isTermsOpen}
+          onCloseTerms={() => setIsTermsOpen(false)}
+          cookiePrefs={cookiePrefs}
+          onUpdateCookiePrefs={(p) => setCookiePrefs(p)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div
       onMouseMove={handleMouseMove}
@@ -485,7 +634,7 @@ export default function App() {
         interactionMode={interactionMode}
         onSelectInteractionMode={handleSelectMode}
         activeView={activeView}
-        onSelectView={setActiveView}
+        onSelectView={handleSelectView}
         customization={customization}
         currentUser={currentUser}
         onOpenAuth={() => setIsAuthOpen(true)}
@@ -497,34 +646,67 @@ export default function App() {
 
       {/* Main Workspace Body */}
       <main className="relative flex flex-1 flex-col overflow-hidden">
-        {activeView === 'chat' ? (
-          <>
-            <ChatTimeline
-              messages={messages}
-              currentModel={currentModel}
-              interactionMode={interactionMode}
-              customization={customization}
-              currentUser={currentUser}
-              onSelectPrompt={(prompt) => handleSendMessage(prompt, [])}
-              onSendToCli={handleSendToCli}
-              onRetry={handleRetry}
-              isLoading={isLoading}
-            />
-
-            <InputDock
-              currentModel={currentModel}
-              interactionMode={interactionMode}
-              customization={customization}
-              extendedThinking={extendedThinking}
-              onToggleExtendedThinking={() => setExtendedThinking(!extendedThinking)}
-              onSendMessage={handleSendMessage}
-              isLoading={isLoading}
-              onStopGeneration={handleStopGeneration}
-            />
-          </>
-        ) : (
-          <CliConsole initialCode={cliInitialCode} initialLang={cliInitialLang} />
+        {/* Live background activity indicator when user is chatting while terminal works */}
+        {activeView === 'chat' && terminalContext.isExecuting && (
+          <div className="flex items-center justify-between border-b border-[#c5a059]/30 bg-[#07130b]/90 px-3 sm:px-4 py-1.5 text-xs font-mono-code text-[#f4e2b8] backdrop-blur-md z-20">
+            <div className="flex items-center gap-2">
+              <span className="flex h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] animate-ping" />
+              <span>
+                Terminal ejecutando en segundo plano:{' '}
+                <strong className="text-[#98e6a5]">{terminalContext.lastCommand || 'Orden activa'}</strong>
+              </span>
+            </div>
+            <button
+              onClick={() => handleSelectView('cli')}
+              className="rounded bg-[#c5a059]/20 px-2 py-0.5 text-[11px] font-semibold text-[#fbf5e8] hover:bg-[#c5a059]/40 transition-colors"
+            >
+              Ir a Terminal →
+            </button>
+          </div>
         )}
+
+        {/* View 1: Chat View */}
+        <div
+          className={`flex flex-1 flex-col overflow-hidden ${
+            activeView === 'chat' ? 'flex' : 'hidden'
+          }`}
+        >
+          <ChatTimeline
+            messages={messages}
+            currentModel={currentModel}
+            interactionMode={interactionMode}
+            customization={customization}
+            currentUser={currentUser}
+            onSelectPrompt={(prompt) => handleSendMessage(prompt, [])}
+            onSendToCli={handleSendToCli}
+            onRetry={handleRetry}
+            isLoading={isLoading}
+          />
+
+          <InputDock
+            currentModel={currentModel}
+            interactionMode={interactionMode}
+            customization={customization}
+            extendedThinking={extendedThinking}
+            onToggleExtendedThinking={() => setExtendedThinking(!extendedThinking)}
+            onSendMessage={handleSendMessage}
+            isLoading={isLoading}
+            onStopGeneration={handleStopGeneration}
+          />
+        </div>
+
+        {/* View 2: CliConsole Component (STAYS MOUNTED IN BACKGROUND SO TERMINAL EXECUTION IS NEVER LOST) */}
+        <div
+          className={`flex flex-1 flex-col overflow-hidden ${
+            activeView === 'cli' ? 'flex h-full w-full' : 'hidden'
+          }`}
+        >
+          <CliConsole
+            initialCode={cliInitialCode}
+            initialLang={cliInitialLang}
+            onStateUpdate={handleTerminalStateUpdate}
+          />
+        </div>
       </main>
 
       {/* Sidebar Drawer */}
@@ -553,22 +735,15 @@ export default function App() {
         onReset={handleResetCustomization}
       />
 
-      {/* Authentication Modal */}
+      {/* Authentication & Profile Modal */}
       <AuthModal
         isOpen={isAuthOpen}
-        onClose={() => {
-          if (currentUser) setIsAuthOpen(false);
-        }}
+        onClose={() => setIsAuthOpen(false)}
         currentUser={currentUser}
-        onLogin={(user) => {
-          setCurrentUser(user);
-          setIsAuthOpen(false);
-        }}
-        onLogout={() => {
-          setCurrentUser(null);
-          setIsAuthOpen(true);
-        }}
-        required={!currentUser}
+        onLogin={handleLogin}
+        onLogout={handleLogout}
+        onUpdateUser={(updated) => setCurrentUser(updated)}
+        required={false}
       />
 
       {/* Legal & Cookie Modals */}

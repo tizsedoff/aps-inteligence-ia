@@ -48,11 +48,19 @@ function getModelCandidateList(apsModel: string): string[] {
   }
 }
 
-// System Instruction Builder trained for APS INSTANT, PRO & HARD WORK + 3 Modes
+// System Instruction Builder trained for APS INSTANT, PRO & HARD WORK + 3 Modes + User Memory
 function buildSystemPrompt(
   model: string,
   mode: 'code' | 'teens' | 'adults' = 'code',
-  userName?: string
+  userName?: string,
+  terminalContext?: {
+    files?: { filename: string; language: string; code: string }[];
+    recentLogs?: { type: string; text: string }[];
+    isExecuting?: boolean;
+    lastCommand?: string;
+  },
+  userMemories?: { fact: string; category?: string }[],
+  customInstructions?: string
 ): string {
   // 1. Model Core Profile
   let modelProfile = '';
@@ -105,12 +113,56 @@ function buildSystemPrompt(
 
   const userGreeting = userName ? `El usuario se llama ${userName}. Puedes saludarlo o llamarlo por su nombre de forma natural.` : '';
 
+  // User Memory & Custom Instructions
+  let memorySection = '';
+  if ((userMemories && userMemories.length > 0) || customInstructions) {
+    const memoryList = (userMemories || [])
+      .map((m) => `• [${m.category || 'Recuerdo'}] ${m.fact}`)
+      .join('\n');
+
+    memorySection = `\n\nMEMORIA PERSISTENTE DE LA IA SOBRE EL USUARIO:
+${memoryList || '(Sin recuerdos previos)'}
+
+${customInstructions ? `INSTRUCCIONES PERSONALIZADAS DEL USUARIO:\n${customInstructions}` : ''}
+
+REGLA DE MEMORIA:
+Usa activamente estos recuerdos sobre las preferencias, proyectos, gustos o estilo del usuario para personalizar naturalmente tus respuestas, sin necesidad de que el usuario tenga que repetir dicha información en cada conversación.`;
+  }
+
+  // Terminal context integration: assistant has full live awareness of the terminal and files!
+  let terminalSection = '';
+  if (terminalContext) {
+    const fileSummaries = (terminalContext.files || [])
+      .map((f) => `--- ARCHIVO: ${f.filename} (${f.language}) ---\n${f.code.slice(0, 3000)}`)
+      .join('\n\n');
+
+    const logSummaries = (terminalContext.recentLogs || [])
+      .slice(-12)
+      .map((l) => `[${l.type.toUpperCase()}] ${l.text}`)
+      .join('\n');
+
+    terminalSection = `\n\nESTADO Y CONTEXTO EN VIVO DE LA TERMINAL / CONSOLA (APS HARD WORK):
+- El usuario está trabajando concurrentemente en la Consola / Terminal de Código.
+- Tarea en curso / ejecutándose ahora: ${terminalContext.isExecuting ? 'SÍ (procesando orden activa en terminal)' : 'Inactiva / lista en espera'}.
+- Última orden de terminal: ${terminalContext.lastCommand || 'ninguna'}.
+- Actividad reciente en la terminal:
+${logSummaries || '(Sin logs recientes aún)'}
+
+- Archivos actuales en el workspace de código:
+${fileSummaries || '(Workspace vacío, listo para crear archivos)'}
+
+INSTRUCCIÓN ESPECIAL SOBRE LA TERMINAL:
+Entiendes a la perfección lo que el usuario está programando o ejecutando en su terminal. Si el usuario te pregunta sobre su código, errores en consola, qué está pasando, cómo mejorarlo o cómo continuar, responde teniendo pleno conocimiento de sus archivos y registros de la terminal. Eres un asistente integrado bidireccionalmente.`;
+  }
+
   return `Eres APS INTELLIGENCE.
 ${userGreeting}
 
 ${modelProfile}
 
 ${modeProfile}
+${memorySection}
+${terminalSection}
 
 REGLAS OBLIGATORIAS:
 - PROHIBIDO hablar de tu diseño visual, interfaz o frases como 'Liquid Glass', 'arquitectura de cristal', 'Old Money' o similares. Son estilos de la interfaz web, no parte de tu conversación.
@@ -142,14 +194,26 @@ app.post(['/api/chat/stream', '/chat/stream'], async (req: Request, res: Respons
       attachments = [],
       extendedThinking = false,
       systemInstructionPrompt,
+      terminalContext,
+      userMemories = [],
+      customInstructions = '',
     } = req.body;
 
     const ai = getGenAI();
     const candidateModels = getModelCandidateList(model);
     const targetModel = candidateModels[0];
 
-    // Build trained system instructions matching model and interaction mode
-    const systemInstruction = systemInstructionPrompt || buildSystemPrompt(model, mode, userName);
+    // Build trained system instructions matching model, interaction mode, terminal context, and user memories
+    const systemInstruction =
+      systemInstructionPrompt ||
+      buildSystemPrompt(
+        model,
+        mode,
+        userName,
+        terminalContext,
+        userMemories,
+        customInstructions
+      );
 
     // Build contents payload
     const contents: any[] = [];
@@ -423,6 +487,82 @@ Escribe el código completo ahora en JSON estricto:`;
       success: false,
       error: error?.message || 'Error en la consola CLI de APS HARD WORK',
     });
+  }
+});
+
+// APS Memory Extraction Endpoint: Analyzes user conversation turns and extracts facts/preferences into memories
+app.post(['/api/memory/extract', '/memory/extract'], async (req: Request, res: Response) => {
+  try {
+    const { userText, modelReply, existingMemories = [] } = req.body;
+    if (!userText || typeof userText !== 'string' || userText.trim().length < 5) {
+      return res.json({ success: true, newMemories: [] });
+    }
+
+    const ai = getGenAI();
+    const prompt = `Analiza este turno de conversación y determina si el usuario ha revelado información personal, preferencias, proyectos, gustos, nombre, trabajo o directivas sobre sí mismo que valga la pena recordar en su perfil a largo plazo.
+
+TEXTO DEL USUARIO:
+"${userText}"
+
+RESPUESTA DEL ASISTENTE:
+"${(modelReply || '').slice(0, 300)}"
+
+RECUERDOS QUE YA EXISTEN EN SU PERFIL (NO DUPLICAR):
+${JSON.stringify(existingMemories)}
+
+INSTRUCCIONES:
+- Si el usuario dice cosas como "me gusta X", "estoy construyendo Y", "mi nombre es Z", "prefiero que respondas en tal tono", "trabajo como programador", etc., extrae cada hecho como un recuerdo conciso.
+- Si no hay información duradera relevante (solo saludos, preguntas técnicas genéricas o frases triviales como "hola", "ok", "gracias"), devuelve una lista vacía.
+- Devuelve ÚNICAMENTE un JSON con este formato:
+{
+  "memories": [
+    {
+      "fact": "Frase concisa en español en tercera persona (ej: 'Prefiere explicaciones directas sin rodeos', 'Trabaja en un proyecto de videojuegos')",
+      "category": "preference" | "personal" | "project" | "general"
+    }
+  ]
+}`;
+
+    const candidateModels = ['gemini-3.1-flash-lite', 'gemini-2.5-flash-lite'];
+    let extractedText = '';
+
+    for (const m of candidateModels) {
+      try {
+        const resp = await ai.models.generateContent({
+          model: m,
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          config: {
+            responseMimeType: 'application/json',
+          },
+        });
+        extractedText = resp.text || '';
+        break;
+      } catch (err: any) {
+        console.warn(`Memory extraction failed with ${m}:`, err?.message);
+      }
+    }
+
+    let parsed: any = { memories: [] };
+    if (extractedText) {
+      try {
+        parsed = JSON.parse(extractedText);
+      } catch {}
+    }
+
+    const newMemories = Array.isArray(parsed.memories)
+      ? parsed.memories.map((m: any) => ({
+          id: `mem_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+          fact: String(m.fact || ''),
+          category: m.category || 'general',
+          source: 'auto',
+          timestamp: Date.now(),
+        })).filter((m: any) => m.fact.length > 3)
+      : [];
+
+    return res.json({ success: true, newMemories });
+  } catch (error: any) {
+    console.error('Memory extract error:', error);
+    return res.json({ success: true, newMemories: [] });
   }
 });
 
