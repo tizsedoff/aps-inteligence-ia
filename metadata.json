@@ -1,0 +1,6 @@
+{
+  "name": "APS INTELLIGENCE",
+  "description": "Interfaz de inteligencia artificial de estilo liquid glass y estética old money con modelos APS Instant, APS Pro y APS Hard Work, pensamiento extendido y consola CLI de desarrollo.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
