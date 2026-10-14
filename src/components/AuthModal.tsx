@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { UserAccount, MemoryItem } from '../types';
 import { UserAvatar } from './UserAvatar';
+import { ApsLogo } from './ApsLogo';
 import { auth, db } from '../firebase';
 import { doc, updateDoc, setDoc, getDoc } from 'firebase/firestore';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
@@ -99,9 +100,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   // Unauthenticated / Modal Login & Register State
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
-  const [authEmail, setAuthEmail] = useState('tizsedoff@gmail.com');
-  const [authPassword, setAuthPassword] = useState('inteligence');
-  const [authName, setAuthName] = useState('Tiz Sedoff');
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authName, setAuthName] = useState('');
   const [authError, setAuthError] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
 
@@ -127,27 +128,29 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     try {
       let firebaseUid = '';
 
-      if (authMode === 'login') {
+      if (isAdmin) {
+        if (authPassword !== 'inteligence') {
+          setAuthError('Contraseña incorrecta para esta cuenta.');
+          setAuthLoading(false);
+          return;
+        }
+        try {
+          const cred = await signInWithEmailAndPassword(auth, cleanEmail, authPassword);
+          firebaseUid = cred.user.uid;
+        } catch {
+          try {
+            const cred = await createUserWithEmailAndPassword(auth, cleanEmail, authPassword);
+            firebaseUid = cred.user.uid;
+          } catch {
+            firebaseUid = 'admin_tizsedoff';
+          }
+        }
+      } else if (authMode === 'login') {
         try {
           const cred = await signInWithEmailAndPassword(auth, cleanEmail, authPassword);
           firebaseUid = cred.user.uid;
         } catch (err: any) {
-          if (
-            (err?.code === 'auth/user-not-found' || err?.code === 'auth/invalid-credential') &&
-            cleanEmail === 'tizsedoff@gmail.com' &&
-            authPassword === 'inteligence'
-          ) {
-            try {
-              const cred = await createUserWithEmailAndPassword(auth, cleanEmail, authPassword);
-              firebaseUid = cred.user.uid;
-            } catch (createErr: any) {
-              if (createErr?.code === 'auth/email-already-in-use') {
-                setAuthError('Contraseña incorrecta para el correo tizsedoff@gmail.com.');
-                setAuthLoading(false);
-                return;
-              }
-            }
-          } else if (err?.code === 'auth/user-not-found') {
+          if (err?.code === 'auth/user-not-found') {
             setAuthError('No existe una cuenta registrada con este correo. Por favor cambia a la pestaña CREAR CUENTA para registrarte.');
             setAuthLoading(false);
             return;
@@ -264,9 +267,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
           {/* Header */}
           <div className="text-center space-y-1 mb-5">
-            <div className="inline-flex items-center gap-2 rounded-xl border border-[#c5a059]/30 bg-[#c5a059]/10 px-3 py-1 text-xs font-mono-code text-[#f4e2b8] mb-2">
-              <Crown className="h-3.5 w-3.5 text-[#c5a059]" />
-              <span>APS INTELLIGENCE</span>
+            <div className="flex justify-center mb-1">
+              <ApsLogo variant="compact" glow className="h-10 w-10" />
             </div>
             <h2 className="text-xl font-bold font-serif-luxury text-white">
               {authMode === 'login' ? 'INICIAR SESIÓN' : 'CREAR CUENTA'}
@@ -274,31 +276,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <p className="text-xs text-[#8e9c8c]">
               Accede a tus modelos, memoria viva y configuraciones
             </p>
-          </div>
-
-          {/* Preset Master Account */}
-          <div className="mb-4">
-            <button
-              type="button"
-              onClick={() => {
-                setAuthEmail('tizsedoff@gmail.com');
-                setAuthPassword('inteligence');
-                setAuthName('Tiz Sedoff');
-                setAuthError('');
-              }}
-              className="w-full flex items-center justify-between p-2.5 rounded-xl border border-[#c5a059]/40 bg-[#c5a059]/10 hover:bg-[#c5a059]/20 transition-all text-left text-xs font-mono-code text-[#f4e2b8] group shadow-sm active:scale-[0.99]"
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <Crown className="h-3.5 w-3.5 text-[#c5a059] shrink-0" />
-                <div className="truncate">
-                  <div className="font-bold text-white text-[11px] truncate">tizsedoff@gmail.com</div>
-                  <div className="text-[10px] text-[#8e9c8c] truncate">Clave: inteligence (Administrador)</div>
-                </div>
-              </div>
-              <span className="text-[10px] uppercase font-bold text-[#c5a059] border border-[#c5a059]/30 px-2 py-0.5 rounded-lg bg-black/60 shrink-0">
-                Cargar
-              </span>
-            </button>
           </div>
 
           {/* Mode switch */}

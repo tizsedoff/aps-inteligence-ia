@@ -1,5 +1,6 @@
 import React from 'react';
 import { ApsModelId, UserAccount } from '../types';
+import { ApsLogo } from './ApsLogo';
 import {
   MessageSquare,
   Trash2,
@@ -68,15 +69,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/10 pb-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/20 bg-gradient-to-br from-[#16291e] to-[#0a140f] font-serif-luxury font-bold text-[#f4e2b8] shadow-lg">
-              APS
-            </div>
-            <div>
-              <h2 className="font-serif-luxury text-sm font-bold tracking-wider text-white">
-                CHATS RECIENTES
-              </h2>
-              <p className="text-[10px] text-[#8e9c8c]">APS INTELLIGENCE ENGINE</p>
-            </div>
+            <ApsLogo variant="full" />
           </div>
           <button
             onClick={onClose}

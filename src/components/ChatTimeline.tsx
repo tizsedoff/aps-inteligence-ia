@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { ChatMessage, ApsModelId, InteractionMode, VisualCustomization, UserAccount } from '../types';
 import { ThinkingDrawer } from './ThinkingDrawer';
 import { MarkdownRenderer } from './MarkdownRenderer';
+import { ApsLogo } from './ApsLogo';
 import {
   Sparkles,
   Copy,
@@ -119,6 +120,11 @@ export const ChatTimeline: React.FC<ChatTimelineProps> = ({
             transition={{ duration: 0.5, ease: 'easeOut' }}
             className="flex min-h-[55vh] sm:min-h-[60vh] flex-col items-center justify-center text-center space-y-3 sm:space-y-4 px-2"
           >
+            {/* APS Logo in larger space */}
+            <div className="mb-2">
+              <ApsLogo variant="full" />
+            </div>
+
             {/* HOLA (NOMBRE) */}
             <h1 className="text-2xl sm:text-3xl md:text-5xl font-extrabold tracking-wider bg-gradient-to-r from-[#00cec9] via-[#0984e3] to-[#a29bfe] bg-clip-text text-transparent drop-shadow-[0_0_25px_rgba(0,206,201,0.4)]">
               HOLA <span className="text-[#a29bfe]">{displayName}</span>

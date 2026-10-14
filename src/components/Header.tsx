@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { ApsModelId, InteractionMode, VisualCustomization, UserAccount } from '../types';
 import { UserAvatar } from './UserAvatar';
+import { ApsLogo } from './ApsLogo';
 import {
-  Menu,
   MessageSquare,
   Palette,
   ChevronDown,
@@ -75,13 +75,13 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="flex w-full items-center justify-between px-2 sm:px-4 py-2 sm:py-2.5 md:px-8 gap-1.5 sm:gap-3">
         {/* LEFT: Hamburger + MODELO APS... Card */}
         <div className="flex items-center gap-1.5 sm:gap-4 shrink-0">
-          {/* Hamburger Menu Icon */}
+          {/* Hamburger / APS Logo Menu Icon */}
           <button
             onClick={onOpenSidebar}
-            className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-[#fbf5e8] hover:bg-white/15 hover:border-white/30 transition-all shadow-md active:scale-95"
-            title="Abrir panel lateral"
+            className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-[#fbf5e8] hover:bg-white/15 hover:border-white/30 transition-all shadow-md active:scale-95 group"
+            title="Abrir menú APS"
           >
-            <Menu className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
+            <ApsLogo variant="compact" className="h-5 w-5 sm:h-5.5 sm:w-5.5 group-hover:scale-105 transition-transform" />
           </button>
 
           {/* Big Rounded 'MODELO APS...' Card */}

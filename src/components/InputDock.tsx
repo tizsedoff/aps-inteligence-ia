@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { ApsModelId, InteractionMode, Attachment, VisualCustomization } from '../types';
+import { ApsLogo } from './ApsLogo';
 import {
-  ArrowUp,
   Image as ImageIcon,
   FileText,
   X,
@@ -245,9 +245,9 @@ export const InputDock: React.FC<InputDockProps> = ({
                   ? 'bg-[#00cec9] text-[#070c09] hover:scale-110 active:scale-95 shadow-[0_0_20px_rgba(0,206,201,0.6)] cursor-pointer'
                   : 'bg-[#00cec9]/70 text-[#070c09]/80 cursor-not-allowed opacity-80'
               }`}
-              title="Enviar idea"
+              title="Enviar idea (APS)"
             >
-              <ArrowUp className="h-5 w-5 sm:h-6 sm:w-6 stroke-[3]" />
+              <ApsLogo variant="compact" className="h-5 w-5 sm:h-6 sm:w-6" />
             </button>
           )}
         </div>

@@ -6,7 +6,8 @@ import {
   createUserWithEmailAndPassword,
   signInWithPopup,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { ApsLogo } from './ApsLogo';
 import {
   Lock,
   Mail,
@@ -79,8 +80,6 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
     const y = ((e.clientY - rect.top) / rect.height) * 100;
     setMousePos({ x, y });
   };
-
-  const isMasterAdmin = email.trim().toLowerCase() === 'tizsedoff@gmail.com';
 
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -214,29 +213,34 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
       let userAvatar = avatarImage || '';
       let firebaseUid = '';
 
-      if (mode === 'login') {
+      // 1. MASTER ADMIN SPECIAL HANDLER (Secret Credentials: tizsedoff@gmail.com / inteligence)
+      if (isAdmin) {
+        if (password !== 'inteligence') {
+          setError('Contraseña incorrecta. Por favor verifica tu clave de acceso.');
+          setErrorActionType('WRONG_PASSWORD');
+          setLoading(false);
+          return;
+        }
+
+        // Master credentials verified! Try Firebase Auth, fallback to persistent master UID
+        try {
+          const cred = await signInWithEmailAndPassword(auth, cleanEmail, password);
+          firebaseUid = cred.user.uid;
+        } catch {
+          try {
+            const createCred = await createUserWithEmailAndPassword(auth, cleanEmail, password);
+            firebaseUid = createCred.user.uid;
+          } catch {
+            firebaseUid = 'admin_tizsedoff';
+          }
+        }
+      } else if (mode === 'login') {
+        // 2. STANDARD USER LOGIN
         try {
           const cred = await signInWithEmailAndPassword(auth, cleanEmail, password);
           firebaseUid = cred.user.uid;
         } catch (err: any) {
-          // Special bootstrap for requested master admin credentials if not created yet
-          if (
-            (err?.code === 'auth/user-not-found' || err?.code === 'auth/invalid-credential') &&
-            cleanEmail === 'tizsedoff@gmail.com' &&
-            password === 'inteligence'
-          ) {
-            try {
-              const cred = await createUserWithEmailAndPassword(auth, cleanEmail, password);
-              firebaseUid = cred.user.uid;
-            } catch (createErr: any) {
-              if (createErr?.code === 'auth/email-already-in-use') {
-                setError('Contraseña incorrecta para el correo tizsedoff@gmail.com.');
-                setErrorActionType('WRONG_PASSWORD');
-                setLoading(false);
-                return;
-              }
-            }
-          } else if (err?.code === 'auth/user-not-found') {
+          if (err?.code === 'auth/user-not-found') {
             setError('No existe ninguna cuenta registrada con este correo electrónico.');
             setErrorActionType('SWITCH_TO_REGISTER');
             setLoading(false);
@@ -247,10 +251,42 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
             setLoading(false);
             return;
           } else if (err?.code === 'auth/invalid-credential') {
-            setError('Credenciales incorrectas o la cuenta no existe. Si no tienes cuenta, por favor regístrate.');
+            setError('Credenciales no válidas o la cuenta no existe. Si no tienes cuenta, por favor regístrate.');
             setErrorActionType('SWITCH_TO_REGISTER');
             setLoading(false);
             return;
+          } else if (err?.code === 'auth/operation-not-allowed') {
+            // Check Firestore database records for registered account
+            try {
+              const usersCol = collection(db, 'users');
+              const q = query(usersCol, where('email', '==', cleanEmail));
+              const querySnap = await getDocs(q);
+
+              if (querySnap.empty) {
+                setError('No existe ninguna cuenta registrada con este correo electrónico. Por favor regístrate en CREAR CUENTA.');
+                setErrorActionType('SWITCH_TO_REGISTER');
+                setLoading(false);
+                return;
+              }
+
+              const existingDoc = querySnap.docs[0];
+              const userData = existingDoc.data();
+              if (userData.password && userData.password !== password) {
+                setError('Contraseña incorrecta. Por favor verifica tu clave de acceso.');
+                setErrorActionType('WRONG_PASSWORD');
+                setLoading(false);
+                return;
+              }
+
+              firebaseUid = existingDoc.id;
+              if (userData.name) displayName = userData.name;
+              if (userData.avatar) userAvatar = userData.avatar;
+            } catch (fsErr) {
+              setError('No se pudo verificar la cuenta. Por favor regístrate o reintenta.');
+              setErrorActionType('SWITCH_TO_REGISTER');
+              setLoading(false);
+              return;
+            }
           } else {
             setError(translateFirebaseError(err?.code || '', err?.message || 'Error al iniciar sesión'));
             setErrorActionType('NONE');
@@ -259,7 +295,23 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
           }
         }
       } else {
-        // mode === 'register'
+        // 3. STANDARD USER REGISTRATION
+        // First check Firestore if email already exists
+        try {
+          const usersCol = collection(db, 'users');
+          const q = query(usersCol, where('email', '==', cleanEmail));
+          const querySnap = await getDocs(q);
+
+          if (!querySnap.empty) {
+            setError('Este correo electrónico ya está registrado en el sistema. Puedes iniciar sesión con tu contraseña o crear una cuenta con un correo diferente.');
+            setErrorActionType('EMAIL_ALREADY_REGISTERED');
+            setLoading(false);
+            return;
+          }
+        } catch (fsCheckErr) {
+          console.warn('Firestore duplicate check note:', fsCheckErr);
+        }
+
         try {
           const cred = await createUserWithEmailAndPassword(auth, cleanEmail, password);
           firebaseUid = cred.user.uid;
@@ -279,6 +331,9 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
             setErrorActionType('NONE');
             setLoading(false);
             return;
+          } else if (err?.code === 'auth/operation-not-allowed') {
+            // Create directly in Firestore
+            firebaseUid = 'usr_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 8);
           } else {
             setError(translateFirebaseError(err?.code || '', err?.message || 'Error al registrar la cuenta'));
             setErrorActionType('NONE');
@@ -310,6 +365,7 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
               id: firebaseUid,
               name: displayName,
               email: cleanEmail,
+              password: password,
               avatar: userAvatar,
               membership: initialMembership,
               isAdmin,
@@ -366,19 +422,7 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
 
       {/* Top Header Bar */}
       <header className="relative z-20 flex w-full items-center justify-between px-4 py-3 sm:px-8 border-b border-white/10 backdrop-blur-xl bg-black/40">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-white/20 bg-gradient-to-br from-[#1b2b20] to-[#0a140f] font-serif-luxury text-xs sm:text-sm font-bold text-white shadow-lg shadow-[#00cec9]/10">
-            APS
-          </div>
-          <div className="flex flex-col">
-            <span className="font-serif-luxury text-xs sm:text-sm font-bold tracking-widest text-white">
-              APS INTELLIGENCE
-            </span>
-            <span className="text-[9px] sm:text-[10px] font-mono-code text-[#8e9c8c] tracking-wider uppercase">
-              SISTEMA DE MODELOS DE ALTA INFERENCIA
-            </span>
-          </div>
-        </div>
+        <ApsLogo variant="full" />
 
         <button
           onClick={onOpenTerms}
@@ -398,6 +442,10 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
             transition={{ duration: 0.5 }}
             className="text-center space-y-2"
           >
+            <div className="flex justify-center mb-1">
+              <ApsLogo variant="compact" glow className="h-12 w-12" />
+            </div>
+
             <h1 className="text-3xl sm:text-5xl font-extrabold tracking-wider bg-gradient-to-r from-[#00cec9] via-[#0984e3] to-[#a29bfe] bg-clip-text text-transparent drop-shadow-[0_0_25px_rgba(0,206,201,0.35)]">
               APS INTELLIGENCE
             </h1>
@@ -522,38 +570,6 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
               </motion.div>
             )}
 
-            {/* Quick Fill Master Account Shortcut */}
-            <div className="mb-4">
-              <button
-                type="button"
-                onClick={() => {
-                  setEmail('tizsedoff@gmail.com');
-                  setPassword('inteligence');
-                  setConfirmPassword('inteligence');
-                  setName('Tiz Sedoff');
-                  setError('');
-                }}
-                className="w-full flex items-center justify-between p-2.5 rounded-xl border border-[#c5a059]/40 bg-[#c5a059]/10 hover:bg-[#c5a059]/20 transition-all text-left text-xs font-mono-code text-[#f4e2b8] group shadow-sm active:scale-[0.99]"
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="h-7 w-7 rounded-lg bg-[#c5a059]/20 border border-[#c5a059]/40 flex items-center justify-center shrink-0">
-                    <Crown className="h-3.5 w-3.5 text-[#c5a059] group-hover:scale-110 transition-transform" />
-                  </div>
-                  <div className="truncate">
-                    <div className="font-bold text-white text-[11px] font-serif-luxury truncate">
-                      tizsedoff@gmail.com
-                    </div>
-                    <div className="text-[10px] text-[#8e9c8c] truncate">
-                      Autocompletar Administrador (clave: inteligence)
-                    </div>
-                  </div>
-                </div>
-                <span className="text-[10px] uppercase font-bold text-[#c5a059] border border-[#c5a059]/40 px-2 py-0.5 rounded-lg bg-black/60 shrink-0 ml-2">
-                  Autocompletar
-                </span>
-              </button>
-            </div>
-
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
               {mode === 'register' && (
@@ -652,18 +668,6 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
                     className="w-full rounded-xl border border-white/15 bg-black/50 pl-10 pr-4 py-2.5 text-xs text-white placeholder-white/30 focus:border-[#00cec9] focus:ring-1 focus:ring-[#00cec9] focus:outline-none transition-all shadow-inner"
                   />
                 </div>
-
-                {/* Master Admin Live Recognition Badge */}
-                {isMasterAdmin && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mt-2 flex items-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-950/40 px-3 py-1.5 text-[11px] font-mono-code text-emerald-300 shadow-md"
-                  >
-                    <Crown className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-                    <span>★ ADMINISTRADOR SUPREMO (Tiziano · Control Total de Sistema)</span>
-                  </motion.div>
-                )}
               </div>
 
               {/* Password Input */}
