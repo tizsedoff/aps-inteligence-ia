@@ -96,6 +96,10 @@ export interface VisualCustomization {
 
   // Typography
   fontScale: 'sm' | 'md' | 'lg';
+
+  // Real Logo Images (URLs or Base64 / SVG)
+  logoCompact?: string; // Para flecha de enviar y 3 barras de menú
+  logoLarge?: string; // Para cabecera, sidebar, bienvenida y login
 }
 
 export interface MemoryItem {

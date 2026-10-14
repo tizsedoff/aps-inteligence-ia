@@ -78,10 +78,10 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Hamburger / APS Logo Menu Icon */}
           <button
             onClick={onOpenSidebar}
-            className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-[#fbf5e8] hover:bg-white/15 hover:border-white/30 transition-all shadow-md active:scale-95 group"
+            className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-white/15 bg-white/5 hover:bg-white/15 hover:border-white/30 transition-all shadow-md active:scale-95 group p-1.5"
             title="Abrir menú APS"
           >
-            <ApsLogo variant="compact" className="h-5 w-5 sm:h-5.5 sm:w-5.5 group-hover:scale-105 transition-transform" />
+            <ApsLogo variant="compact" className="h-full w-full object-contain group-hover:scale-105 transition-transform" />
           </button>
 
           {/* Big Rounded 'MODELO APS...' Card */}

@@ -34,6 +34,10 @@ export const DEFAULT_CUSTOMIZATION: VisualCustomization = {
   accentColor: '#00cec9',
 
   fontScale: 'md',
+
+  // Official Logo Real Images
+  logoCompact: '/logo-compact.png',
+  logoLarge: '/logo-large.png',
 };
 
 export const THEME_PRESETS: { name: string; id: string; config: Partial<VisualCustomization> }[] = [

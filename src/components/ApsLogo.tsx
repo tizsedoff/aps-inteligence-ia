@@ -1,130 +1,98 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface ApsLogoProps {
   variant?: 'compact' | 'full' | 'icon';
   className?: string;
   size?: number | string;
   glow?: boolean;
+  alt?: string;
 }
 
 /**
- * APS INTELLIGENCE Logo Component
- * - 'compact' / 'icon': Used for small spaces like the send button (replacing the arrow)
- *   and the hamburger menu (replacing the 3 bars). Integrates seamlessly with backgrounds.
- * - 'full': Used for wider spaces (Header, Sidebar, Auth Gateway, Welcome Hero).
+ * APS Official Logo Component
+ * - Uses REAL IMAGE (<img />) passed by the user, strictly without code-drawn SVG recreation.
+ * - 'compact' / 'icon': For small spaces (send button replacing the arrow, and hamburger 3-bars).
+ * - 'full': For larger spaces (Header, Sidebar brand, Welcome hero, Auth modal).
+ * - Seamlessly integrates with dark background (transparent PNG / WebP / SVG).
+ * - Reads from localStorage / VisualCustomization or default /logo-compact.png and /logo-large.png.
  */
 export const ApsLogo: React.FC<ApsLogoProps> = ({
   variant = 'compact',
   className = '',
   size,
   glow = false,
+  alt = 'APS Logo',
 }) => {
-  // COMPACT LOGO (Icon/Emblem for send button & 3 bars menu)
-  if (variant === 'compact' || variant === 'icon') {
+  const [compactSrc, setCompactSrc] = useState<string>('/logo-compact.png');
+  const [largeSrc, setLargeSrc] = useState<string>('/logo-large.png');
+  const [imgError, setImgError] = useState<boolean>(false);
+
+  useEffect(() => {
+    // Load custom uploaded images if present in localStorage or window state
+    const savedCompact = localStorage.getItem('aps_logo_compact');
+    if (savedCompact) setCompactSrc(savedCompact);
+
+    const savedLarge = localStorage.getItem('aps_logo_large');
+    if (savedLarge) setLargeSrc(savedLarge);
+
+    const handleStorageChange = () => {
+      const c = localStorage.getItem('aps_logo_compact');
+      if (c) setCompactSrc(c);
+      const l = localStorage.getItem('aps_logo_large');
+      if (l) setLargeSrc(l);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('aps-logo-updated', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('aps-logo-updated', handleStorageChange);
+    };
+  }, []);
+
+  const isCompact = variant === 'compact' || variant === 'icon';
+  const targetSrc = isCompact ? compactSrc : largeSrc;
+
+  // COMPACT LOGO: For send arrow and 3 bars
+  if (isCompact) {
     return (
-      <svg
-        viewBox="0 0 32 32"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className={`transition-all duration-300 ${glow ? 'drop-shadow-[0_0_8px_rgba(0,206,201,0.6)]' : ''} ${className}`}
+      <img
+        src={targetSrc}
+        alt={alt}
+        className={`object-contain transition-all duration-300 select-none ${
+          glow ? 'drop-shadow-[0_0_10px_rgba(0,206,201,0.7)]' : 'drop-shadow-sm'
+        } ${className}`}
         style={size ? { width: size, height: size } : undefined}
-      >
-        <defs>
-          <linearGradient id="apsCompactGrad" x1="2" y1="2" x2="30" y2="30" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#00cec9" />
-            <stop offset="50%" stopColor="#0984e3" />
-            <stop offset="100%" stopColor="#a29bfe" />
-          </linearGradient>
-          <linearGradient id="apsGoldGrad" x1="6" y1="6" x2="26" y2="26" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#f4e2b8" />
-            <stop offset="100%" stopColor="#c5a059" />
-          </linearGradient>
-        </defs>
-
-        {/* Outer stylized faceted hexagon / diamond crystal */}
-        <path
-          d="M16 2.5L28.5 9.5V22.5L16 29.5L3.5 22.5V9.5L16 2.5Z"
-          stroke="url(#apsCompactGrad)"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="opacity-90"
-        />
-
-        {/* Inner dynamic upward apex / chevron symbolizing intelligence & ascension (ideal for send arrow) */}
-        <path
-          d="M16 7L23 18.5H18.5V24.5H13.5V18.5H9L16 7Z"
-          fill="url(#apsCompactGrad)"
-          className="drop-shadow-sm"
-        />
-
-        {/* Precision core golden spark */}
-        <circle cx="16" cy="14" r="1.5" fill="url(#apsGoldGrad)" />
-      </svg>
+        onError={() => {
+          // If png fails, try .svg or .webp
+          if (targetSrc.endsWith('.png')) {
+            setCompactSrc('/logo-compact.svg');
+          } else {
+            setImgError(true);
+          }
+        }}
+      />
     );
   }
 
-  // FULL LOGO (Large spaces: Header, Sidebar, Auth, Hero)
+  // FULL LOGO: For larger spaces (Header, Sidebar, Login)
   return (
     <div className={`inline-flex items-center gap-3 select-none ${className}`}>
-      {/* Brand Icon Crest */}
-      <svg
-        viewBox="0 0 40 40"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-9 w-9 sm:h-10 sm:w-10 shrink-0 drop-shadow-[0_0_15px_rgba(0,206,201,0.45)]"
-      >
-        <defs>
-          <linearGradient id="apsFullGrad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#00cec9" />
-            <stop offset="50%" stopColor="#0984e3" />
-            <stop offset="100%" stopColor="#6c5ce7" />
-          </linearGradient>
-          <linearGradient id="apsFullGold" x1="10" y1="8" x2="30" y2="32" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#f7e7ce" />
-            <stop offset="100%" stopColor="#c5a059" />
-          </linearGradient>
-          <radialGradient id="apsInnerGlow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="rgba(0,206,201,0.25)" />
-            <stop offset="100%" stopColor="transparent" />
-          </radialGradient>
-        </defs>
-
-        <rect x="2" y="2" width="36" height="36" rx="10" fill="url(#apsInnerGlow)" />
-        <rect
-          x="2"
-          y="2"
-          width="36"
-          height="36"
-          rx="10"
-          stroke="url(#apsFullGrad)"
-          strokeWidth="1.75"
-          className="opacity-80"
-        />
-
-        {/* Central Geometric Stylized Monogram */}
-        <path
-          d="M20 7.5L30 24.5H23.5V31.5H16.5V24.5H10L20 7.5Z"
-          fill="url(#apsFullGrad)"
-        />
-        {/* Diamond Core */}
-        <polygon points="20,12 23,19 20,23 17,19" fill="url(#apsFullGold)" />
-      </svg>
-
-      {/* Typography */}
-      <div className="flex flex-col text-left">
-        <div className="flex items-center gap-1.5">
-          <span className="font-serif-luxury text-base sm:text-lg font-extrabold tracking-[0.2em] bg-gradient-to-r from-white via-[#e8ebe4] to-[#f4e2b8] bg-clip-text text-transparent">
-            APS
-          </span>
-          <span className="text-[9px] font-mono-code font-bold tracking-widest text-[#00cec9] px-1.5 py-0.5 rounded border border-[#00cec9]/30 bg-[#00cec9]/10">
-            INTELLIGENCE
-          </span>
-        </div>
-        <span className="text-[9px] font-mono-code text-[#8e9c8c] tracking-widest uppercase">
-          Autonomous Neural System
-        </span>
-      </div>
+      <img
+        src={largeSrc}
+        alt={alt}
+        className={`h-9 w-auto max-w-[180px] sm:h-10 sm:max-w-[220px] object-contain transition-all duration-300 ${
+          glow ? 'drop-shadow-[0_0_15px_rgba(0,206,201,0.5)]' : 'drop-shadow-md'
+        }`}
+        style={size ? { height: size } : undefined}
+        onError={() => {
+          if (largeSrc.endsWith('.png')) {
+            setLargeSrc('/logo-large.svg');
+          } else {
+            setImgError(true);
+          }
+        }}
+      />
     </div>
   );
 };

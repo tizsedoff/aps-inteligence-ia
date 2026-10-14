@@ -30,10 +30,38 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
   onUpdateCustomization,
   onReset,
 }) => {
-  const [activeTab, setActiveTab] = useState<'presets' | 'background' | 'bubbles' | 'glass' | 'controls'>('presets');
+  const [activeTab, setActiveTab] = useState<'presets' | 'background' | 'bubbles' | 'glass' | 'controls' | 'logos'>('presets');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const compactLogoInputRef = useRef<HTMLInputElement>(null);
+  const largeLogoInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
+
+  const handleCompactLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      localStorage.setItem('aps_logo_compact', result);
+      onUpdateCustomization({ logoCompact: result });
+      window.dispatchEvent(new Event('aps-logo-updated'));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleLargeLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      localStorage.setItem('aps_logo_large', result);
+      onUpdateCustomization({ logoLarge: result });
+      window.dispatchEvent(new Event('aps-logo-updated'));
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -98,6 +126,7 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
         <div className="flex overflow-x-auto border-b border-[#c5a059]/15 bg-[#070c09] px-6 py-2 gap-2 scrollbar-none">
           {[
             { id: 'presets', label: 'Estilos Prediseñados', icon: Sparkles },
+            { id: 'logos', label: 'Logos (Imágenes)', icon: Upload },
             { id: 'background', label: 'Fondo & Wallpapers', icon: ImageIcon },
             { id: 'bubbles', label: 'Globos de Texto', icon: MessageCircle },
             { id: 'glass', label: 'Física Liquid Glass', icon: Layers },
@@ -595,6 +624,148 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
                       style={{ background: grad }}
                     />
                   ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: LOGOS (IMÁGENES REALES) */}
+          {activeTab === 'logos' && (
+            <div className="space-y-6">
+              <div className="rounded-2xl border border-[#c5a059]/30 bg-[#0e1913]/90 p-5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-[#00cec9]" />
+                  <h3 className="font-serif-luxury text-base font-bold text-[#f4e2b8]">
+                    Logos Oficiales (Imágenes Reales)
+                  </h3>
+                </div>
+                <p className="text-xs text-[#8e9c8c] leading-relaxed">
+                  Configura las 2 imágenes oficiales. Se muestran exactamente como archivos de imagen reales (<code className="text-[#00cec9] font-mono">&lt;img /&gt;</code>) sin recreación por código. Se recomienda formato <strong>PNG con fondo transparente</strong> o <strong>SVG</strong> para una integración perfecta con el tema oscuro.
+                </p>
+              </div>
+
+              {/* Hidden file inputs */}
+              <input
+                ref={compactLogoInputRef}
+                type="file"
+                accept="image/*,.svg"
+                className="hidden"
+                onChange={handleCompactLogoUpload}
+              />
+              <input
+                ref={largeLogoInputRef}
+                type="file"
+                accept="image/*,.svg"
+                className="hidden"
+                onChange={handleLargeLogoUpload}
+              />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* 1. LOGO CHIQUITO */}
+                <div className="rounded-2xl border border-white/10 bg-[#0c1610]/90 p-5 flex flex-col justify-between space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-mono-code font-bold uppercase tracking-wider text-[#00cec9]">
+                        1. Logo Chiquito (Ícono)
+                      </span>
+                      <span className="text-[10px] bg-white/10 text-white/70 px-2 py-0.5 rounded-full">
+                        Flecha Enviar & 3 Barras
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#8e9c8c]">
+                      Reemplaza la flecha de enviar del chat y las 3 barras del menú lateral con tu logo.
+                    </p>
+
+                    {/* Live Preview on Dark Background */}
+                    <div className="flex items-center justify-center h-28 rounded-xl border border-white/10 bg-black/60 p-4 relative group">
+                      <img
+                        src={customization.logoCompact || localStorage.getItem('aps_logo_compact') || '/logo-compact.png'}
+                        alt="Logo Chiquito Preview"
+                        className="max-h-16 max-w-16 object-contain drop-shadow-[0_0_12px_rgba(0,206,201,0.5)]"
+                        onError={(e) => {
+                          // Fallback to svg or display icon indicator
+                          const target = e.currentTarget;
+                          if (!target.src.endsWith('.svg')) target.src = '/logo-compact.svg';
+                        }}
+                      />
+                      <span className="absolute bottom-1 right-2 text-[9px] font-mono text-white/40">
+                        Vista previa
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 pt-2 border-t border-white/10">
+                    <button
+                      onClick={() => compactLogoInputRef.current?.click()}
+                      className="w-full flex items-center justify-center gap-2 rounded-xl border border-[#00cec9]/40 bg-[#00cec9]/15 px-4 py-2 text-xs font-bold text-[#00cec9] hover:bg-[#00cec9]/25 transition-all shadow-md active:scale-95"
+                    >
+                      <Upload className="h-4 w-4" />
+                      Subir Imagen (Logo Chiquito)
+                    </button>
+                    <button
+                      onClick={() => {
+                        localStorage.removeItem('aps_logo_compact');
+                        onUpdateCustomization({ logoCompact: '/logo-compact.png' });
+                        window.dispatchEvent(new Event('aps-logo-updated'));
+                      }}
+                      className="w-full text-center text-[10px] text-white/40 hover:text-white/80 transition-colors py-1"
+                    >
+                      Restablecer por defecto (/logo-compact.png)
+                    </button>
+                  </div>
+                </div>
+
+                {/* 2. LOGO GRANDE */}
+                <div className="rounded-2xl border border-white/10 bg-[#0c1610]/90 p-5 flex flex-col justify-between space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-mono-code font-bold uppercase tracking-wider text-[#c5a059]">
+                        2. Logo Grande (Completo)
+                      </span>
+                      <span className="text-[10px] bg-white/10 text-white/70 px-2 py-0.5 rounded-full">
+                        Header, Sidebar & Login
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#8e9c8c]">
+                      Usado en la cabecera superior, menú lateral y pantalla de inicio de sesión.
+                    </p>
+
+                    {/* Live Preview on Dark Background */}
+                    <div className="flex items-center justify-center h-28 rounded-xl border border-white/10 bg-black/60 p-4 relative group">
+                      <img
+                        src={customization.logoLarge || localStorage.getItem('aps_logo_large') || '/logo-large.png'}
+                        alt="Logo Grande Preview"
+                        className="max-h-16 max-w-[200px] object-contain drop-shadow-[0_0_12px_rgba(197,160,89,0.5)]"
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          if (!target.src.endsWith('.svg')) target.src = '/logo-large.svg';
+                        }}
+                      />
+                      <span className="absolute bottom-1 right-2 text-[9px] font-mono text-white/40">
+                        Vista previa
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 pt-2 border-t border-white/10">
+                    <button
+                      onClick={() => largeLogoInputRef.current?.click()}
+                      className="w-full flex items-center justify-center gap-2 rounded-xl border border-[#c5a059]/40 bg-[#c5a059]/15 px-4 py-2 text-xs font-bold text-[#f4e2b8] hover:bg-[#c5a059]/25 transition-all shadow-md active:scale-95"
+                    >
+                      <Upload className="h-4 w-4" />
+                      Subir Imagen (Logo Grande)
+                    </button>
+                    <button
+                      onClick={() => {
+                        localStorage.removeItem('aps_logo_large');
+                        onUpdateCustomization({ logoLarge: '/logo-large.png' });
+                        window.dispatchEvent(new Event('aps-logo-updated'));
+                      }}
+                      className="w-full text-center text-[10px] text-white/40 hover:text-white/80 transition-colors py-1"
+                    >
+                      Restablecer por defecto (/logo-large.png)
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

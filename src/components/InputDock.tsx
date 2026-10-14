@@ -240,14 +240,14 @@ export const InputDock: React.FC<InputDockProps> = ({
             <button
               onClick={handleSubmit}
               disabled={!text.trim() && attachments.length === 0}
-              className={`flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-full shadow-xl transition-all duration-300 ${
+              className={`flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-full transition-all duration-300 p-2 ${
                 text.trim() || attachments.length > 0
-                  ? 'bg-[#00cec9] text-[#070c09] hover:scale-110 active:scale-95 shadow-[0_0_20px_rgba(0,206,201,0.6)] cursor-pointer'
-                  : 'bg-[#00cec9]/70 text-[#070c09]/80 cursor-not-allowed opacity-80'
+                  ? 'bg-gradient-to-tr from-[#00cec9] to-[#81ecec] hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(0,206,201,0.5)] cursor-pointer'
+                  : 'bg-white/10 hover:bg-white/15 cursor-not-allowed opacity-60'
               }`}
               title="Enviar idea (APS)"
             >
-              <ApsLogo variant="compact" className="h-5 w-5 sm:h-6 sm:w-6" />
+              <ApsLogo variant="compact" className="h-full w-full object-contain" />
             </button>
           )}
         </div>
