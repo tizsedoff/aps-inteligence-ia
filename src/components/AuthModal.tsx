@@ -1,8 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { UserAccount, MemoryItem } from '../types';
 import { UserAvatar } from './UserAvatar';
-import { db } from '../firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { auth, db } from '../firebase';
+import { doc, updateDoc, setDoc, getDoc } from 'firebase/firestore';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import {
   ShieldCheck,
   LogOut,
@@ -26,6 +27,7 @@ import {
   Save,
   MessageSquare,
   BookOpen,
+  ArrowRight,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -70,6 +72,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   isOpen,
   onClose,
   currentUser,
+  onLogin,
   onLogout,
   onUpdateUser,
 }) => {
@@ -94,14 +97,361 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   );
   const [isSavingInstructions, setIsSavingInstructions] = useState(false);
 
+  // Unauthenticated / Modal Login & Register State
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [authEmail, setAuthEmail] = useState('tizsedoff@gmail.com');
+  const [authPassword, setAuthPassword] = useState('inteligence');
+  const [authName, setAuthName] = useState('Tiz Sedoff');
+  const [authError, setAuthError] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  if (!isOpen || !currentUser) return null;
+  if (!isOpen) return null;
 
   const showStatus = (msg: string) => {
     setStatusMessage(msg);
     setTimeout(() => setStatusMessage(''), 3500);
   };
+
+  const handleModalAuthSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError('');
+    setAuthLoading(true);
+
+    const cleanEmail = authEmail.trim().toLowerCase();
+    const isAdmin = cleanEmail === 'tizsedoff@gmail.com';
+    let displayName = authName.trim() || cleanEmail.split('@')[0];
+    displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+
+    try {
+      let firebaseUid = '';
+
+      if (authMode === 'login') {
+        try {
+          const cred = await signInWithEmailAndPassword(auth, cleanEmail, authPassword);
+          firebaseUid = cred.user.uid;
+        } catch (err: any) {
+          if (
+            (err?.code === 'auth/user-not-found' || err?.code === 'auth/invalid-credential') &&
+            cleanEmail === 'tizsedoff@gmail.com' &&
+            authPassword === 'inteligence'
+          ) {
+            try {
+              const cred = await createUserWithEmailAndPassword(auth, cleanEmail, authPassword);
+              firebaseUid = cred.user.uid;
+            } catch (createErr: any) {
+              if (createErr?.code === 'auth/email-already-in-use') {
+                setAuthError('Contraseña incorrecta para el correo tizsedoff@gmail.com.');
+                setAuthLoading(false);
+                return;
+              }
+            }
+          } else if (err?.code === 'auth/user-not-found') {
+            setAuthError('No existe una cuenta registrada con este correo. Por favor cambia a la pestaña CREAR CUENTA para registrarte.');
+            setAuthLoading(false);
+            return;
+          } else if (err?.code === 'auth/wrong-password') {
+            setAuthError('Contraseña incorrecta. Por favor verifica tus credenciales.');
+            setAuthLoading(false);
+            return;
+          } else if (err?.code === 'auth/invalid-credential') {
+            setAuthError('Credenciales no válidas. Si aún no te has registrado, crea una cuenta nueva; o verifica tu clave.');
+            setAuthLoading(false);
+            return;
+          } else {
+            setAuthError(err?.message || 'Error al iniciar sesión.');
+            setAuthLoading(false);
+            return;
+          }
+        }
+      } else {
+        try {
+          const cred = await createUserWithEmailAndPassword(auth, cleanEmail, authPassword);
+          firebaseUid = cred.user.uid;
+        } catch (err: any) {
+          if (err?.code === 'auth/email-already-in-use') {
+            setAuthError('Este correo electrónico ya está registrado. Selecciona INICIAR SESIÓN con tu clave o usa otro correo.');
+            setAuthLoading(false);
+            return;
+          } else if (err?.code === 'auth/weak-password') {
+            setAuthError('La contraseña debe tener al menos 6 caracteres.');
+            setAuthLoading(false);
+            return;
+          } else {
+            setAuthError(err?.message || 'Error al registrar la cuenta.');
+            setAuthLoading(false);
+            return;
+          }
+        }
+      }
+
+      if (!firebaseUid) {
+        setAuthError('No se pudo verificar la sesión.');
+        setAuthLoading(false);
+        return;
+      }
+
+      const initialMembership = isAdmin ? 'ADMINISTRADOR SUPREMO' : 'APS PRO';
+      let userAvatar = '';
+
+      try {
+        const userRef = doc(db, 'users', firebaseUid);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          const data = userSnap.data() as Partial<UserAccount>;
+          if (data.name) displayName = data.name;
+          if (data.avatar) userAvatar = data.avatar;
+        } else {
+          await setDoc(userRef, {
+            id: firebaseUid,
+            name: displayName,
+            email: cleanEmail,
+            membership: initialMembership,
+            isAdmin,
+            createdAt: Date.now(),
+          }, { merge: true });
+        }
+      } catch (e) {
+        console.warn('Firestore doc check:', e);
+      }
+
+      const account: UserAccount = {
+        id: firebaseUid,
+        name: displayName,
+        email: cleanEmail,
+        avatar: userAvatar,
+        membership: initialMembership,
+        isAdmin,
+      };
+
+      localStorage.setItem('aps_current_user', JSON.stringify(account));
+      onLogin(account);
+      onClose();
+    } catch (err: any) {
+      setAuthError(err?.message || 'Error al procesar autenticación.');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  if (!currentUser) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
+        {/* Backdrop */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/85 backdrop-blur-xl transition-opacity"
+          onClick={onClose}
+        />
+
+        {/* Modal Container */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 10 }}
+          className="relative z-10 w-full max-w-md rounded-3xl border border-[#c5a059]/40 bg-[#070d0a]/95 p-5 sm:p-7 shadow-2xl backdrop-blur-2xl liquid-glass-real"
+        >
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            className="absolute right-4 top-4 rounded-xl p-2 text-[#8e9c8c] hover:bg-white/10 hover:text-white transition-colors"
+          >
+            <X className="h-5 w-5" />
+          </button>
+
+          {/* Header */}
+          <div className="text-center space-y-1 mb-5">
+            <div className="inline-flex items-center gap-2 rounded-xl border border-[#c5a059]/30 bg-[#c5a059]/10 px-3 py-1 text-xs font-mono-code text-[#f4e2b8] mb-2">
+              <Crown className="h-3.5 w-3.5 text-[#c5a059]" />
+              <span>APS INTELLIGENCE</span>
+            </div>
+            <h2 className="text-xl font-bold font-serif-luxury text-white">
+              {authMode === 'login' ? 'INICIAR SESIÓN' : 'CREAR CUENTA'}
+            </h2>
+            <p className="text-xs text-[#8e9c8c]">
+              Accede a tus modelos, memoria viva y configuraciones
+            </p>
+          </div>
+
+          {/* Preset Master Account */}
+          <div className="mb-4">
+            <button
+              type="button"
+              onClick={() => {
+                setAuthEmail('tizsedoff@gmail.com');
+                setAuthPassword('inteligence');
+                setAuthName('Tiz Sedoff');
+                setAuthError('');
+              }}
+              className="w-full flex items-center justify-between p-2.5 rounded-xl border border-[#c5a059]/40 bg-[#c5a059]/10 hover:bg-[#c5a059]/20 transition-all text-left text-xs font-mono-code text-[#f4e2b8] group shadow-sm active:scale-[0.99]"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <Crown className="h-3.5 w-3.5 text-[#c5a059] shrink-0" />
+                <div className="truncate">
+                  <div className="font-bold text-white text-[11px] truncate">tizsedoff@gmail.com</div>
+                  <div className="text-[10px] text-[#8e9c8c] truncate">Clave: inteligence (Administrador)</div>
+                </div>
+              </div>
+              <span className="text-[10px] uppercase font-bold text-[#c5a059] border border-[#c5a059]/30 px-2 py-0.5 rounded-lg bg-black/60 shrink-0">
+                Cargar
+              </span>
+            </button>
+          </div>
+
+          {/* Mode switch */}
+          <div className="flex rounded-2xl border border-white/10 bg-black/60 p-1 mb-4">
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMode('login');
+                setAuthError('');
+              }}
+              className={`flex-1 rounded-xl py-2 text-xs font-serif-luxury font-bold transition-all ${
+                authMode === 'login'
+                  ? 'bg-gradient-to-r from-[#00cec9] to-[#0984e3] text-black shadow-md'
+                  : 'text-[#8e9c8c] hover:text-white'
+              }`}
+            >
+              INICIAR SESIÓN
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMode('register');
+                setAuthError('');
+              }}
+              className={`flex-1 rounded-xl py-2 text-xs font-serif-luxury font-bold transition-all ${
+                authMode === 'register'
+                  ? 'bg-gradient-to-r from-[#00cec9] to-[#0984e3] text-black shadow-md'
+                  : 'text-[#8e9c8c] hover:text-white'
+              }`}
+            >
+              CREAR CUENTA
+            </button>
+          </div>
+
+          {authError && (
+            <div className="mb-4 rounded-xl border border-red-500/40 bg-red-950/60 p-3 text-xs text-red-200 space-y-2">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 text-red-400 shrink-0 mt-0.5" />
+                <span className="flex-1">{authError}</span>
+              </div>
+              {authMode === 'register' && authError.includes('INICIAR SESIÓN') && (
+                <div className="flex gap-2 pt-1 border-t border-red-500/20">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthMode('login');
+                      setAuthError('');
+                    }}
+                    className="flex-1 rounded-lg bg-[#00cec9] py-1.5 px-2 text-[11px] font-bold text-black hover:bg-[#00cec9]/90 transition-all text-center"
+                  >
+                    Iniciar Sesión con este correo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthEmail('');
+                      setAuthError('');
+                    }}
+                    className="flex-1 rounded-lg border border-white/20 bg-black/60 py-1.5 px-2 text-[11px] font-semibold text-white hover:bg-white/10 transition-all text-center"
+                  >
+                    Usar otro correo
+                  </button>
+                </div>
+              )}
+              {authMode === 'login' && authError.includes('CREAR CUENTA') && (
+                <div className="pt-1 border-t border-red-500/20">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthMode('register');
+                      setAuthError('');
+                    }}
+                    className="w-full rounded-lg bg-[#00cec9] py-1.5 px-2 text-[11px] font-bold text-black hover:bg-[#00cec9]/90 transition-all text-center"
+                  >
+                    Crear cuenta con este correo
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleModalAuthSubmit} className="space-y-3.5">
+            {authMode === 'register' && (
+              <div>
+                <label className="block text-[10px] font-mono-code text-[#8e9c8c] uppercase mb-1">Nombre</label>
+                <div className="relative">
+                  <User className="absolute left-3 top-2.5 h-4 w-4 text-[#8e9c8c]" />
+                  <input
+                    type="text"
+                    value={authName}
+                    onChange={(e) => setAuthName(e.target.value)}
+                    placeholder="Tu nombre completo"
+                    className="w-full rounded-xl border border-white/15 bg-black/60 pl-9 pr-3 py-2 text-xs text-white placeholder-white/30 focus:border-[#00cec9] outline-none"
+                    required
+                  />
+                </div>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-[10px] font-mono-code text-[#8e9c8c] uppercase mb-1">Correo Electrónico</label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-2.5 h-4 w-4 text-[#8e9c8c]" />
+                <input
+                  type="email"
+                  value={authEmail}
+                  onChange={(e) => setAuthEmail(e.target.value)}
+                  placeholder="ejemplo@correo.com"
+                  className="w-full rounded-xl border border-white/15 bg-black/60 pl-9 pr-3 py-2 text-xs text-white placeholder-white/30 focus:border-[#00cec9] outline-none"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-mono-code text-[#8e9c8c] uppercase mb-1">Contraseña</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-2.5 h-4 w-4 text-[#8e9c8c]" />
+                <input
+                  type="password"
+                  value={authPassword}
+                  onChange={(e) => setAuthPassword(e.target.value)}
+                  placeholder="Mínimo 6 caracteres"
+                  className="w-full rounded-xl border border-white/15 bg-black/60 pl-9 pr-3 py-2 text-xs text-white placeholder-white/30 focus:border-[#00cec9] outline-none"
+                  required
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={authLoading}
+              className="w-full mt-2 rounded-xl border border-white/20 bg-gradient-to-r from-[#00cec9] via-[#0984e3] to-[#6c5ce7] py-2.5 text-xs font-serif-luxury font-bold text-white shadow-lg hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2"
+            >
+              {authLoading ? (
+                <>
+                  <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  <span>Procesando...</span>
+                </>
+              ) : (
+                <>
+                  <span>{authMode === 'login' ? 'Entrar a APS Intelligence' : 'Crear Cuenta y Entrar'}</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </>
+              )}
+            </button>
+          </form>
+        </motion.div>
+      </div>
+    );
+  }
+
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

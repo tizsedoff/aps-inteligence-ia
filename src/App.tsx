@@ -125,7 +125,7 @@ export default function App() {
 
   // 2. User Authentication State (Firebase connected)
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(() => {
-    const saved = localStorage.getItem('aps_current_user');
+    const saved = localStorage.getItem('aps_current_user') || sessionStorage.getItem('aps_current_user');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -138,12 +138,12 @@ export default function App() {
         // ignore
       }
     }
+    // Real login: start as null so unauthenticated visitors see AuthGateway
     return null;
   });
 
   const handleLogin = (user: UserAccount) => {
     setCurrentUser(user);
-    localStorage.setItem('aps_current_user', JSON.stringify(user));
     setIsAuthOpen(false);
   };
 
@@ -152,6 +152,7 @@ export default function App() {
       auth.signOut();
     } catch {}
     localStorage.removeItem('aps_current_user');
+    sessionStorage.removeItem('aps_current_user');
     setCurrentUser(null);
     setIsAuthOpen(false);
   };
@@ -202,7 +203,7 @@ export default function App() {
         }
         setIsAuthOpen(false);
       } else {
-        const saved = localStorage.getItem('aps_current_user');
+        const saved = localStorage.getItem('aps_current_user') || sessionStorage.getItem('aps_current_user');
         if (!saved) {
           setCurrentUser(null);
         }
