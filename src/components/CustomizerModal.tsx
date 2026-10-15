@@ -89,18 +89,18 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
       />
 
       {/* Modal Container */}
-      <div className="relative z-10 flex h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-[#c5a059]/30 bg-[#09110c]/95 shadow-2xl backdrop-blur-2xl">
+      <div className="relative z-10 flex h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-[color:var(--accent)]/30 bg-[color:var(--surface-1)]/95 shadow-2xl backdrop-blur-2xl">
         {/* Top Header */}
-        <div className="flex items-center justify-between border-b border-[#c5a059]/20 bg-[#0e1a14]/90 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-[color:var(--accent)]/20 bg-[color:var(--surface-2)]/90 px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#c5a059]/40 bg-[#16291e] text-[#f4e2b8] shadow-md">
-              <Palette className="h-5 w-5 text-[#c5a059]" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[color:var(--accent)]/40 bg-[color:var(--surface-3)] text-[color:var(--accent-soft)] shadow-md">
+              <Palette className="h-5 w-5 text-[color:var(--accent)]" />
             </div>
             <div>
-              <h2 className="font-serif-luxury text-base sm:text-lg font-bold tracking-wider text-[#f4e2b8]">
+              <h2 className="font-serif-luxury text-base sm:text-lg font-bold tracking-wider text-[color:var(--accent-soft)]">
                 ESTUDIO DE PERSONALIZACIÓN VISUAL
               </h2>
-              <p className="text-xs text-[#8e9c8c]">
+              <p className="text-xs text-[color:var(--text-secondary)]">
                 Personaliza fondos, globos de texto, física de liquid glass y controles
               </p>
             </div>
@@ -109,7 +109,7 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={onReset}
-              className="flex items-center gap-1.5 rounded-xl border border-[#c5a059]/20 bg-white/5 px-3 py-1.5 text-xs text-[#a7b3a5] hover:bg-white/10 hover:text-[#f4e2b8] transition-colors"
+              className="flex items-center gap-1.5 rounded-xl border border-[color:var(--accent)]/20 bg-white/5 px-3 py-1.5 text-xs text-[color:var(--text-secondary)] hover:bg-white/10 hover:text-[color:var(--accent-soft)] transition-colors"
               title="Restablecer a valores por defecto"
             >
               <RotateCcw className="h-3.5 w-3.5" />
@@ -117,7 +117,7 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
             </button>
             <button
               onClick={onClose}
-              className="rounded-xl p-2 text-[#8e9c8c] hover:bg-white/10 hover:text-white transition-colors"
+              className="rounded-xl p-2 text-[color:var(--text-secondary)] hover:bg-white/10 hover:text-white transition-colors"
             >
               <X className="h-5 w-5" />
             </button>
@@ -125,7 +125,7 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex overflow-x-auto border-b border-[#c5a059]/15 bg-[#070c09] px-6 py-2 gap-2 scrollbar-none">
+        <div className="flex overflow-x-auto border-b border-[color:var(--accent)]/15 bg-[color:var(--surface-0)] px-6 py-2 gap-2 scrollbar-none">
           {[
             { id: 'presets', label: 'Estilos Prediseñados', icon: Sparkles },
             { id: 'logos', label: 'Logos (Imágenes)', icon: Upload },
@@ -142,11 +142,11 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`flex items-center gap-2 whitespace-nowrap rounded-xl px-3.5 py-2 text-xs font-medium transition-all ${
                   isActive
-                    ? 'border border-[#c5a059]/40 bg-[#c5a059]/20 text-[#fbf5e8] shadow-sm font-semibold'
-                    : 'text-[#8e9c8c] hover:bg-white/5 hover:text-[#d8b66f]'
+                    ? 'border border-[color:var(--accent)]/40 bg-[color:var(--accent)]/20 text-[color:var(--text-primary)] shadow-sm font-semibold'
+                    : 'text-[color:var(--text-secondary)] hover:bg-white/5 hover:text-[color:var(--accent-hover)]'
                 }`}
               >
-                <Icon className="h-3.5 w-3.5 text-[#c5a059]" />
+                <Icon className="h-3.5 w-3.5 text-[color:var(--accent)]" />
                 <span>{tab.label}</span>
               </button>
             );
@@ -158,7 +158,7 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
           {/* TAB 1: PRESETS */}
           {activeTab === 'presets' && (
             <div className="space-y-4">
-              <h3 className="font-serif-luxury text-sm font-semibold text-[#f4e2b8] uppercase tracking-wider">
+              <h3 className="font-serif-luxury text-sm font-semibold text-[color:var(--accent-soft)] uppercase tracking-wider">
                 Selecciona un tema base para aplicar instantáneamente:
               </h3>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -166,13 +166,13 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
                   <button
                     key={preset.id}
                     onClick={() => onUpdateCustomization(preset.config)}
-                    className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-[#c5a059]/25 bg-[#0e1913]/80 p-5 text-left transition-all hover:border-[#c5a059]/60 hover:bg-[#14261d] hover:shadow-2xl"
+                    className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-[color:var(--accent)]/25 bg-[color:var(--surface-2)]/80 p-5 text-left transition-all hover:border-[color:var(--accent)]/60 hover:bg-[color:var(--surface-3)] hover:shadow-2xl"
                   >
                     <div>
-                      <h4 className="font-serif-luxury text-sm font-bold text-[#fbf5e8] mb-1">
+                      <h4 className="font-serif-luxury text-sm font-bold text-[color:var(--text-primary)] mb-1">
                         {preset.name}
                       </h4>
-                      <p className="text-xs text-[#8e9c8c] mb-4">
+                      <p className="text-xs text-[color:var(--text-secondary)] mb-4">
                         Alineado con el estilo visual y gradientes ópticos característicos.
                       </p>
                     </div>
@@ -194,7 +194,7 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
                         style={{ background: preset.config.modelSelectorGradient }}
                         title="Selector Modelo"
                       />
-                      <span className="text-[10px] font-mono-code text-[#c5a059] ml-auto">
+                      <span className="text-[10px] font-mono-code text-[color:var(--accent)] ml-auto">
                         Aplicar
                       </span>
                     </div>
@@ -209,7 +209,7 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
             <div className="space-y-6">
               {/* Type Switcher */}
               <div>
-                <label className="font-serif-luxury text-xs font-semibold text-[#c5a059] uppercase tracking-wider block mb-2">
+                <label className="font-serif-luxury text-xs font-semibold text-[color:var(--accent)] uppercase tracking-wider block mb-2">
                   Tipo de Fondo
                 </label>
                 <div className="flex gap-2">
@@ -223,8 +223,8 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
                       onClick={() => onUpdateCustomization({ bgType: t.id as any })}
                       className={`rounded-xl px-4 py-2 text-xs font-medium transition-all ${
                         customization.bgType === t.id
-                          ? 'border border-[#c5a059]/50 bg-[#c5a059]/25 text-[#fbf5e8] font-bold shadow'
-                          : 'border border-white/10 bg-white/5 text-[#8e9c8c] hover:bg-white/10'
+                          ? 'border border-[color:var(--accent)]/50 bg-[color:var(--accent)]/25 text-[color:var(--text-primary)] font-bold shadow'
+                          : 'border border-white/10 bg-white/5 text-[color:var(--text-secondary)] hover:bg-white/10'
                       }`}
                     >
                       {t.label}
@@ -235,8 +235,8 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
 
               {/* Color Picker if Color */}
               {customization.bgType === 'color' && (
-                <div className="rounded-2xl border border-[#c5a059]/20 bg-[#0e1913]/70 p-4 space-y-3">
-                  <label className="text-xs font-medium text-[#f4e2b8] block">
+                <div className="rounded-2xl border border-[color:var(--accent)]/20 bg-[color:var(--surface-2)]/70 p-4 space-y-3">
+                  <label className="text-xs font-medium text-[color:var(--accent-soft)] block">
                     Color de Fondo Principal
                   </label>
                   <div className="flex items-center gap-3">
@@ -244,13 +244,13 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
                       type="color"
                       value={customization.bgColor}
                       onChange={(e) => onUpdateCustomization({ bgColor: e.target.value })}
-                      className="h-10 w-16 cursor-pointer rounded-lg border border-[#c5a059]/30 bg-transparent p-1"
+                      className="h-10 w-16 cursor-pointer rounded-lg border border-[color:var(--accent)]/30 bg-transparent p-1"
                     />
                     <input
                       type="text"
                       value={customization.bgColor}
                       onChange={(e) => onUpdateCustomization({ bgColor: e.target.value })}
-                      className="rounded-lg border border-[#c5a059]/25 bg-[#060b08] px-3 py-1.5 font-mono-code text-xs text-[#fbf5e8]"
+                      className="rounded-lg border border-[color:var(--accent)]/25 bg-[color:var(--surface-0)] px-3 py-1.5 font-mono-code text-xs text-[color:var(--text-primary)]"
                     />
                   </div>
                 </div>
@@ -258,8 +258,8 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
 
               {/* Gradient if Gradient */}
               {customization.bgType === 'gradient' && (
-                <div className="rounded-2xl border border-[#c5a059]/20 bg-[#0e1913]/70 p-4 space-y-3">
-                  <label className="text-xs font-medium text-[#f4e2b8] block">
+                <div className="rounded-2xl border border-[color:var(--accent)]/20 bg-[color:var(--surface-2)]/70 p-4 space-y-3">
+                  <label className="text-xs font-medium text-[color:var(--accent-soft)] block">
                     Degradados de Alta Precisión
                   </label>
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -284,7 +284,7 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
 
               {/* Image / Wallpaper Picker */}
               {customization.bgType === 'image' && (
-                <div className="rounded-2xl border border-[#c5a059]/20 bg-[#0e1913]/70 p-4 space-y-4">
+                <div className="rounded-2xl border border-[color:var(--accent)]/20 bg-[color:var(--surface-2)]/70 p-4 space-y-4">
                   {/* Upload custom image */}
                   <div className="flex flex-wrap items-center gap-3">
                     <input
@@ -296,12 +296,12 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
                     />
                     <button
                       onClick={() => fileInputRef.current?.click()}
-                      className="flex items-center gap-2 rounded-xl border border-[#c5a059]/40 bg-[#c5a059]/20 px-4 py-2 text-xs font-medium text-[#f4e2b8] hover:bg-[#c5a059]/35 transition-colors shadow-sm"
+                      className="flex items-center gap-2 rounded-xl border border-[color:var(--accent)]/40 bg-[color:var(--accent)]/20 px-4 py-2 text-xs font-medium text-[color:var(--accent-soft)] hover:bg-[color:var(--accent)]/35 transition-colors shadow-sm"
                     >
-                      <Upload className="h-4 w-4 text-[#c5a059]" />
+                      <Upload className="h-4 w-4 text-[color:var(--accent)]" />
                       <span>Subir Imagen Desde Mi Equipo</span>
                     </button>
-                    <span className="text-xs text-[#8e9c8c]">O selecciona un wallpaper curado:</span>
+                    <span className="text-xs text-[color:var(--text-secondary)]">O selecciona un wallpaper curado:</span>
                   </div>
 
                   {/* Wallpaper Grid */}
@@ -323,7 +323,7 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
                   {/* Image Adjustments */}
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 pt-2 border-t border-white/10">
                     <div>
-                      <div className="flex justify-between text-xs text-[#a7b3a5] mb-1">
+                      <div className="flex justify-between text-xs text-[color:var(--text-secondary)] mb-1">
                         <span>Desenfoque del fondo (Blur)</span>
                         <span className="font-mono-code">{customization.bgImageBlur}px</span>
                       </div>
@@ -335,12 +335,12 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
                         onChange={(e) =>
                           onUpdateCustomization({ bgImageBlur: parseInt(e.target.value, 10) })
                         }
-                        className="w-full accent-[#c5a059]"
+                        className="w-full accent-[color:var(--accent)]"
                       />
                     </div>
 
                     <div>
-                      <div className="flex justify-between text-xs text-[#a7b3a5] mb-1">
+                      <div className="flex justify-between text-xs text-[color:var(--text-secondary)] mb-1">
                         <span>Opacidad del fondo</span>
                         <span className="font-mono-code">{Math.round(customization.bgImageOpacity * 100)}%</span>
                       </div>
@@ -353,7 +353,7 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
                         onChange={(e) =>
                           onUpdateCustomization({ bgImageOpacity: parseFloat(e.target.value) })
                         }
-                        className="w-full accent-[#c5a059]"
+                        className="w-full accent-[color:var(--accent)]"
                       />
                     </div>
                   </div>
@@ -366,9 +366,9 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
           {activeTab === 'bubbles' && (
             <div className="space-y-6">
               {/* User Bubble Settings */}
-              <div className="rounded-2xl border border-[#c5a059]/25 bg-[#0e1913]/70 p-5 space-y-4">
+              <div className="rounded-2xl border border-[color:var(--accent)]/25 bg-[color:var(--surface-2)]/70 p-5 space-y-4">
                 <div className="flex items-center justify-between">
-                  <h4 className="font-serif-luxury text-sm font-bold text-[#f4e2b8]">
+                  <h4 className="font-serif-luxury text-sm font-bold text-[color:var(--accent-soft)]">
                     Globo de Mensaje del Usuario
                   </h4>
                   {/* Live Mini Preview */}
@@ -386,7 +386,7 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
 
                 {/* Preset gradients for user bubble */}
                 <div>
-                  <span className="text-xs text-[#a7b3a5] block mb-2">Gradientes de Ejemplo:</span>
+                  <span className="text-xs text-[color:var(--text-secondary)] block mb-2">Gradientes de Ejemplo:</span>
                   <div className="flex flex-wrap gap-2">
                     {[
                       'linear-gradient(135deg, #0984e3 0%, #00cec9 100%)',
@@ -407,22 +407,22 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="text-xs text-[#a7b3a5] block mb-1">Color del Texto</label>
+                    <label className="text-xs text-[color:var(--text-secondary)] block mb-1">Color del Texto</label>
                     <div className="flex items-center gap-2">
                       <input
                         type="color"
                         value={customization.userBubbleTextColor}
                         onChange={(e) => onUpdateCustomization({ userBubbleTextColor: e.target.value })}
-                        className="h-8 w-12 rounded cursor-pointer border border-[#c5a059]/20 bg-transparent p-1"
+                        className="h-8 w-12 rounded cursor-pointer border border-[color:var(--accent)]/20 bg-transparent p-1"
                       />
-                      <span className="font-mono-code text-xs text-[#fbf5e8]">
+                      <span className="font-mono-code text-xs text-[color:var(--text-primary)]">
                         {customization.userBubbleTextColor}
                       </span>
                     </div>
                   </div>
 
                   <div>
-                    <div className="flex justify-between text-xs text-[#a7b3a5] mb-1">
+                    <div className="flex justify-between text-xs text-[color:var(--text-secondary)] mb-1">
                       <span>Curvatura (Radio)</span>
                       <span className="font-mono-code">{customization.userBubbleRadius}px</span>
                     </div>
@@ -434,16 +434,16 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
                       onChange={(e) =>
                         onUpdateCustomization({ userBubbleRadius: parseInt(e.target.value, 10) })
                       }
-                      className="w-full accent-[#c5a059]"
+                      className="w-full accent-[color:var(--accent)]"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Model Bubble Settings */}
-              <div className="rounded-2xl border border-[#c5a059]/25 bg-[#0e1913]/70 p-5 space-y-4">
+              <div className="rounded-2xl border border-[color:var(--accent)]/25 bg-[color:var(--surface-2)]/70 p-5 space-y-4">
                 <div className="flex items-center justify-between">
-                  <h4 className="font-serif-luxury text-sm font-bold text-[#f4e2b8]">
+                  <h4 className="font-serif-luxury text-sm font-bold text-[color:var(--accent-soft)]">
                     Globo de Mensaje de APS (IA)
                   </h4>
                   {/* Live Mini Preview */}
@@ -461,7 +461,7 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
 
                 {/* Preset gradients for model bubble */}
                 <div>
-                  <span className="text-xs text-[#a7b3a5] block mb-2">Gradientes de Ejemplo:</span>
+                  <span className="text-xs text-[color:var(--text-secondary)] block mb-2">Gradientes de Ejemplo:</span>
                   <div className="flex flex-wrap gap-2">
                     {[
                       'linear-gradient(135deg, #ff7675 0%, #e17055 100%)',
@@ -482,22 +482,22 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="text-xs text-[#a7b3a5] block mb-1">Color del Texto</label>
+                    <label className="text-xs text-[color:var(--text-secondary)] block mb-1">Color del Texto</label>
                     <div className="flex items-center gap-2">
                       <input
                         type="color"
                         value={customization.modelBubbleTextColor}
                         onChange={(e) => onUpdateCustomization({ modelBubbleTextColor: e.target.value })}
-                        className="h-8 w-12 rounded cursor-pointer border border-[#c5a059]/20 bg-transparent p-1"
+                        className="h-8 w-12 rounded cursor-pointer border border-[color:var(--accent)]/20 bg-transparent p-1"
                       />
-                      <span className="font-mono-code text-xs text-[#fbf5e8]">
+                      <span className="font-mono-code text-xs text-[color:var(--text-primary)]">
                         {customization.modelBubbleTextColor}
                       </span>
                     </div>
                   </div>
 
                   <div>
-                    <div className="flex justify-between text-xs text-[#a7b3a5] mb-1">
+                    <div className="flex justify-between text-xs text-[color:var(--text-secondary)] mb-1">
                       <span>Curvatura (Radio)</span>
                       <span className="font-mono-code">{customization.modelBubbleRadius}px</span>
                     </div>
@@ -509,7 +509,7 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
                       onChange={(e) =>
                         onUpdateCustomization({ modelBubbleRadius: parseInt(e.target.value, 10) })
                       }
-                      className="w-full accent-[#c5a059]"
+                      className="w-full accent-[color:var(--accent)]"
                     />
                   </div>
                 </div>
@@ -519,14 +519,14 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
 
           {/* TAB 4: LIQUID GLASS PHYSICS */}
           {activeTab === 'glass' && (
-            <div className="space-y-5 rounded-2xl border border-[#c5a059]/20 bg-[#0e1913]/70 p-5">
-              <h4 className="font-serif-luxury text-sm font-bold text-[#f4e2b8]">
+            <div className="space-y-5 rounded-2xl border border-[color:var(--accent)]/20 bg-[color:var(--surface-2)]/70 p-5">
+              <h4 className="font-serif-luxury text-sm font-bold text-[color:var(--accent-soft)]">
                 Parámetros de Refracción & Cristal Líquido Real
               </h4>
 
               <div className="space-y-4">
                 <div>
-                  <div className="flex justify-between text-xs text-[#a7b3a5] mb-1">
+                  <div className="flex justify-between text-xs text-[color:var(--text-secondary)] mb-1">
                     <span>Backdrop Blur (Desenfoque Vítreo)</span>
                     <span className="font-mono-code">{customization.glassBlur}px</span>
                   </div>
@@ -538,12 +538,12 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
                     onChange={(e) =>
                       onUpdateCustomization({ glassBlur: parseInt(e.target.value, 10) })
                     }
-                    className="w-full accent-[#c5a059]"
+                    className="w-full accent-[color:var(--accent)]"
                   />
                 </div>
 
                 <div>
-                  <div className="flex justify-between text-xs text-[#a7b3a5] mb-1">
+                  <div className="flex justify-between text-xs text-[color:var(--text-secondary)] mb-1">
                     <span>Densidad / Opacidad del Cristal</span>
                     <span className="font-mono-code">{Math.round(customization.glassOpacity * 100)}%</span>
                   </div>
@@ -556,16 +556,16 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
                     onChange={(e) =>
                       onUpdateCustomization({ glassOpacity: parseFloat(e.target.value) })
                     }
-                    className="w-full accent-[#c5a059]"
+                    className="w-full accent-[color:var(--accent)]"
                   />
                 </div>
 
                 <div className="flex items-center justify-between border-t border-white/10 pt-3">
                   <div>
-                    <span className="text-xs font-medium text-[#fbf5e8] block">
+                    <span className="text-xs font-medium text-[color:var(--text-primary)] block">
                       Destello Especular Dinámico (Reflejo 3D)
                     </span>
-                    <span className="text-[11px] text-[#8e9c8c]">
+                    <span className="text-[11px] text-[color:var(--text-secondary)]">
                       El halo de luz reacciona y sigue el movimiento de tu cursor en tiempo real.
                     </span>
                   </div>
@@ -575,7 +575,7 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
                     onChange={(e) =>
                       onUpdateCustomization({ glassSpecularGlow: e.target.checked })
                     }
-                    className="h-4 w-4 accent-[#c5a059] cursor-pointer"
+                    className="h-4 w-4 accent-[color:var(--accent)] cursor-pointer"
                   />
                 </div>
               </div>
@@ -586,8 +586,8 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
           {activeTab === 'controls' && (
             <div className="space-y-6">
               {/* Input Bar Gradient */}
-              <div className="rounded-2xl border border-[#c5a059]/20 bg-[#0e1913]/70 p-5 space-y-3">
-                <h4 className="font-serif-luxury text-sm font-bold text-[#f4e2b8]">
+              <div className="rounded-2xl border border-[color:var(--accent)]/20 bg-[color:var(--surface-2)]/70 p-5 space-y-3">
+                <h4 className="font-serif-luxury text-sm font-bold text-[color:var(--accent-soft)]">
                   Barra Flotante de Escritura ('DESCRIBE TU IDEA')
                 </h4>
                 <div className="flex flex-wrap gap-2">
@@ -608,8 +608,8 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
               </div>
 
               {/* Model Selector Card Gradient */}
-              <div className="rounded-2xl border border-[#c5a059]/20 bg-[#0e1913]/70 p-5 space-y-3">
-                <h4 className="font-serif-luxury text-sm font-bold text-[#f4e2b8]">
+              <div className="rounded-2xl border border-[color:var(--accent)]/20 bg-[color:var(--surface-2)]/70 p-5 space-y-3">
+                <h4 className="font-serif-luxury text-sm font-bold text-[color:var(--accent-soft)]">
                   Tarjeta del Selector 'MODELO APS...'
                 </h4>
                 <div className="flex flex-wrap gap-2">
@@ -634,15 +634,15 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
           {/* TAB: LOGOS (IMÁGENES REALES) */}
           {activeTab === 'logos' && (
             <div className="space-y-6">
-              <div className="rounded-2xl border border-[#c5a059]/30 bg-[#0e1913]/90 p-5 space-y-3">
+              <div className="rounded-2xl border border-[color:var(--accent)]/30 bg-[color:var(--surface-2)]/90 p-5 space-y-3">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-[#00cec9]" />
-                  <h3 className="font-serif-luxury text-base font-bold text-[#f4e2b8]">
+                  <Sparkles className="h-5 w-5 text-[color:var(--accent)]" />
+                  <h3 className="font-serif-luxury text-base font-bold text-[color:var(--accent-soft)]">
                     Logos Oficiales (Imágenes Reales)
                   </h3>
                 </div>
-                <p className="text-xs text-[#8e9c8c] leading-relaxed">
-                  Configura las 2 imágenes oficiales. Se muestran exactamente como archivos de imagen reales (<code className="text-[#00cec9] font-mono">&lt;img /&gt;</code>) sin recreación por código. Se recomienda formato <strong>PNG con fondo transparente</strong> o <strong>SVG</strong> para una integración perfecta con el tema oscuro.
+                <p className="text-xs text-[color:var(--text-secondary)] leading-relaxed">
+                  Configura las 2 imágenes oficiales. Se muestran exactamente como archivos de imagen reales (<code className="text-[color:var(--accent)] font-mono">&lt;img /&gt;</code>) sin recreación por código. Se recomienda formato <strong>PNG con fondo transparente</strong> o <strong>SVG</strong> para una integración perfecta con el tema oscuro.
                 </p>
               </div>
 
@@ -664,17 +664,17 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {/* 1. LOGO CHIQUITO */}
-                <div className="rounded-2xl border border-white/10 bg-[#0c1610]/90 p-5 flex flex-col justify-between space-y-4">
+                <div className="rounded-2xl border border-white/10 bg-[color:var(--surface-2)]/90 p-5 flex flex-col justify-between space-y-4">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-mono-code font-bold uppercase tracking-wider text-[#00cec9]">
+                      <span className="text-xs font-mono-code font-bold uppercase tracking-wider text-[color:var(--accent)]">
                         1. Logo Chiquito (Ícono)
                       </span>
                       <span className="text-[10px] bg-white/10 text-white/70 px-2 py-0.5 rounded-full">
                         Flecha Enviar & 3 Barras
                       </span>
                     </div>
-                    <p className="text-xs text-[#8e9c8c]">
+                    <p className="text-xs text-[color:var(--text-secondary)]">
                       Reemplaza la flecha de enviar del chat y las 3 barras del menú lateral con tu logo.
                     </p>
 
@@ -683,7 +683,7 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
                       <img
                         src={customization.logoCompact || localStorage.getItem('aps_logo_compact') || compactDefault}
                         alt="Logo Chiquito Preview"
-                        className="max-h-16 max-w-16 object-contain drop-shadow-[0_0_12px_rgba(0,206,201,0.5)]"
+                        className="max-h-16 max-w-16 object-contain drop-shadow-[0_0_12px_color-mix(in_srgb,var(--accent)_50%,transparent)]"
                         onError={(e) => {
                           const target = e.currentTarget;
                           target.src = compactDefault;
@@ -698,7 +698,7 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
                   <div className="space-y-2 pt-2 border-t border-white/10">
                     <button
                       onClick={() => compactLogoInputRef.current?.click()}
-                      className="w-full flex items-center justify-center gap-2 rounded-xl border border-[#00cec9]/40 bg-[#00cec9]/15 px-4 py-2 text-xs font-bold text-[#00cec9] hover:bg-[#00cec9]/25 transition-all shadow-md active:scale-95"
+                      className="w-full flex items-center justify-center gap-2 rounded-xl border border-[color:var(--accent)]/40 bg-[color:var(--accent)]/15 px-4 py-2 text-xs font-bold text-[color:var(--accent)] hover:bg-[color:var(--accent)]/25 transition-all shadow-md active:scale-95"
                     >
                       <Upload className="h-4 w-4" />
                       Subir Imagen (Logo Chiquito)
@@ -717,17 +717,17 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
                 </div>
 
                 {/* 2. LOGO GRANDE */}
-                <div className="rounded-2xl border border-white/10 bg-[#0c1610]/90 p-5 flex flex-col justify-between space-y-4">
+                <div className="rounded-2xl border border-white/10 bg-[color:var(--surface-2)]/90 p-5 flex flex-col justify-between space-y-4">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-mono-code font-bold uppercase tracking-wider text-[#c5a059]">
+                      <span className="text-xs font-mono-code font-bold uppercase tracking-wider text-[color:var(--accent)]">
                         2. Logo Grande (Completo)
                       </span>
                       <span className="text-[10px] bg-white/10 text-white/70 px-2 py-0.5 rounded-full">
                         Header, Sidebar & Login
                       </span>
                     </div>
-                    <p className="text-xs text-[#8e9c8c]">
+                    <p className="text-xs text-[color:var(--text-secondary)]">
                       Usado en la cabecera superior, menú lateral y pantalla de inicio de sesión.
                     </p>
 
@@ -736,7 +736,7 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
                       <img
                         src={customization.logoLarge || localStorage.getItem('aps_logo_large') || largeDefault}
                         alt="Logo Grande Preview"
-                        className="max-h-16 max-w-[200px] object-contain drop-shadow-[0_0_12px_rgba(197,160,89,0.5)]"
+                        className="max-h-16 max-w-[200px] object-contain drop-shadow-[0_0_12px_color-mix(in_srgb,var(--accent)_50%,transparent)]"
                         onError={(e) => {
                           const target = e.currentTarget;
                           target.src = largeDefault;
@@ -751,7 +751,7 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
                   <div className="space-y-2 pt-2 border-t border-white/10">
                     <button
                       onClick={() => largeLogoInputRef.current?.click()}
-                      className="w-full flex items-center justify-center gap-2 rounded-xl border border-[#c5a059]/40 bg-[#c5a059]/15 px-4 py-2 text-xs font-bold text-[#f4e2b8] hover:bg-[#c5a059]/25 transition-all shadow-md active:scale-95"
+                      className="w-full flex items-center justify-center gap-2 rounded-xl border border-[color:var(--accent)]/40 bg-[color:var(--accent)]/15 px-4 py-2 text-xs font-bold text-[color:var(--accent-soft)] hover:bg-[color:var(--accent)]/25 transition-all shadow-md active:scale-95"
                     >
                       <Upload className="h-4 w-4" />
                       Subir Imagen (Logo Grande)
@@ -774,13 +774,13 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-[#c5a059]/20 bg-[#0e1a14]/90 px-6 py-4">
-          <span className="text-xs text-[#8e9c8c]">
+        <div className="flex items-center justify-between border-t border-[color:var(--accent)]/20 bg-[color:var(--surface-2)]/90 px-6 py-4">
+          <span className="text-xs text-[color:var(--text-secondary)]">
             Tus cambios se guardan automáticamente en tu navegador.
           </span>
           <button
             onClick={onClose}
-            className="rounded-xl border border-[#c5a059]/50 bg-gradient-to-r from-[#c5a059] to-[#d8b66f] px-6 py-2 text-xs font-serif-luxury font-bold text-[#070c09] shadow-lg hover:brightness-110 active:scale-95 transition-all"
+            className="rounded-xl border border-[color:var(--accent)]/50 bg-gradient-to-r from-[color:var(--accent)] to-[color:var(--accent-hover)] px-6 py-2 text-xs font-serif-luxury font-bold text-[color:var(--on-accent)] shadow-lg hover:brightness-110 active:scale-95 transition-all"
           >
             Guardar & Aplicar
           </button>

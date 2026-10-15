@@ -78,7 +78,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Hamburger / Menu Button replaced with Compact APS Logo as instructed */}
           <button
             onClick={onOpenSidebar}
-            className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 hover:border-[#00cec9]/40 hover:shadow-[0_0_15px_rgba(0,206,201,0.3)] transition-all shadow-md active:scale-95 group p-1.5 shrink-0"
+            className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 hover:border-[color:var(--accent)]/40 hover:shadow-[0_0_15px_color-mix(in_srgb,var(--accent)_30%,transparent)] transition-all shadow-md active:scale-95 group p-1.5 shrink-0"
             title="Abrir menú APS"
           >
             <ApsLogo
@@ -120,9 +120,9 @@ export const Header: React.FC<HeaderProps> = ({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 8, scale: 0.95 }}
                   transition={{ duration: 0.18 }}
-                  className="absolute left-0 top-full mt-2 w-64 sm:w-72 overflow-hidden rounded-2xl border border-[#c5a059]/30 bg-[#09110c]/95 p-2 shadow-2xl backdrop-blur-2xl z-50"
+                  className="absolute left-0 top-full mt-2 w-64 sm:w-72 overflow-hidden rounded-2xl border border-[color:var(--accent)]/30 bg-[color:var(--surface-1)]/95 p-2 shadow-2xl backdrop-blur-2xl z-50"
                 >
-                  <div className="p-2 border-b border-white/10 text-[10px] font-mono-code uppercase tracking-wider text-[#c5a059]">
+                  <div className="p-2 border-b border-white/10 text-[10px] font-mono-code uppercase tracking-wider text-[color:var(--accent)]">
                     Seleccionar Inteligencia APS
                   </div>
                   {models.map((m) => {
@@ -137,16 +137,16 @@ export const Header: React.FC<HeaderProps> = ({
                         }}
                         className={`flex w-full items-start gap-3 rounded-xl p-2.5 text-left transition-all ${
                           isSelected
-                            ? 'border border-[#c5a059]/40 bg-[#c5a059]/25 text-[#fbf5e8]'
-                            : 'text-[#8e9c8c] hover:bg-white/5 hover:text-[#f4e2b8]'
+                            ? 'border border-[color:var(--accent)]/40 bg-[color:var(--accent)]/25 text-[color:var(--text-primary)]'
+                            : 'text-[color:var(--text-secondary)] hover:bg-white/5 hover:text-[color:var(--accent-soft)]'
                         }`}
                       >
-                        <Icon className="h-4 w-4 shrink-0 text-[#c5a059] mt-0.5" />
+                        <Icon className="h-4 w-4 shrink-0 text-[color:var(--accent)] mt-0.5" />
                         <div>
-                          <span className="font-serif-luxury text-xs font-bold block text-[#f4e2b8]">
+                          <span className="font-serif-luxury text-xs font-bold block text-[color:var(--accent-soft)]">
                             {m.label}
                           </span>
-                          <span className="text-[10px] text-[#8e9c8c] block">{m.desc}</span>
+                          <span className="text-[10px] text-[color:var(--text-secondary)] block">{m.desc}</span>
                         </div>
                       </button>
                     );
@@ -167,8 +167,8 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={() => onSelectView('chat')}
             className={`flex items-center gap-1.5 sm:gap-2 rounded-xl px-3 sm:px-5 py-1.5 text-xs sm:text-sm font-serif-luxury font-bold tracking-wider transition-all duration-300 ${
               activeView === 'chat'
-                ? 'bg-gradient-to-r from-[#00cec9] to-[#0984e3] text-black shadow-lg shadow-cyan-500/20 scale-105'
-                : 'text-[#8e9c8c] hover:text-white hover:bg-white/5'
+                ? 'bg-gradient-to-r from-[color:var(--accent)] to-[color:var(--accent-2)] text-black shadow-lg shadow-cyan-500/20 scale-105'
+                : 'text-[color:var(--text-secondary)] hover:text-white hover:bg-white/5'
             }`}
           >
             <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -185,8 +185,8 @@ export const Header: React.FC<HeaderProps> = ({
             }}
             className={`flex items-center gap-1.5 sm:gap-2 rounded-xl px-3 sm:px-5 py-1.5 text-xs sm:text-sm font-serif-luxury font-bold tracking-wider transition-all duration-300 ${
               activeView === 'cli'
-                ? 'bg-gradient-to-r from-[#00cec9] to-[#0984e3] text-black shadow-lg shadow-cyan-500/20 scale-105'
-                : 'text-[#8e9c8c] hover:text-white hover:bg-white/5'
+                ? 'bg-gradient-to-r from-[color:var(--accent)] to-[color:var(--accent-2)] text-black shadow-lg shadow-cyan-500/20 scale-105'
+                : 'text-[color:var(--text-secondary)] hover:text-white hover:bg-white/5'
             }`}
           >
             <Code2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -200,26 +200,26 @@ export const Header: React.FC<HeaderProps> = ({
           {/* New Session Button */}
           <button
             onClick={onNewChat}
-            className="hidden lg:flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-[#f4e2b8] hover:bg-white/15 transition-all shadow-sm"
+            className="hidden lg:flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-[color:var(--accent-soft)] hover:bg-white/15 transition-all shadow-sm"
             title="Nueva conversación limpia"
           >
-            <PlusCircle className="h-3.5 w-3.5 text-[#c5a059]" />
+            <PlusCircle className="h-3.5 w-3.5 text-[color:var(--accent)]" />
             <span>Nueva</span>
           </button>
 
           {/* Visual Customization Studio Button */}
           <button
             onClick={onOpenCustomizer}
-            className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-[#c5a059]/40 bg-[#c5a059]/15 text-[#f4e2b8] hover:bg-[#c5a059]/30 hover:scale-105 transition-all shadow-md active:scale-95"
+            className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-[color:var(--accent)]/40 bg-[color:var(--accent)]/15 text-[color:var(--accent-soft)] hover:bg-[color:var(--accent)]/30 hover:scale-105 transition-all shadow-md active:scale-95"
             title="Personalizar cualquier aspecto visual"
           >
-            <Palette className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-[#c5a059]" />
+            <Palette className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-[color:var(--accent)]" />
           </button>
 
           {/* Terms & Conditions quick button */}
           <button
             onClick={onOpenTerms}
-            className="hidden md:flex h-10 w-10 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-[#8e9c8c] hover:bg-white/10 hover:text-white transition-all shadow-sm"
+            className="hidden md:flex h-10 w-10 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-[color:var(--text-secondary)] hover:bg-white/10 hover:text-white transition-all shadow-sm"
             title="Términos y condiciones + Cookies"
           >
             <FileText className="h-4 w-4" />
@@ -228,7 +228,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* User Circular Profile Avatar */}
           <button
             onClick={onOpenAuth}
-            className="group relative flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-2xl border border-white/20 bg-gradient-to-br from-[#1b2b20] to-[#0a140f] text-white shadow-xl transition-transform hover:scale-105 active:scale-95"
+            className="group relative flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-2xl border border-white/20 bg-gradient-to-br from-[color:var(--surface-4)] to-[color:var(--surface-1)] text-white shadow-xl transition-transform hover:scale-105 active:scale-95"
             title={currentUser ? `Perfil: ${currentUser.name}` : 'Iniciar Sesión / Registro'}
           >
             <UserAvatar

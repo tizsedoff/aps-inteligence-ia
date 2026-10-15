@@ -36,7 +36,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
 
   return (
     <div
-      className={`relative inline-flex shrink-0 items-center justify-center rounded-2xl overflow-hidden border border-white/20 bg-gradient-to-br from-[#1b2b20] to-[#0a140f] text-white font-serif-luxury font-bold shadow-md ${sizeClasses[size]} ${className}`}
+      className={`relative inline-flex shrink-0 items-center justify-center rounded-2xl overflow-hidden border border-white/20 bg-gradient-to-br from-[color:var(--surface-4)] to-[color:var(--surface-1)] text-white font-serif-luxury font-bold shadow-md ${sizeClasses[size]} ${className}`}
     >
       {isImage ? (
         <img

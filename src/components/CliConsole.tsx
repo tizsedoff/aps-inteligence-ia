@@ -96,9 +96,9 @@ function buildCombinedPreviewHtml(allFiles: CliFile[], activeFile?: CliFile): st
   <title>Vista Previa APS</title>
   <style>
     body { font-family: system-ui, -apple-system, sans-serif; background: #070d09; color: #fbf5e8; padding: 24px; margin: 0; }
-    h2 { color: #f4e2b8; border-bottom: 1px solid rgba(197, 160, 89, 0.3); padding-bottom: 10px; font-size: 1.1rem; }
+    h2 { color: #f4e2b8; border-bottom: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); padding-bottom: 10px; font-size: 1.1rem; }
     p { color: #8e9c8c; font-size: 0.85rem; }
-    pre { background: #0c1611; border: 1px solid rgba(197, 160, 89, 0.2); padding: 16px; border-radius: 8px; color: #98e6a5; overflow: auto; font-size: 0.8rem; font-family: monospace; white-space: pre-wrap; }
+    pre { background: #0c1611; border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent); padding: 16px; border-radius: 8px; color: #98e6a5; overflow: auto; font-size: 0.8rem; font-family: monospace; white-space: pre-wrap; }
   </style>
 </head>
 <body>
@@ -603,15 +603,15 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
   const activeLineCount = currentFile?.code.split('\n').length || 1;
 
   return (
-    <div className="flex flex-1 h-full w-full flex-col overflow-hidden p-0 sm:p-1 md:p-2 bg-[#040805]">
-      <div className="flex h-full w-full flex-1 flex-col overflow-hidden rounded-none sm:rounded-xl border-0 sm:border border-[#c5a059]/30 bg-[#070d09]/95 shadow-2xl backdrop-blur-2xl">
+    <div className="flex flex-1 h-full w-full flex-col overflow-hidden p-0 sm:p-1 md:p-2 bg-[color:var(--surface-0)]">
+      <div className="flex h-full w-full flex-1 flex-col overflow-hidden rounded-none sm:rounded-xl border-0 sm:border border-[color:var(--accent)]/30 bg-[color:var(--surface-0)]/95 shadow-2xl backdrop-blur-2xl">
         {/* Top Header Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#c5a059]/20 bg-[#0c1611]/90 px-2.5 sm:px-4 py-2 sm:py-2.5 gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[color:var(--accent)]/20 bg-[color:var(--surface-2)]/90 px-2.5 sm:px-4 py-2 sm:py-2.5 gap-2">
           {/* Left: Engine Badge & File Tabs */}
           <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto scrollbar-none pb-0.5 sm:pb-0">
-            <div className="flex items-center gap-1.5 sm:gap-2 pr-2 border-r border-[#c5a059]/20 shrink-0">
-              <span className="flex h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full bg-[#c5a059] shadow-[0_0_8px_#c5a059]" />
-              <span className="font-serif-luxury text-[11px] sm:text-xs font-bold tracking-wider text-[#f4e2b8] whitespace-nowrap">
+            <div className="flex items-center gap-1.5 sm:gap-2 pr-2 border-r border-[color:var(--accent)]/20 shrink-0">
+              <span className="flex h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full bg-[color:var(--accent)] shadow-[0_0_8px_#c5a059]" />
+              <span className="font-serif-luxury text-[11px] sm:text-xs font-bold tracking-wider text-[color:var(--accent-soft)] whitespace-nowrap">
                 <span className="hidden xs:inline sm:inline">APS HARD WORK </span>CLI
               </span>
             </div>
@@ -626,16 +626,16 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
                   }}
                   className={`flex items-center gap-1 sm:gap-1.5 rounded-lg px-2 sm:px-2.5 py-1 text-[11px] sm:text-xs font-mono-code transition-all cursor-pointer whitespace-nowrap ${
                     activeFileIndex === idx
-                      ? 'border border-[#c5a059]/40 bg-[#c5a059]/20 text-[#fbf5e8] shadow-sm font-semibold'
-                      : 'text-[#8e9c8c] hover:bg-white/5 hover:text-[#d8b66f]'
+                      ? 'border border-[color:var(--accent)]/40 bg-[color:var(--accent)]/20 text-[color:var(--text-primary)] shadow-sm font-semibold'
+                      : 'text-[color:var(--text-secondary)] hover:bg-white/5 hover:text-[color:var(--accent-hover)]'
                   }`}
                 >
-                  <FileCode className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-[#c5a059]" />
+                  <FileCode className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-[color:var(--accent)]" />
                   <span>{file.filename}</span>
                   {files.length > 1 && (
                     <button
                       onClick={(e) => handleDeleteFile(e, idx)}
-                      className="ml-1 text-[#8e9c8c] hover:text-red-400 p-0.5 rounded"
+                      className="ml-1 text-[color:var(--text-secondary)] hover:text-red-400 p-0.5 rounded"
                       title="Eliminar archivo"
                     >
                       <X className="h-3 w-3" />
@@ -645,7 +645,7 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
               ))}
               <button
                 onClick={handleAddNewFile}
-                className="flex items-center gap-1 rounded-lg border border-dashed border-[#c5a059]/30 px-2 py-1 text-[10px] sm:text-[11px] font-mono-code text-[#c5a059] hover:bg-[#c5a059]/10 transition-colors whitespace-nowrap"
+                className="flex items-center gap-1 rounded-lg border border-dashed border-[color:var(--accent)]/30 px-2 py-1 text-[10px] sm:text-[11px] font-mono-code text-[color:var(--accent)] hover:bg-[color:var(--accent)]/10 transition-colors whitespace-nowrap"
                 title="Crear nuevo archivo en el workspace"
               >
                 <span>+ Nuevo</span>
@@ -656,7 +656,7 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
           {/* Right: View Toggles & Actions */}
           <div className="flex items-center justify-between sm:justify-end gap-1.5 sm:gap-2">
             {/* View Switcher: Consola is the First / Default Tab */}
-            <div className="flex items-center rounded-lg border border-[#c5a059]/20 bg-[#060c08] p-0.5 text-xs">
+            <div className="flex items-center rounded-lg border border-[color:var(--accent)]/20 bg-[color:var(--surface-0)] p-0.5 text-xs">
               <button
                 onClick={() => {
                   setActiveTab('terminal');
@@ -664,12 +664,12 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
                 }}
                 className={`flex items-center gap-1 rounded-md px-2 sm:px-2.5 py-1 transition-all ${
                   activeTab === 'terminal' && !isSplitView
-                    ? 'bg-[#c5a059]/25 text-[#f4e2b8] font-bold shadow-sm'
-                    : 'text-[#8e9c8c] hover:text-[#f4e2b8]'
+                    ? 'bg-[color:var(--accent)]/25 text-[color:var(--accent-soft)] font-bold shadow-sm'
+                    : 'text-[color:var(--text-secondary)] hover:text-[color:var(--accent-soft)]'
                 }`}
                 title="Consola de órdenes de desarrollo"
               >
-                <TerminalIcon className="h-3.5 w-3.5 text-[#c5a059]" />
+                <TerminalIcon className="h-3.5 w-3.5 text-[color:var(--accent)]" />
                 <span className="text-[11px] sm:text-xs">Consola</span>
               </button>
 
@@ -680,12 +680,12 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
                 }}
                 className={`flex items-center gap-1 rounded-md px-2 sm:px-2.5 py-1 transition-all ${
                   activeTab === 'editor' && !isSplitView
-                    ? 'bg-[#c5a059]/25 text-[#f4e2b8] font-bold shadow-sm'
-                    : 'text-[#8e9c8c] hover:text-[#f4e2b8]'
+                    ? 'bg-[color:var(--accent)]/25 text-[color:var(--accent-soft)] font-bold shadow-sm'
+                    : 'text-[color:var(--text-secondary)] hover:text-[color:var(--accent-soft)]'
                 }`}
                 title="Editor de código"
               >
-                <Code2 className="h-3.5 w-3.5 text-[#c5a059]" />
+                <Code2 className="h-3.5 w-3.5 text-[color:var(--accent)]" />
                 <span className="text-[11px] sm:text-xs">Editor</span>
               </button>
 
@@ -696,12 +696,12 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
                 }}
                 className={`flex items-center gap-1 rounded-md px-2 sm:px-2.5 py-1 transition-all ${
                   activeTab === 'preview' && !isSplitView
-                    ? 'bg-[#c5a059]/25 text-[#f4e2b8] font-bold shadow-sm'
-                    : 'text-[#8e9c8c] hover:text-[#f4e2b8]'
+                    ? 'bg-[color:var(--accent)]/25 text-[color:var(--accent-soft)] font-bold shadow-sm'
+                    : 'text-[color:var(--text-secondary)] hover:text-[color:var(--accent-soft)]'
                 }`}
                 title="Vista previa interactiva"
               >
-                <Eye className="h-3.5 w-3.5 text-[#c5a059]" />
+                <Eye className="h-3.5 w-3.5 text-[color:var(--accent)]" />
                 <span className="text-[11px] sm:text-xs">
                   <span className="hidden sm:inline">Vista </span>Previa
                 </span>
@@ -710,10 +710,10 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
               {/* Requirement 3: Split View for Line-by-Line Live Progress */}
               <button
                 onClick={() => setIsSplitView((prev) => !prev)}
-                className={`flex items-center gap-1 rounded-md px-2 sm:px-2.5 py-1 transition-all border-l border-[#c5a059]/20 ${
+                className={`flex items-center gap-1 rounded-md px-2 sm:px-2.5 py-1 transition-all border-l border-[color:var(--accent)]/20 ${
                   isSplitView
                     ? 'bg-emerald-500/25 text-emerald-200 font-bold shadow-sm'
-                    : 'text-[#8e9c8c] hover:text-[#f4e2b8]'
+                    : 'text-[color:var(--text-secondary)] hover:text-[color:var(--accent-soft)]'
                 }`}
                 title="Ver código y vista previa lado a lado para ver el progreso línea por línea"
               >
@@ -725,10 +725,10 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
             {/* Requirement 2: Full Screen Preview Button */}
             <button
               onClick={() => setIsFullScreenPreview(true)}
-              className="flex items-center gap-1 sm:gap-1.5 rounded-lg border border-[#c5a059]/40 bg-[#c5a059]/20 px-2.5 sm:px-3 py-1 text-xs font-serif-luxury font-semibold text-[#fbf5e8] shadow-sm hover:bg-[#c5a059]/35 active:scale-95 transition-all"
+              className="flex items-center gap-1 sm:gap-1.5 rounded-lg border border-[color:var(--accent)]/40 bg-[color:var(--accent)]/20 px-2.5 sm:px-3 py-1 text-xs font-serif-luxury font-semibold text-[color:var(--text-primary)] shadow-sm hover:bg-[color:var(--accent)]/35 active:scale-95 transition-all"
               title="Agrandar vista previa a pantalla completa"
             >
-              <Maximize2 className="h-3 w-3 text-[#f4e2b8]" />
+              <Maximize2 className="h-3 w-3 text-[color:var(--accent-soft)]" />
               <span className="text-[11px] sm:text-xs hidden sm:inline">Full Screen</span>
             </button>
 
@@ -736,16 +736,16 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
               {/* Run Button */}
               <button
                 onClick={executeActiveCode}
-                className="flex items-center gap-1 sm:gap-1.5 rounded-lg border border-[#c5a059]/40 bg-gradient-to-r from-[#c5a059]/30 to-emerald-600/30 px-2 sm:px-2.5 py-1 text-xs font-serif-luxury font-semibold text-[#fbf5e8] shadow-sm hover:brightness-110 active:scale-95 transition-all"
+                className="flex items-center gap-1 sm:gap-1.5 rounded-lg border border-[color:var(--accent)]/40 bg-gradient-to-r from-[color:var(--accent)]/30 to-emerald-600/30 px-2 sm:px-2.5 py-1 text-xs font-serif-luxury font-semibold text-[color:var(--text-primary)] shadow-sm hover:brightness-110 active:scale-95 transition-all"
                 title="Ejecutar archivo"
               >
-                <Play className="h-3 w-3 fill-current text-[#f4e2b8]" />
+                <Play className="h-3 w-3 fill-current text-[color:var(--accent-soft)]" />
                 <span className="text-[11px] sm:text-xs hidden md:inline">Ejecutar</span>
               </button>
 
               <button
                 onClick={handleCopyCode}
-                className="rounded-lg border border-[#c5a059]/20 p-1.5 text-[#8e9c8c] hover:bg-[#c5a059]/10 hover:text-[#f4e2b8] transition-colors"
+                className="rounded-lg border border-[color:var(--accent)]/20 p-1.5 text-[color:var(--text-secondary)] hover:bg-[color:var(--accent)]/10 hover:text-[color:var(--accent-soft)] transition-colors"
                 title="Copiar código actual"
               >
                 {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
@@ -753,7 +753,7 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
 
               <button
                 onClick={handleDownloadCode}
-                className="rounded-lg border border-[#c5a059]/20 p-1.5 text-[#8e9c8c] hover:bg-[#c5a059]/10 hover:text-[#f4e2b8] transition-colors"
+                className="rounded-lg border border-[color:var(--accent)]/20 p-1.5 text-[color:var(--text-secondary)] hover:bg-[color:var(--accent)]/10 hover:text-[color:var(--accent-soft)] transition-colors"
                 title="Descargar archivo"
               >
                 <Download className="h-3.5 w-3.5" />
@@ -764,24 +764,24 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
 
         {/* Real-time Line-by-Line Progress Indicator if streaming or typing */}
         {lineProgress && (
-          <div className="flex items-center justify-between border-b border-[#c5a059]/30 bg-[#0e1c14] px-4 py-1.5 text-xs font-mono-code text-[#98e6a5] animate-pulse">
+          <div className="flex items-center justify-between border-b border-[color:var(--accent)]/30 bg-[color:var(--surface-2)] px-4 py-1.5 text-xs font-mono-code text-[color:var(--accent)] animate-pulse">
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
               <span>
                 Transmitiendo línea por línea en <strong>{lineProgress.filename}</strong>:
               </span>
-              <span className="font-bold text-[#fbf5e8]">
+              <span className="font-bold text-[color:var(--text-primary)]">
                 Línea {lineProgress.current} de {lineProgress.total} (
                 {Math.round((lineProgress.current / lineProgress.total) * 100)}%)
               </span>
             </div>
-            <span className="text-[11px] text-[#c5a059]">Sincronizando con Vista Previa...</span>
+            <span className="text-[11px] text-[color:var(--accent)]">Sincronizando con Vista Previa...</span>
           </div>
         )}
 
         {/* Quick Command Suggestions Strip */}
-        <div className="flex items-center gap-2 overflow-x-auto border-b border-[#c5a059]/10 bg-[#08100c]/70 px-4 py-1.5 text-xs font-mono-code scrollbar-none">
-          <span className="text-[10px] text-[#738271] uppercase tracking-wider">Órdenes sugeridas:</span>
+        <div className="flex items-center gap-2 overflow-x-auto border-b border-[color:var(--accent)]/10 bg-[color:var(--surface-1)]/70 px-4 py-1.5 text-xs font-mono-code scrollbar-none">
+          <span className="text-[10px] text-[color:var(--text-muted)] uppercase tracking-wider">Órdenes sugeridas:</span>
           {[
             'Crea un juego de Snake en HTML con Canvas',
             'Haz una calculadora interactiva y elegante',
@@ -795,7 +795,7 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
             <button
               key={promptCmd}
               onClick={() => handleExecuteCommand(promptCmd)}
-              className="whitespace-nowrap rounded-md border border-[#c5a059]/15 bg-[#0e1712]/60 px-2 py-0.5 text-[11px] text-[#a7b3a5] hover:border-[#c5a059]/40 hover:text-[#f4e2b8] transition-colors"
+              className="whitespace-nowrap rounded-md border border-[color:var(--accent)]/15 bg-[color:var(--surface-2)]/60 px-2 py-0.5 text-[11px] text-[color:var(--text-secondary)] hover:border-[color:var(--accent)]/40 hover:text-[color:var(--accent-soft)] transition-colors"
             >
               {promptCmd}
             </button>
@@ -808,13 +808,13 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
           {isSplitView ? (
             <div className="flex h-full flex-col md:flex-row overflow-hidden">
               {/* Left Pane: Code Editor with Line Numbers */}
-              <div className="flex flex-1 flex-col border-b md:border-b-0 md:border-r border-[#c5a059]/20 bg-[#050a07] overflow-hidden">
-                <div className="flex items-center justify-between border-b border-[#c5a059]/15 bg-[#0a140f] px-3 py-1 text-[11px] font-mono-code text-[#8e9c8c]">
+              <div className="flex flex-1 flex-col border-b md:border-b-0 md:border-r border-[color:var(--accent)]/20 bg-[color:var(--surface-0)] overflow-hidden">
+                <div className="flex items-center justify-between border-b border-[color:var(--accent)]/15 bg-[color:var(--surface-1)] px-3 py-1 text-[11px] font-mono-code text-[color:var(--text-secondary)]">
                   <span>EDITOR — {currentFile?.filename}</span>
-                  <span className="text-[#c5a059]">Líneas: {activeLineCount} (Edición en vivo)</span>
+                  <span className="text-[color:var(--accent)]">Líneas: {activeLineCount} (Edición en vivo)</span>
                 </div>
-                <div className="flex flex-1 overflow-auto p-3 font-mono-code text-xs md:text-sm leading-relaxed text-[#dbe5da]">
-                  <div className="select-none pr-3 text-right text-[#455243]">
+                <div className="flex flex-1 overflow-auto p-3 font-mono-code text-xs md:text-sm leading-relaxed text-[color:var(--surface-4)]">
+                  <div className="select-none pr-3 text-right text-[color:var(--surface-4)]">
                     {currentFile?.code.split('\n').map((_, i) => (
                       <div key={i}>{i + 1}</div>
                     ))}
@@ -833,32 +833,32 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
                     }}
                     placeholder="// Escribe aquí tu código línea por línea..."
                     spellCheck={false}
-                    className="flex-1 resize-none bg-transparent font-mono-code outline-none text-[#e8f0e6] selection:bg-[#c5a059]/30"
+                    className="flex-1 resize-none bg-transparent font-mono-code outline-none text-[color:var(--text-primary)] selection:bg-[color:var(--accent)]/30"
                   />
                 </div>
               </div>
 
               {/* Right Pane: Live Preview updating line-by-line */}
-              <div className="flex flex-1 flex-col bg-[#0b1510] overflow-hidden">
-                <div className="flex items-center justify-between border-b border-[#c5a059]/15 bg-[#0a140f] px-3 py-1 text-[11px] font-mono-code text-[#8e9c8c]">
+              <div className="flex flex-1 flex-col bg-[color:var(--surface-2)] overflow-hidden">
+                <div className="flex items-center justify-between border-b border-[color:var(--accent)]/15 bg-[color:var(--surface-1)] px-3 py-1 text-[11px] font-mono-code text-[color:var(--text-secondary)]">
                   <div className="flex items-center gap-1.5">
                     <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399] animate-pulse" />
-                    <span className="text-[#f4e2b8] font-bold">VISTA PREVIA EN VIVO</span>
-                    <span className="hidden sm:inline text-[#738271]">
+                    <span className="text-[color:var(--accent-soft)] font-bold">VISTA PREVIA EN VIVO</span>
+                    <span className="hidden sm:inline text-[color:var(--text-muted)]">
                       (Progreso actualizado línea por línea)
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setPreviewKey((k) => k + 1)}
-                      className="p-1 text-[#8e9c8c] hover:text-[#f4e2b8]"
+                      className="p-1 text-[color:var(--text-secondary)] hover:text-[color:var(--accent-soft)]"
                       title="Refrescar vista previa"
                     >
                       <RefreshCw className="h-3 w-3" />
                     </button>
                     <button
                       onClick={() => setIsFullScreenPreview(true)}
-                      className="flex items-center gap-1 rounded bg-[#c5a059]/20 px-2 py-0.5 text-[10px] font-semibold text-[#f4e2b8] hover:bg-[#c5a059]/40 transition-colors"
+                      className="flex items-center gap-1 rounded bg-[color:var(--accent)]/20 px-2 py-0.5 text-[10px] font-semibold text-[color:var(--accent-soft)] hover:bg-[color:var(--accent)]/40 transition-colors"
                       title="Agrandar a Full Screen"
                     >
                       <Maximize2 className="h-3 w-3" />
@@ -881,24 +881,24 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
             <>
               {/* Tab 1: Terminal Logs View (DEFAULT TAB) */}
               {activeTab === 'terminal' && (
-                <div className="flex h-full flex-col overflow-y-auto bg-[#040805] p-3 sm:p-4 font-mono-code text-xs leading-relaxed terminal-grid">
+                <div className="flex h-full flex-col overflow-y-auto bg-[color:var(--surface-0)] p-3 sm:p-4 font-mono-code text-xs leading-relaxed terminal-grid">
                   {terminalLogs.map((log, i) => (
                     <div key={i} className="mb-2">
                       {log.type === 'input' && (
-                        <div className="text-[#f4e2b8] font-semibold">{log.text}</div>
+                        <div className="text-[color:var(--accent-soft)] font-semibold">{log.text}</div>
                       )}
                       {log.type === 'stdout' && (
-                        <div className="whitespace-pre-wrap text-[#98e6a5]">{log.text}</div>
+                        <div className="whitespace-pre-wrap text-[color:var(--accent)]">{log.text}</div>
                       )}
                       {log.type === 'stderr' && (
                         <div className="whitespace-pre-wrap text-red-400 font-semibold">{log.text}</div>
                       )}
                       {log.type === 'system' && (
-                        <div className="whitespace-pre-wrap text-[#d8b66f]/90 italic">{log.text}</div>
+                        <div className="whitespace-pre-wrap text-[color:var(--accent-hover)]/90 italic">{log.text}</div>
                       )}
                       {log.type === 'thinking' && (
-                        <div className="flex items-start gap-1.5 text-[#c5a059] bg-[#c5a059]/10 p-2 rounded border border-[#c5a059]/20">
-                          <Brain className="h-4 w-4 shrink-0 text-[#f4e2b8] animate-pulse" />
+                        <div className="flex items-start gap-1.5 text-[color:var(--accent)] bg-[color:var(--accent)]/10 p-2 rounded border border-[color:var(--accent)]/20">
+                          <Brain className="h-4 w-4 shrink-0 text-[color:var(--accent-soft)] animate-pulse" />
                           <div className="whitespace-pre-wrap text-[11px]">{log.text}</div>
                         </div>
                       )}
@@ -906,12 +906,12 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
                   ))}
 
                   {/* Quick Shortcut Buttons in Terminal after generation */}
-                  <div className="my-2 flex flex-wrap items-center gap-2 pt-2 border-t border-[#c5a059]/15">
+                  <div className="my-2 flex flex-wrap items-center gap-2 pt-2 border-t border-[color:var(--accent)]/15">
                     <button
                       onClick={() => setActiveTab('preview')}
-                      className="flex items-center gap-1.5 rounded-lg border border-[#c5a059]/30 bg-[#c5a059]/15 px-3 py-1 text-[11px] font-semibold text-[#f4e2b8] hover:bg-[#c5a059]/30 transition-all"
+                      className="flex items-center gap-1.5 rounded-lg border border-[color:var(--accent)]/30 bg-[color:var(--accent)]/15 px-3 py-1 text-[11px] font-semibold text-[color:var(--accent-soft)] hover:bg-[color:var(--accent)]/30 transition-all"
                     >
-                      <Eye className="h-3 w-3 text-[#c5a059]" />
+                      <Eye className="h-3 w-3 text-[color:var(--accent)]" />
                       <span>Abrir Vista Previa</span>
                     </button>
                     <button
@@ -923,7 +923,7 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
                     </button>
                     <button
                       onClick={() => setIsSplitView(true)}
-                      className="flex items-center gap-1.5 rounded-lg border border-[#c5a059]/20 bg-white/5 px-3 py-1 text-[11px] text-[#d8b66f] hover:bg-white/10 transition-all"
+                      className="flex items-center gap-1.5 rounded-lg border border-[color:var(--accent)]/20 bg-white/5 px-3 py-1 text-[11px] text-[color:var(--accent-hover)] hover:bg-white/10 transition-all"
                     >
                       <Columns className="h-3 w-3" />
                       <span>Vista Dividida (Línea por línea)</span>
@@ -931,8 +931,8 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
                   </div>
 
                   {isProcessing && (
-                    <div className="flex items-center gap-2 text-[#d8b66f] animate-pulse my-2">
-                      <Sparkles className="h-3.5 w-3.5 animate-spin text-[#c5a059]" />
+                    <div className="flex items-center gap-2 text-[color:var(--accent-hover)] animate-pulse my-2">
+                      <Sparkles className="h-3.5 w-3.5 animate-spin text-[color:var(--accent)]" />
                       <span>APS HARD WORK está procesando el flujo de datos...</span>
                     </div>
                   )}
@@ -942,20 +942,20 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
 
               {/* Tab 2: Code Editor View */}
               {activeTab === 'editor' && (
-                <div className="flex h-full flex-col overflow-hidden bg-[#050a07]">
+                <div className="flex h-full flex-col overflow-hidden bg-[color:var(--surface-0)]">
                   {/* Editor status strip */}
-                  <div className="flex items-center justify-between border-b border-[#c5a059]/15 bg-[#0a140f] px-3 py-1.5 text-xs font-mono-code text-[#8e9c8c]">
+                  <div className="flex items-center justify-between border-b border-[color:var(--accent)]/15 bg-[color:var(--surface-1)] px-3 py-1.5 text-xs font-mono-code text-[color:var(--text-secondary)]">
                     <div className="flex items-center gap-2">
-                      <FileCode className="h-3.5 w-3.5 text-[#c5a059]" />
-                      <span className="text-[#fbf5e8] font-semibold">{currentFile?.filename}</span>
-                      <span className="text-[11px] text-[#738271]">
+                      <FileCode className="h-3.5 w-3.5 text-[color:var(--accent)]" />
+                      <span className="text-[color:var(--text-primary)] font-semibold">{currentFile?.filename}</span>
+                      <span className="text-[11px] text-[color:var(--text-muted)]">
                         ({activeLineCount} líneas de código)
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => setIsSplitView(true)}
-                        className="flex items-center gap-1 rounded bg-[#c5a059]/15 px-2 py-0.5 text-[11px] text-[#f4e2b8] hover:bg-[#c5a059]/30 transition-all"
+                        className="flex items-center gap-1 rounded bg-[color:var(--accent)]/15 px-2 py-0.5 text-[11px] text-[color:var(--accent-soft)] hover:bg-[color:var(--accent)]/30 transition-all"
                         title="Dividir pantalla para ver la vista previa al mismo tiempo"
                       >
                         <Columns className="h-3 w-3 text-emerald-400" />
@@ -963,7 +963,7 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
                       </button>
                       <button
                         onClick={() => setIsFullScreenPreview(true)}
-                        className="flex items-center gap-1 rounded bg-[#c5a059]/15 px-2 py-0.5 text-[11px] text-[#f4e2b8] hover:bg-[#c5a059]/30 transition-all"
+                        className="flex items-center gap-1 rounded bg-[color:var(--accent)]/15 px-2 py-0.5 text-[11px] text-[color:var(--accent-soft)] hover:bg-[color:var(--accent)]/30 transition-all"
                       >
                         <Maximize2 className="h-3 w-3" />
                         <span>Full Screen Preview</span>
@@ -971,9 +971,9 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
                     </div>
                   </div>
 
-                  <div className="flex flex-1 overflow-auto p-4 font-mono-code text-xs md:text-sm leading-relaxed text-[#dbe5da]">
+                  <div className="flex flex-1 overflow-auto p-4 font-mono-code text-xs md:text-sm leading-relaxed text-[color:var(--surface-4)]">
                     {/* Line numbers column */}
-                    <div className="select-none pr-4 text-right text-[#455243]">
+                    <div className="select-none pr-4 text-right text-[color:var(--surface-4)]">
                       {currentFile?.code.split('\n').map((_, i) => (
                         <div key={i}>{i + 1}</div>
                       ))}
@@ -993,7 +993,7 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
                       }}
                       placeholder="// Escribe aquí tu código línea por línea..."
                       spellCheck={false}
-                      className="flex-1 resize-none bg-transparent font-mono-code outline-none text-[#e8f0e6] selection:bg-[#c5a059]/30"
+                      className="flex-1 resize-none bg-transparent font-mono-code outline-none text-[color:var(--text-primary)] selection:bg-[color:var(--accent)]/30"
                     />
                   </div>
                 </div>
@@ -1001,12 +1001,12 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
 
               {/* Tab 3: Live Preview Tab with Full Screen Button */}
               {activeTab === 'preview' && (
-                <div className="flex h-full flex-col bg-[#0b1510] overflow-hidden">
-                  <div className="flex items-center justify-between border-b border-[#c5a059]/15 bg-[#0a140f] px-3 py-1.5 text-xs font-mono-code">
+                <div className="flex h-full flex-col bg-[color:var(--surface-2)] overflow-hidden">
+                  <div className="flex items-center justify-between border-b border-[color:var(--accent)]/15 bg-[color:var(--surface-1)] px-3 py-1.5 text-xs font-mono-code">
                     <div className="flex items-center gap-2">
                       <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] animate-pulse" />
-                      <span className="text-[#f4e2b8] font-bold">VISTA PREVIA EN VIVO</span>
-                      <span className="text-[#8e9c8c] text-[11px] hidden sm:inline">
+                      <span className="text-[color:var(--accent-soft)] font-bold">VISTA PREVIA EN VIVO</span>
+                      <span className="text-[color:var(--text-secondary)] text-[11px] hidden sm:inline">
                         — Sincronizado en tiempo real
                       </span>
                     </div>
@@ -1014,7 +1014,7 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => setPreviewKey((k) => k + 1)}
-                        className="flex items-center gap-1 rounded bg-white/5 px-2 py-1 text-xs text-[#8e9c8c] hover:text-[#f4e2b8] transition-colors"
+                        className="flex items-center gap-1 rounded bg-white/5 px-2 py-1 text-xs text-[color:var(--text-secondary)] hover:text-[color:var(--accent-soft)] transition-colors"
                         title="Recargar vista previa"
                       >
                         <RefreshCw className="h-3 w-3" />
@@ -1024,10 +1024,10 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
                       {/* Requirement 2: Dedicated Full Screen button inside preview */}
                       <button
                         onClick={() => setIsFullScreenPreview(true)}
-                        className="flex items-center gap-1.5 rounded-lg border border-[#c5a059]/40 bg-[#c5a059]/25 px-2.5 py-1 text-xs font-semibold text-[#fbf5e8] hover:bg-[#c5a059]/40 active:scale-95 transition-all shadow-sm"
+                        className="flex items-center gap-1.5 rounded-lg border border-[color:var(--accent)]/40 bg-[color:var(--accent)]/25 px-2.5 py-1 text-xs font-semibold text-[color:var(--text-primary)] hover:bg-[color:var(--accent)]/40 active:scale-95 transition-all shadow-sm"
                         title="Agrandar vista previa a pantalla completa"
                       >
-                        <Maximize2 className="h-3.5 w-3.5 text-[#f4e2b8]" />
+                        <Maximize2 className="h-3.5 w-3.5 text-[color:var(--accent-soft)]" />
                         <span>Agrandar a Full Screen</span>
                       </button>
                     </div>
@@ -1049,7 +1049,7 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
         </div>
 
         {/* Bottom CLI Prompt Input Bar */}
-        <div className="border-t border-[#c5a059]/25 bg-[#0a140f] p-2 sm:p-3 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        <div className="border-t border-[color:var(--accent)]/25 bg-[color:var(--surface-1)] p-2 sm:p-3 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
           {/* Uploaded attachments in CLI */}
           <input
             ref={fileInputRef}
@@ -1064,14 +1064,14 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
               {cliAttachments.map((att) => (
                 <div
                   key={att.id}
-                  className="flex items-center gap-1.5 rounded-md border border-[#c5a059]/30 bg-[#122218] px-2 py-0.5 text-xs text-[#f4e2b8]"
+                  className="flex items-center gap-1.5 rounded-md border border-[color:var(--accent)]/30 bg-[color:var(--surface-3)] px-2 py-0.5 text-xs text-[color:var(--accent-soft)]"
                 >
                   <span className="truncate max-w-[100px] sm:max-w-[120px]">{att.name}</span>
                   <button
                     onClick={() =>
                       setCliAttachments((prev) => prev.filter((a) => a.id !== att.id))
                     }
-                    className="text-[#8e9c8c] hover:text-red-400"
+                    className="text-[color:var(--text-secondary)] hover:text-red-400"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -1080,19 +1080,19 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
             </div>
           )}
 
-          <div className="flex items-center gap-1.5 sm:gap-2 rounded-xl border border-[#c5a059]/30 bg-[#060b08] px-2.5 sm:px-3 py-1.5 sm:py-2 shadow-inner">
+          <div className="flex items-center gap-1.5 sm:gap-2 rounded-xl border border-[color:var(--accent)]/30 bg-[color:var(--surface-0)] px-2.5 sm:px-3 py-1.5 sm:py-2 shadow-inner">
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="rounded-lg p-1 text-[#8e9c8c] hover:bg-white/10 hover:text-[#d8b66f]"
+              className="rounded-lg p-1 text-[color:var(--text-secondary)] hover:bg-white/10 hover:text-[color:var(--accent-hover)]"
               title="Adjuntar datos / imágenes para procesar"
             >
               <Paperclip className="h-4 w-4" />
             </button>
 
-            <span className="font-mono-code text-xs font-bold text-[#c5a059] hidden sm:inline shrink-0">
+            <span className="font-mono-code text-xs font-bold text-[color:var(--accent)] hidden sm:inline shrink-0">
               aps@hardwork:~$
             </span>
-            <span className="font-mono-code text-xs font-bold text-[#c5a059] sm:hidden shrink-0">
+            <span className="font-mono-code text-xs font-bold text-[color:var(--accent)] sm:hidden shrink-0">
               ~$
             </span>
 
@@ -1103,7 +1103,7 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
               onChange={(e) => setCommand(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Orden a la IA (ej: 'crea un juego de snake', 'calculadora')..."
-              className="flex-1 min-w-0 bg-transparent font-mono-code text-xs sm:text-sm text-[#f4e2b8] placeholder-[#576954] focus:outline-none"
+              className="flex-1 min-w-0 bg-transparent font-mono-code text-xs sm:text-sm text-[color:var(--accent-soft)] placeholder-[color:var(--text-muted)] focus:outline-none"
             />
 
             <button
@@ -1111,8 +1111,8 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
               disabled={isProcessing || !command.trim()}
               className={`flex items-center gap-1 sm:gap-1.5 rounded-lg px-2.5 sm:px-3 py-1.5 text-xs font-mono-code font-semibold transition-all shrink-0 ${
                 command.trim() && !isProcessing
-                  ? 'border border-[#c5a059]/50 bg-[#c5a059]/30 text-[#fbf5e8] shadow-sm hover:bg-[#c5a059]/50 hover:scale-105 active:scale-95'
-                  : 'text-[#485746] cursor-not-allowed'
+                  ? 'border border-[color:var(--accent)]/50 bg-[color:var(--accent)]/30 text-[color:var(--text-primary)] shadow-sm hover:bg-[color:var(--accent)]/50 hover:scale-105 active:scale-95'
+                  : 'text-[color:var(--surface-4)] cursor-not-allowed'
               }`}
             >
               <CornerDownLeft className="h-3.5 w-3.5" />
@@ -1125,33 +1125,33 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
 
       {/* REQUIREMENT 2: FULL SCREEN PREVIEW OVERLAY */}
       {isFullScreenPreview && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-[#070d09] animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex flex-col bg-[color:var(--surface-0)] animate-in fade-in duration-200">
           {/* Full Screen Top Control Bar */}
-          <div className="flex items-center justify-between border-b border-[#c5a059]/30 bg-[#0c1611] px-3 sm:px-5 py-2.5 sm:py-3 shadow-2xl">
+          <div className="flex items-center justify-between border-b border-[color:var(--accent)]/30 bg-[color:var(--surface-2)] px-3 sm:px-5 py-2.5 sm:py-3 shadow-2xl">
             <div className="flex items-center gap-2 sm:gap-3">
               <span className="flex h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full bg-emerald-400 shadow-[0_0_10px_#34d399] animate-pulse" />
               <div className="flex flex-col">
-                <span className="font-serif-luxury text-xs sm:text-sm font-bold text-[#f4e2b8] tracking-wider">
+                <span className="font-serif-luxury text-xs sm:text-sm font-bold text-[color:var(--accent-soft)] tracking-wider">
                   VISTA PREVIA — PANTALLA COMPLETA
                 </span>
-                <span className="text-[10px] text-[#8e9c8c] hidden xs:block">
+                <span className="text-[10px] text-[color:var(--text-secondary)] hidden xs:block">
                   Progreso sincronizado en tiempo real línea por línea
                 </span>
               </div>
-              <span className="hidden md:inline-block rounded-md border border-[#c5a059]/30 bg-[#c5a059]/15 px-2 py-0.5 text-xs font-mono-code text-[#fbf5e8]">
+              <span className="hidden md:inline-block rounded-md border border-[color:var(--accent)]/30 bg-[color:var(--accent)]/15 px-2 py-0.5 text-xs font-mono-code text-[color:var(--text-primary)]">
                 {currentFile?.filename || 'index.html'}
               </span>
             </div>
 
             <div className="flex items-center gap-2">
               {/* Responsive viewport selector */}
-              <div className="hidden sm:flex items-center rounded-lg border border-[#c5a059]/20 bg-[#060c08] p-0.5 text-xs mr-2">
+              <div className="hidden sm:flex items-center rounded-lg border border-[color:var(--accent)]/20 bg-[color:var(--surface-0)] p-0.5 text-xs mr-2">
                 <button
                   onClick={() => setPreviewViewport('full')}
                   className={`flex items-center gap-1 rounded px-2 py-1 transition-colors ${
                     previewViewport === 'full'
-                      ? 'bg-[#c5a059]/20 text-[#f4e2b8] font-semibold'
-                      : 'text-[#8e9c8c] hover:text-[#f4e2b8]'
+                      ? 'bg-[color:var(--accent)]/20 text-[color:var(--accent-soft)] font-semibold'
+                      : 'text-[color:var(--text-secondary)] hover:text-[color:var(--accent-soft)]'
                   }`}
                   title="100% Pantalla"
                 >
@@ -1162,8 +1162,8 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
                   onClick={() => setPreviewViewport('tablet')}
                   className={`flex items-center gap-1 rounded px-2 py-1 transition-colors ${
                     previewViewport === 'tablet'
-                      ? 'bg-[#c5a059]/20 text-[#f4e2b8] font-semibold'
-                      : 'text-[#8e9c8c] hover:text-[#f4e2b8]'
+                      ? 'bg-[color:var(--accent)]/20 text-[color:var(--accent-soft)] font-semibold'
+                      : 'text-[color:var(--text-secondary)] hover:text-[color:var(--accent-soft)]'
                   }`}
                   title="Vista Tablet (768px)"
                 >
@@ -1173,8 +1173,8 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
                   onClick={() => setPreviewViewport('mobile')}
                   className={`flex items-center gap-1 rounded px-2 py-1 transition-colors ${
                     previewViewport === 'mobile'
-                      ? 'bg-[#c5a059]/20 text-[#f4e2b8] font-semibold'
-                      : 'text-[#8e9c8c] hover:text-[#f4e2b8]'
+                      ? 'bg-[color:var(--accent)]/20 text-[color:var(--accent-soft)] font-semibold'
+                      : 'text-[color:var(--text-secondary)] hover:text-[color:var(--accent-soft)]'
                   }`}
                   title="Vista Móvil (390px)"
                 >
@@ -1185,7 +1185,7 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
 
               <button
                 onClick={() => setPreviewKey((k) => k + 1)}
-                className="flex items-center gap-1.5 rounded-lg border border-[#c5a059]/25 bg-[#122218] px-2.5 sm:px-3 py-1.5 text-xs text-[#f4e2b8] hover:bg-[#c5a059]/20 transition-all"
+                className="flex items-center gap-1.5 rounded-lg border border-[color:var(--accent)]/25 bg-[color:var(--surface-3)] px-2.5 sm:px-3 py-1.5 text-xs text-[color:var(--accent-soft)] hover:bg-[color:var(--accent)]/20 transition-all"
                 title="Recargar vista previa"
               >
                 <RefreshCw className="h-3.5 w-3.5" />
@@ -1194,13 +1194,13 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
 
               <button
                 onClick={() => setIsFullScreenPreview(false)}
-                className="flex items-center gap-1.5 rounded-lg border border-[#c5a059]/40 bg-[#c5a059]/25 px-3 py-1.5 text-xs font-semibold text-[#fbf5e8] hover:bg-[#c5a059]/40 active:scale-95 transition-all shadow-md"
+                className="flex items-center gap-1.5 rounded-lg border border-[color:var(--accent)]/40 bg-[color:var(--accent)]/25 px-3 py-1.5 text-xs font-semibold text-[color:var(--text-primary)] hover:bg-[color:var(--accent)]/40 active:scale-95 transition-all shadow-md"
                 title="Salir de pantalla completa (Esc)"
               >
                 <Minimize2 className="h-4 w-4" />
                 <span>
                   Salir <span className="hidden sm:inline">de Full Screen</span>
-                  <span className="text-[10px] text-[#8e9c8c] font-mono-code ml-1 hidden md:inline">
+                  <span className="text-[10px] text-[color:var(--text-secondary)] font-mono-code ml-1 hidden md:inline">
                     (Esc)
                   </span>
                 </span>
@@ -1209,13 +1209,13 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
           </div>
 
           {/* Full Screen Iframe Container with optional viewport container */}
-          <div className="flex-1 w-full bg-[#050a07] flex items-center justify-center p-0 overflow-hidden">
+          <div className="flex-1 w-full bg-[color:var(--surface-0)] flex items-center justify-center p-0 overflow-hidden">
             <div
               className={`h-full transition-all duration-300 bg-white ${
                 previewViewport === 'mobile'
-                  ? 'w-[390px] shadow-2xl border-x border-[#c5a059]/30 rounded-xl my-4 overflow-hidden'
+                  ? 'w-[390px] shadow-2xl border-x border-[color:var(--accent)]/30 rounded-xl my-4 overflow-hidden'
                   : previewViewport === 'tablet'
-                  ? 'w-[768px] shadow-2xl border-x border-[#c5a059]/30 rounded-xl my-4 overflow-hidden'
+                  ? 'w-[768px] shadow-2xl border-x border-[color:var(--accent)]/30 rounded-xl my-4 overflow-hidden'
                   : 'w-full'
               }`}
             >

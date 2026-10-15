@@ -59,22 +59,22 @@ export const LegalModals: React.FC<LegalModalsProps> = ({
       {/* 1. COOKIE BANNER (if not accepted yet) */}
       {!cookiePrefs.accepted && (
         <div className="fixed bottom-4 left-4 right-4 z-40 mx-auto max-w-4xl">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border border-[#c5a059]/40 bg-[#09110c]/90 p-4 shadow-2xl backdrop-blur-2xl">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border border-[color:var(--accent)]/40 bg-[color:var(--surface-1)]/90 p-4 shadow-2xl backdrop-blur-2xl">
             <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#c5a059]/30 bg-[#16271c] text-[#f4e2b8]">
-                <Cookie className="h-5 w-5 text-[#c5a059]" />
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[color:var(--accent)]/30 bg-[color:var(--surface-3)] text-[color:var(--accent-soft)]">
+                <Cookie className="h-5 w-5 text-[color:var(--accent)]" />
               </div>
               <div className="text-xs">
-                <span className="font-serif-luxury font-bold text-[#f4e2b8] block mb-0.5">
+                <span className="font-serif-luxury font-bold text-[color:var(--accent-soft)] block mb-0.5">
                   Privacidad & Gestión de Cookies en APS INTELLIGENCE
                 </span>
-                <p className="text-[#a7b3a5] leading-relaxed">
+                <p className="text-[color:var(--text-secondary)] leading-relaxed">
                   Utilizamos cookies esenciales y de personalización para recordar tus ajustes visuales, temas y sesiones en tu dispositivo. Consulta nuestros{' '}
                   <button
                     onClick={() => {
                       /* open terms */
                     }}
-                    className="text-[#c5a059] underline hover:text-[#f4e2b8]"
+                    className="text-[color:var(--accent)] underline hover:text-[color:var(--accent-soft)]"
                   >
                     Términos y Condiciones
                   </button>.
@@ -85,19 +85,19 @@ export const LegalModals: React.FC<LegalModalsProps> = ({
             <div className="flex w-full sm:w-auto items-center justify-end gap-2 shrink-0">
               <button
                 onClick={() => setShowCookieSettings(true)}
-                className="rounded-xl border border-[#c5a059]/30 bg-white/5 px-3 py-1.5 text-xs text-[#a7b3a5] hover:bg-white/10 hover:text-white transition-colors"
+                className="rounded-xl border border-[color:var(--accent)]/30 bg-white/5 px-3 py-1.5 text-xs text-[color:var(--text-secondary)] hover:bg-white/10 hover:text-white transition-colors"
               >
                 Preferencias
               </button>
               <button
                 onClick={handleRejectNonEssential}
-                className="rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-[#a7b3a5] hover:bg-white/10 hover:text-white transition-colors"
+                className="rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-[color:var(--text-secondary)] hover:bg-white/10 hover:text-white transition-colors"
               >
                 Solo Esenciales
               </button>
               <button
                 onClick={handleAcceptAll}
-                className="rounded-xl border border-[#c5a059]/50 bg-gradient-to-r from-[#c5a059] to-[#d8b66f] px-4 py-1.5 text-xs font-serif-luxury font-bold text-[#070c09] shadow-md hover:brightness-110 transition-all"
+                className="rounded-xl border border-[color:var(--accent)]/50 bg-gradient-to-r from-[color:var(--accent)] to-[color:var(--accent-hover)] px-4 py-1.5 text-xs font-serif-luxury font-bold text-[color:var(--on-accent)] shadow-md hover:brightness-110 transition-all"
               >
                 Aceptar Todas
               </button>
@@ -113,17 +113,17 @@ export const LegalModals: React.FC<LegalModalsProps> = ({
             className="fixed inset-0 bg-black/80 backdrop-blur-md"
             onClick={() => setShowCookieSettings(false)}
           />
-          <div className="relative z-10 w-full max-w-lg rounded-3xl border border-[#c5a059]/30 bg-[#09110c]/95 p-6 shadow-2xl backdrop-blur-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-[#c5a059]/20 pb-3">
+          <div className="relative z-10 w-full max-w-lg rounded-3xl border border-[color:var(--accent)]/30 bg-[color:var(--surface-1)]/95 p-6 shadow-2xl backdrop-blur-2xl space-y-5">
+            <div className="flex items-center justify-between border-b border-[color:var(--accent)]/20 pb-3">
               <div className="flex items-center gap-2.5">
-                <Cookie className="h-5 w-5 text-[#c5a059]" />
-                <h3 className="font-serif-luxury text-base font-bold text-[#f4e2b8]">
+                <Cookie className="h-5 w-5 text-[color:var(--accent)]" />
+                <h3 className="font-serif-luxury text-base font-bold text-[color:var(--accent-soft)]">
                   Configuración de Cookies
                 </h3>
               </div>
               <button
                 onClick={() => setShowCookieSettings(false)}
-                className="rounded-lg p-1.5 text-[#8e9c8c] hover:bg-white/10 hover:text-white"
+                className="rounded-lg p-1.5 text-[color:var(--text-secondary)] hover:bg-white/10 hover:text-white"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -131,10 +131,10 @@ export const LegalModals: React.FC<LegalModalsProps> = ({
 
             <div className="space-y-3.5 text-xs">
               {/* Necessary */}
-              <div className="flex items-center justify-between rounded-xl border border-[#c5a059]/20 bg-[#0e1913]/70 p-3">
+              <div className="flex items-center justify-between rounded-xl border border-[color:var(--accent)]/20 bg-[color:var(--surface-2)]/70 p-3">
                 <div>
-                  <span className="font-semibold text-[#f4e2b8] block">Cookies Esenciales</span>
-                  <p className="text-[#8e9c8c]">
+                  <span className="font-semibold text-[color:var(--accent-soft)] block">Cookies Esenciales</span>
+                  <p className="text-[color:var(--text-secondary)]">
                     Necesarias para la autenticación, seguridad y funcionamiento técnico básico.
                   </p>
                 </div>
@@ -144,10 +144,10 @@ export const LegalModals: React.FC<LegalModalsProps> = ({
               </div>
 
               {/* Personalization */}
-              <div className="flex items-center justify-between rounded-xl border border-[#c5a059]/20 bg-[#0e1913]/70 p-3">
+              <div className="flex items-center justify-between rounded-xl border border-[color:var(--accent)]/20 bg-[color:var(--surface-2)]/70 p-3">
                 <div className="pr-4">
-                  <span className="font-semibold text-[#f4e2b8] block">Personalización Visual</span>
-                  <p className="text-[#8e9c8c]">
+                  <span className="font-semibold text-[color:var(--accent-soft)] block">Personalización Visual</span>
+                  <p className="text-[color:var(--text-secondary)]">
                     Permiten almacenar tus colores, gradientes, wallpapers, globos y efectos de cristal líquido.
                   </p>
                 </div>
@@ -157,15 +157,15 @@ export const LegalModals: React.FC<LegalModalsProps> = ({
                   onChange={(e) =>
                     setTempPrefs((p) => ({ ...p, personalization: e.target.checked }))
                   }
-                  className="accent-[#c5a059] h-4 w-4 cursor-pointer"
+                  className="accent-[color:var(--accent)] h-4 w-4 cursor-pointer"
                 />
               </div>
 
               {/* Performance */}
-              <div className="flex items-center justify-between rounded-xl border border-[#c5a059]/20 bg-[#0e1913]/70 p-3">
+              <div className="flex items-center justify-between rounded-xl border border-[color:var(--accent)]/20 bg-[color:var(--surface-2)]/70 p-3">
                 <div className="pr-4">
-                  <span className="font-semibold text-[#f4e2b8] block">Rendimiento & Cómputo</span>
-                  <p className="text-[#8e9c8c]">
+                  <span className="font-semibold text-[color:var(--accent-soft)] block">Rendimiento & Cómputo</span>
+                  <p className="text-[color:var(--text-secondary)]">
                     Medición anónima de latencia de modelos APS y rendimiento de ejecución en CLI.
                   </p>
                 </div>
@@ -175,21 +175,21 @@ export const LegalModals: React.FC<LegalModalsProps> = ({
                   onChange={(e) =>
                     setTempPrefs((p) => ({ ...p, performance: e.target.checked }))
                   }
-                  className="accent-[#c5a059] h-4 w-4 cursor-pointer"
+                  className="accent-[color:var(--accent)] h-4 w-4 cursor-pointer"
                 />
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 border-t border-[#c5a059]/15 pt-4">
+            <div className="flex justify-end gap-2 border-t border-[color:var(--accent)]/15 pt-4">
               <button
                 onClick={handleRejectNonEssential}
-                className="rounded-xl border border-white/10 px-4 py-2 text-xs text-[#a7b3a5] hover:bg-white/10 hover:text-white"
+                className="rounded-xl border border-white/10 px-4 py-2 text-xs text-[color:var(--text-secondary)] hover:bg-white/10 hover:text-white"
               >
                 Rechazar Opcionales
               </button>
               <button
                 onClick={handleSaveCustom}
-                className="rounded-xl border border-[#c5a059]/50 bg-gradient-to-r from-[#c5a059] to-[#d8b66f] px-5 py-2 text-xs font-serif-luxury font-bold text-[#070c09] shadow"
+                className="rounded-xl border border-[color:var(--accent)]/50 bg-gradient-to-r from-[color:var(--accent)] to-[color:var(--accent-hover)] px-5 py-2 text-xs font-serif-luxury font-bold text-[color:var(--on-accent)] shadow"
               >
                 Guardar Preferencias
               </button>
@@ -202,27 +202,27 @@ export const LegalModals: React.FC<LegalModalsProps> = ({
       {isTermsOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-black/80 backdrop-blur-md" onClick={onCloseTerms} />
-          <div className="relative z-10 flex h-[85vh] w-full max-w-2xl flex-col rounded-3xl border border-[#c5a059]/30 bg-[#09110c]/95 shadow-2xl backdrop-blur-2xl">
+          <div className="relative z-10 flex h-[85vh] w-full max-w-2xl flex-col rounded-3xl border border-[color:var(--accent)]/30 bg-[color:var(--surface-1)]/95 shadow-2xl backdrop-blur-2xl">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-[#c5a059]/20 bg-[#0e1a14]/90 px-6 py-4">
+            <div className="flex items-center justify-between border-b border-[color:var(--accent)]/20 bg-[color:var(--surface-2)]/90 px-6 py-4">
               <div className="flex items-center gap-2.5">
-                <FileText className="h-5 w-5 text-[#c5a059]" />
-                <h3 className="font-serif-luxury text-base font-bold text-[#f4e2b8]">
+                <FileText className="h-5 w-5 text-[color:var(--accent)]" />
+                <h3 className="font-serif-luxury text-base font-bold text-[color:var(--accent-soft)]">
                   TÉRMINOS Y CONDICIONES DEL SERVICIO
                 </h3>
               </div>
               <button
                 onClick={onCloseTerms}
-                className="rounded-xl p-1.5 text-[#8e9c8c] hover:bg-white/10 hover:text-white transition-colors"
+                className="rounded-xl p-1.5 text-[color:var(--text-secondary)] hover:bg-white/10 hover:text-white transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             {/* Scrollable Terms Content */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4 text-xs leading-relaxed text-[#c2ccbf]">
-              <div className="rounded-xl border border-[#c5a059]/20 bg-[#0d1611]/60 p-4">
-                <h4 className="font-serif-luxury font-bold text-[#f4e2b8] mb-1">
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 text-xs leading-relaxed text-[color:var(--text-secondary)]">
+              <div className="rounded-xl border border-[color:var(--accent)]/20 bg-[color:var(--surface-2)]/60 p-4">
+                <h4 className="font-serif-luxury font-bold text-[color:var(--accent-soft)] mb-1">
                   1. Aceptación del Servicio APS INTELLIGENCE
                 </h4>
                 <p>
@@ -230,8 +230,8 @@ export const LegalModals: React.FC<LegalModalsProps> = ({
                 </p>
               </div>
 
-              <div className="rounded-xl border border-[#c5a059]/20 bg-[#0d1611]/60 p-4">
-                <h4 className="font-serif-luxury font-bold text-[#f4e2b8] mb-1">
+              <div className="rounded-xl border border-[color:var(--accent)]/20 bg-[color:var(--surface-2)]/60 p-4">
+                <h4 className="font-serif-luxury font-bold text-[color:var(--accent-soft)] mb-1">
                   2. Modelos Cognitivos y Uso de Cómputo
                 </h4>
                 <p>
@@ -239,8 +239,8 @@ export const LegalModals: React.FC<LegalModalsProps> = ({
                 </p>
               </div>
 
-              <div className="rounded-xl border border-[#c5a059]/20 bg-[#0d1611]/60 p-4">
-                <h4 className="font-serif-luxury font-bold text-[#f4e2b8] mb-1">
+              <div className="rounded-xl border border-[color:var(--accent)]/20 bg-[color:var(--surface-2)]/60 p-4">
+                <h4 className="font-serif-luxury font-bold text-[color:var(--accent-soft)] mb-1">
                   3. Privacidad y Tratamiento de Archivos e Imágenes
                 </h4>
                 <p>
@@ -248,8 +248,8 @@ export const LegalModals: React.FC<LegalModalsProps> = ({
                 </p>
               </div>
 
-              <div className="rounded-xl border border-[#c5a059]/20 bg-[#0d1611]/60 p-4">
-                <h4 className="font-serif-luxury font-bold text-[#f4e2b8] mb-1">
+              <div className="rounded-xl border border-[color:var(--accent)]/20 bg-[color:var(--surface-2)]/60 p-4">
+                <h4 className="font-serif-luxury font-bold text-[color:var(--accent-soft)] mb-1">
                   4. Propiedad Intelectual del Código Generado
                 </h4>
                 <p>
@@ -257,8 +257,8 @@ export const LegalModals: React.FC<LegalModalsProps> = ({
                 </p>
               </div>
 
-              <div className="rounded-xl border border-[#c5a059]/20 bg-[#0d1611]/60 p-4">
-                <h4 className="font-serif-luxury font-bold text-[#f4e2b8] mb-1">
+              <div className="rounded-xl border border-[color:var(--accent)]/20 bg-[color:var(--surface-2)]/60 p-4">
+                <h4 className="font-serif-luxury font-bold text-[color:var(--accent-soft)] mb-1">
                   5. Personalización y Almacenamiento Local
                 </h4>
                 <p>
@@ -268,11 +268,11 @@ export const LegalModals: React.FC<LegalModalsProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between border-t border-[#c5a059]/20 bg-[#0e1a14]/90 px-6 py-4">
-              <span className="text-[11px] text-[#8e9c8c]">Última actualización: 2026 · Versión 3.8</span>
+            <div className="flex items-center justify-between border-t border-[color:var(--accent)]/20 bg-[color:var(--surface-2)]/90 px-6 py-4">
+              <span className="text-[11px] text-[color:var(--text-secondary)]">Última actualización: 2026 · Versión 3.8</span>
               <button
                 onClick={onCloseTerms}
-                className="rounded-xl border border-[#c5a059]/50 bg-gradient-to-r from-[#c5a059] to-[#d8b66f] px-5 py-2 text-xs font-serif-luxury font-bold text-[#070c09] shadow"
+                className="rounded-xl border border-[color:var(--accent)]/50 bg-gradient-to-r from-[color:var(--accent)] to-[color:var(--accent-hover)] px-5 py-2 text-xs font-serif-luxury font-bold text-[color:var(--on-accent)] shadow"
               >
                 He Leído y Acepto
               </button>

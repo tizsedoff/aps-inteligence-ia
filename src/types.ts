@@ -93,6 +93,9 @@ export interface VisualCustomization {
   inputBarTextColor: string;
   modelSelectorGradient: string;
   accentColor: string;
+  accentColor2?: string; // segundo color de acento (degradados, titulos)
+  accentColor2Soft?: string;
+  themeId?: string; // id del preset activo
 
   // Typography
   fontScale: 'sm' | 'md' | 'lg';

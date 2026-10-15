@@ -132,7 +132,7 @@ export const InputDock: React.FC<InputDockProps> = ({
       <motion.div
         animate={{
           boxShadow: isFocused
-            ? '0 20px 45px -10px rgba(0, 0, 0, 0.8), 0 0 25px rgba(0, 206, 201, 0.3)'
+            ? '0 20px 45px -10px rgba(0, 0, 0, 0.8), 0 0 25px color-mix(in srgb, var(--accent) 30%, transparent)'
             : '0 16px 36px -10px rgba(0, 0, 0, 0.7), 0 0 1px 1px rgba(255, 255, 255, 0.15)',
         }}
         onDragOver={handleDragOver}
@@ -167,7 +167,7 @@ export const InputDock: React.FC<InputDockProps> = ({
                       className="h-5 w-5 rounded-full object-cover"
                     />
                   ) : (
-                    <FileText className="h-3.5 w-3.5 text-[#00cec9]" />
+                    <FileText className="h-3.5 w-3.5 text-[color:var(--accent)]" />
                   )}
                   <span className="truncate max-w-[100px] sm:max-w-[120px] font-mono-code text-[11px]">
                     {att.name}
@@ -218,7 +218,7 @@ export const InputDock: React.FC<InputDockProps> = ({
             onClick={onToggleExtendedThinking}
             className={`hidden md:flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold uppercase transition-all ${
               extendedThinking || currentModel === 'APS HARD WORK'
-                ? 'bg-black/50 text-[#00cec9] border border-[#00cec9]/40 shadow-[0_0_10px_rgba(0,206,201,0.3)]'
+                ? 'bg-black/50 text-[color:var(--accent)] border border-[color:var(--accent)]/40 shadow-[0_0_10px_color-mix(in_srgb,var(--accent)_30%,transparent)]'
                 : 'bg-black/25 text-white/70 hover:text-white'
             }`}
             title="Activar Pensamiento Extendido"
@@ -242,21 +242,21 @@ export const InputDock: React.FC<InputDockProps> = ({
               disabled={!text.trim() && attachments.length === 0}
               className={`group relative flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl sm:rounded-2xl transition-all duration-300 p-1.5 overflow-hidden ${
                 text.trim() || attachments.length > 0
-                  ? 'border border-[#00cec9]/80 bg-gradient-to-b from-[#0e2a24]/90 to-[#03130e]/95 hover:border-[#00cec9] hover:from-[#133d34] hover:to-[#061e16] hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(0,206,201,0.55)] cursor-pointer'
+                  ? 'border border-[color:var(--accent)]/80 bg-gradient-to-b from-[color:var(--surface-3)]/90 to-[color:var(--surface-1)]/95 hover:border-[color:var(--accent)] hover:from-[color:var(--surface-4)] hover:to-[color:var(--surface-2)] hover:scale-105 active:scale-95 shadow-[0_0_20px_color-mix(in_srgb,var(--accent)_55%,transparent)] cursor-pointer'
                   : 'border border-white/15 bg-white/5 opacity-80 hover:opacity-100 hover:border-white/30 cursor-pointer'
               }`}
               title="Enviar idea (APS)"
             >
               {/* Radial glow background when ready to send */}
               {(text.trim() || attachments.length > 0) && (
-                <div className="absolute inset-0 bg-radial from-[#00cec9]/30 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-radial from-[color:var(--accent)]/30 via-transparent to-transparent pointer-events-none" />
               )}
               <ApsLogo
                 variant="compact"
                 glow={Boolean(text.trim() || attachments.length > 0)}
                 className={`relative z-10 h-full w-full object-contain transition-all duration-300 ${
                   text.trim() || attachments.length > 0
-                    ? 'scale-105 group-hover:scale-110 drop-shadow-[0_0_10px_rgba(0,206,201,0.8)]'
+                    ? 'scale-105 group-hover:scale-110 drop-shadow-[0_0_10px_color-mix(in_srgb,var(--accent)_80%,transparent)]'
                     : 'opacity-90 group-hover:opacity-100'
                 }`}
               />

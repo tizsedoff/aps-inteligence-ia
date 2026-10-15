@@ -101,13 +101,37 @@ export default function App() {
     const saved = localStorage.getItem('aps_customization');
     if (saved) {
       try {
-        return { ...DEFAULT_CUSTOMIZATION, ...JSON.parse(saved) };
+        const parsed = JSON.parse(saved);
+        // Sin themeId = personalizacion vieja (mezclaba estilos): se descarta.
+        if (parsed && parsed.themeId) return { ...DEFAULT_CUSTOMIZATION, ...parsed };
+        localStorage.removeItem('aps_customization');
       } catch {
         // ignore
       }
     }
     return DEFAULT_CUSTOMIZATION;
   });
+
+  // Propaga el tema elegido a TODA la interfaz (incluye modales y menus)
+  useEffect(() => {
+    const root = document.documentElement;
+    root.dataset.theme = customization.themeId || 'custom';
+    root.style.setProperty('--bg-deep', customization.bgColor);
+    root.style.setProperty('--accent', customization.accentColor);
+    root.style.setProperty('--accent-2', customization.accentColor2 || customization.accentColor);
+    root.style.setProperty(
+      '--accent-2-soft',
+      customization.accentColor2Soft || customization.accentColor2 || customization.accentColor
+    );
+    root.style.setProperty('--glass-border', customization.glassBorderColor);
+  }, [
+    customization.themeId,
+    customization.bgColor,
+    customization.accentColor,
+    customization.accentColor2,
+    customization.accentColor2Soft,
+    customization.glassBorderColor,
+  ]);
 
   // Save customization to localStorage
   const handleUpdateCustomization = (updated: Partial<VisualCustomization>) => {
@@ -590,7 +614,7 @@ export default function App() {
 
   if (!currentUser) {
     return (
-      <div className="relative min-h-screen w-screen overflow-x-hidden bg-[#050806] text-[#e8ebe4] font-sans">
+      <div className="relative min-h-screen w-screen overflow-x-hidden bg-[color:var(--surface-0)] text-[color:var(--text-primary)] font-sans">
         <AuthGateway
           onLogin={handleLogin}
           onOpenTerms={() => setIsTermsOpen(true)}
@@ -609,7 +633,7 @@ export default function App() {
     <div
       onMouseMove={handleMouseMove}
       style={rootBgStyle}
-      className="relative flex h-screen w-screen flex-col overflow-hidden text-[#e8ebe4] transition-colors duration-300 font-sans"
+      className="relative flex h-screen w-screen flex-col overflow-hidden text-[color:var(--text-primary)] transition-colors duration-300 font-sans"
     >
       {/* Background Image Layer if selected */}
       {customization.bgType === 'image' && customization.bgImage && (
@@ -649,17 +673,17 @@ export default function App() {
       <main className="relative flex flex-1 flex-col overflow-hidden">
         {/* Live background activity indicator when user is chatting while terminal works */}
         {activeView === 'chat' && terminalContext.isExecuting && (
-          <div className="flex items-center justify-between border-b border-[#c5a059]/30 bg-[#07130b]/90 px-3 sm:px-4 py-1.5 text-xs font-mono-code text-[#f4e2b8] backdrop-blur-md z-20">
+          <div className="flex items-center justify-between border-b border-[color:var(--accent)]/30 bg-[color:var(--surface-1)]/90 px-3 sm:px-4 py-1.5 text-xs font-mono-code text-[color:var(--accent-soft)] backdrop-blur-md z-20">
             <div className="flex items-center gap-2">
               <span className="flex h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] animate-ping" />
               <span>
                 Terminal ejecutando en segundo plano:{' '}
-                <strong className="text-[#98e6a5]">{terminalContext.lastCommand || 'Orden activa'}</strong>
+                <strong className="text-[color:var(--accent)]">{terminalContext.lastCommand || 'Orden activa'}</strong>
               </span>
             </div>
             <button
               onClick={() => handleSelectView('cli')}
-              className="rounded bg-[#c5a059]/20 px-2 py-0.5 text-[11px] font-semibold text-[#fbf5e8] hover:bg-[#c5a059]/40 transition-colors"
+              className="rounded bg-[color:var(--accent)]/20 px-2 py-0.5 text-[11px] font-semibold text-[color:var(--text-primary)] hover:bg-[color:var(--accent)]/40 transition-colors"
             >
               Ir a Terminal →
             </button>

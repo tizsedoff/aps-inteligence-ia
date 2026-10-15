@@ -126,16 +126,16 @@ export const ChatTimeline: React.FC<ChatTimelineProps> = ({
             </div>
 
             {/* HOLA (NOMBRE) */}
-            <h1 className="text-2xl sm:text-3xl md:text-5xl font-extrabold tracking-wider bg-gradient-to-r from-[#00cec9] via-[#0984e3] to-[#a29bfe] bg-clip-text text-transparent drop-shadow-[0_0_25px_rgba(0,206,201,0.4)]">
-              HOLA <span className="text-[#a29bfe]">{displayName}</span>
+            <h1 className="text-2xl sm:text-3xl md:text-5xl font-extrabold tracking-wider bg-gradient-to-r from-[color:var(--accent)] via-[color:var(--accent-2)] to-[color:var(--accent-2-soft)] bg-clip-text text-transparent drop-shadow-[0_0_25px_color-mix(in_srgb,var(--accent)_40%,transparent)]">
+              HOLA <span className="text-[color:var(--accent-2-soft)]">{displayName}</span>
             </h1>
 
             {/* DIME TU IDEA Y LA HACEMOS REALIDAD */}
             <h2 className="text-lg sm:text-xl md:text-3xl font-extrabold italic tracking-wide text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
-              DIME TU <span className="text-[#00cec9]">IDEA</span> Y LA HACEMOS REALIDAD
+              DIME TU <span className="text-[color:var(--accent)]">IDEA</span> Y LA HACEMOS REALIDAD
             </h2>
 
-            <p className="max-w-md text-xs md:text-sm text-[#8e9c8c] pt-1 sm:pt-2">
+            <p className="max-w-md text-xs md:text-sm text-[color:var(--text-secondary)] pt-1 sm:pt-2">
               Modelos de alta inferencia APS con procesamiento de archivos, generación de código en tiempo real y pensamiento extendido.
             </p>
 
@@ -145,9 +145,9 @@ export const ChatTimeline: React.FC<ChatTimelineProps> = ({
                 <button
                   key={idea.title}
                   onClick={() => onSelectPrompt(idea.prompt)}
-                  className="rounded-full border border-white/15 bg-white/5 px-3 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-xs font-medium text-[#fbf5e8] hover:border-[#c5a059]/60 hover:bg-[#c5a059]/15 hover:scale-105 active:scale-95 transition-all shadow-md backdrop-blur-md"
+                  className="rounded-full border border-white/15 bg-white/5 px-3 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-xs font-medium text-[color:var(--text-primary)] hover:border-[color:var(--accent)]/60 hover:bg-[color:var(--accent)]/15 hover:scale-105 active:scale-95 transition-all shadow-md backdrop-blur-md"
                 >
-                  <span className="text-[#00cec9] font-bold mr-1">✦</span>
+                  <span className="text-[color:var(--accent)] font-bold mr-1">✦</span>
                   {idea.title}
                 </button>
               ))}
@@ -190,7 +190,7 @@ export const ChatTimeline: React.FC<ChatTimelineProps> = ({
                             </div>
                           ) : (
                             <div className="flex items-center gap-2 p-2 sm:p-2.5 text-xs text-white">
-                              <FileText className="h-4 w-4 text-[#00cec9]" />
+                              <FileText className="h-4 w-4 text-[color:var(--accent)]" />
                               <span className="max-w-[100px] sm:max-w-[120px] truncate">{att.name}</span>
                             </div>
                           )}
@@ -214,7 +214,7 @@ export const ChatTimeline: React.FC<ChatTimelineProps> = ({
                     <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                   </div>
 
-                  <div className="flex items-center justify-end gap-1 px-1 text-[10px] font-mono-code text-[#738271]">
+                  <div className="flex items-center justify-end gap-1 px-1 text-[10px] font-mono-code text-[color:var(--text-muted)]">
                     <Clock className="h-2.5 w-2.5" />
                     <span>
                       {new Date(msg.timestamp).toLocaleTimeString([], {
@@ -228,16 +228,16 @@ export const ChatTimeline: React.FC<ChatTimelineProps> = ({
                 /* MODEL MESSAGE BUBBLE */
                 <div className="w-full space-y-2">
                   <div className="flex items-center gap-2 sm:gap-2.5 px-1 flex-wrap">
-                    <div className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-lg border border-white/20 bg-[#16271c] text-[9px] sm:text-[10px] font-serif-luxury font-bold text-[#f4e2b8] shadow">
+                    <div className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-lg border border-white/20 bg-[color:var(--surface-3)] text-[9px] sm:text-[10px] font-serif-luxury font-bold text-[color:var(--accent-soft)] shadow">
                       APS
                     </div>
-                    <span className="font-serif-luxury text-[11px] sm:text-xs font-semibold tracking-wider text-[#f4e2b8]">
+                    <span className="font-serif-luxury text-[11px] sm:text-xs font-semibold tracking-wider text-[color:var(--accent-soft)]">
                       {msg.model || currentModel}
                     </span>
-                    <span className="rounded-full border border-[#00cec9]/40 bg-[#00cec9]/15 px-2 py-0.5 text-[8px] sm:text-[9px] font-mono-code uppercase tracking-wider text-[#00cec9]">
+                    <span className="rounded-full border border-[color:var(--accent)]/40 bg-[color:var(--accent)]/15 px-2 py-0.5 text-[8px] sm:text-[9px] font-mono-code uppercase tracking-wider text-[color:var(--accent)]">
                       {msg.mode === 'code' ? 'Código' : msg.mode === 'teens' ? 'Teens' : 'Adultos'}
                     </span>
-                    <span className="text-[10px] font-mono-code text-[#738271]">
+                    <span className="text-[10px] font-mono-code text-[color:var(--text-muted)]">
                       ·{' '}
                       {new Date(msg.timestamp).toLocaleTimeString([], {
                         hour: '2-digit',
@@ -289,7 +289,7 @@ export const ChatTimeline: React.FC<ChatTimelineProps> = ({
                           <div className="pt-1">
                             <button
                               onClick={() => onRetry(msg.id)}
-                              className="flex items-center gap-2 rounded-xl border border-white/20 bg-gradient-to-r from-[#00cec9] to-[#0984e3] px-4 py-2 text-xs font-bold text-black shadow-lg hover:scale-105 active:scale-95 transition-all"
+                              className="flex items-center gap-2 rounded-xl border border-white/20 bg-gradient-to-r from-[color:var(--accent)] to-[color:var(--accent-2)] px-4 py-2 text-xs font-bold text-black shadow-lg hover:scale-105 active:scale-95 transition-all"
                             >
                               <RefreshCw className="h-4 w-4" />
                               <span>Reintentar Inferencia Ahora</span>
@@ -301,7 +301,7 @@ export const ChatTimeline: React.FC<ChatTimelineProps> = ({
                       <MarkdownRenderer content={msg.content} onSendToCli={onSendToCli} />
                     ) : msg.isThinkingActive ? (
                       <div className="flex items-center gap-3 py-3 text-xs text-white/90 animate-liquid-shimmer rounded-lg px-3">
-                        <Sparkles className="h-4 w-4 text-[#00cec9] animate-spin" />
+                        <Sparkles className="h-4 w-4 text-[color:var(--accent)] animate-spin" />
                         <span>APS está procesando tu solicitud con alta fidelidad...</span>
                       </div>
                     ) : null}
@@ -331,13 +331,13 @@ export const ChatTimeline: React.FC<ChatTimelineProps> = ({
                           <button
                             onClick={() => handleSpeak(msg.id, msg.content)}
                             className={`flex items-center gap-1 transition-colors ${
-                              speakingId === msg.id ? 'text-[#00cec9]' : 'text-white/80 hover:text-white'
+                              speakingId === msg.id ? 'text-[color:var(--accent)]' : 'text-white/80 hover:text-white'
                             }`}
                             title="Lectura en voz alta"
                           >
                             {speakingId === msg.id ? (
                               <>
-                                <VolumeX className="h-3.5 w-3.5 text-[#00cec9]" />
+                                <VolumeX className="h-3.5 w-3.5 text-[color:var(--accent)]" />
                                 <span>Silenciar</span>
                               </>
                             ) : (

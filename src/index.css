@@ -2,45 +2,41 @@
 
 @layer base {
   :root {
-    --font-luxury: 'Cinzel', Georgia, serif;
     --font-prose: 'Plus Jakarta Sans', system-ui, sans-serif;
     --font-code: 'JetBrains Mono', monospace;
+    /* Titulos: sans por defecto; solo el tema Old Money usa serif */
+    --font-luxury: var(--font-prose);
 
-    /* Old Money Dark (Default) */
-    --bg-deep: #070c09;
-    --bg-canvas: #0a110d;
-    --surface-glass: rgba(14, 22, 18, 0.65);
-    --surface-glass-hover: rgba(20, 31, 25, 0.75);
-    --surface-glass-active: rgba(26, 40, 33, 0.85);
-    --border-glass: rgba(197, 160, 89, 0.18);
-    --border-glass-highlight: rgba(216, 182, 111, 0.35);
-    --gold-primary: #c5a059;
-    --gold-hover: #d8b66f;
-    --gold-subtle: rgba(197, 160, 89, 0.12);
-    --emerald-accent: #2e5c46;
-    --text-primary: #f2f5ed;
-    --text-secondary: #a7b3a5;
-    --text-muted: #6e7a6d;
-    --card-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(197, 160, 89, 0.14);
+    /* Base del tema (JS las sobreescribe desde la personalizacion elegida) */
+    --bg-deep: #000000;
+    --accent: #00cec9;
+    --accent-2: #0984e3;
+    --accent-2-soft: #a29bfe;
+    --glass-border: rgba(255, 255, 255, 0.16);
+
+    /* Derivadas: siempre siguen al tema activo */
+    --accent-hover: color-mix(in srgb, var(--accent) 80%, white);
+    --accent-soft: color-mix(in srgb, var(--accent) 35%, white);
+    --on-accent: color-mix(in srgb, var(--bg-deep) 60%, black);
+    --surface-0: color-mix(in srgb, var(--bg-deep) 70%, black);
+    --surface-1: var(--bg-deep);
+    --surface-2: color-mix(in srgb, var(--bg-deep) 95%, white);
+    --surface-3: color-mix(in srgb, var(--bg-deep) 91%, white);
+    --surface-4: color-mix(in srgb, var(--bg-deep) 85%, white);
+    --text-primary: #f5f7fa;
+    --text-secondary: color-mix(in srgb, var(--text-primary) 62%, var(--bg-deep));
+    --text-muted: color-mix(in srgb, var(--text-primary) 40%, var(--bg-deep));
+
+    --surface-glass: color-mix(in srgb, var(--surface-3) 65%, transparent);
+    --surface-glass-hover: color-mix(in srgb, var(--surface-4) 75%, transparent);
+    --border-glass: var(--glass-border);
+    --border-glass-highlight: color-mix(in srgb, var(--accent) 40%, transparent);
+    --card-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.65), 0 0 0 1px var(--glass-border);
   }
 
-  .theme-light {
-    /* Old Money Champagne / Light Parchment */
-    --bg-deep: #ede7da;
-    --bg-canvas: #f6f3eb;
-    --surface-glass: rgba(255, 253, 248, 0.7);
-    --surface-glass-hover: rgba(255, 255, 255, 0.85);
-    --surface-glass-active: rgba(255, 255, 255, 0.95);
-    --border-glass: rgba(142, 112, 60, 0.22);
-    --border-glass-highlight: rgba(168, 134, 76, 0.45);
-    --gold-primary: #8a6829;
-    --gold-hover: #72541e;
-    --gold-subtle: rgba(138, 104, 41, 0.1);
-    --emerald-accent: #214d38;
-    --text-primary: #1e241f;
-    --text-secondary: #4a544b;
-    --text-muted: #79827a;
-    --card-shadow: 0 16px 36px -10px rgba(138, 104, 41, 0.15), 0 0 0 1px rgba(142, 112, 60, 0.2);
+  /* Old Money: unico tema con tipografia serif */
+  [data-theme='old_money_luxury'] {
+    --font-luxury: 'Cinzel', Georgia, serif;
   }
 }
 
@@ -110,9 +106,9 @@ body {
   background: linear-gradient(
     135deg,
     rgba(255, 255, 255, 0.22) 0%,
-    rgba(216, 182, 111, 0.18) 35%,
+    color-mix(in srgb, var(--accent) 18%, transparent) 35%,
     rgba(255, 255, 255, 0.02) 65%,
-    rgba(46, 92, 70, 0.15) 100%
+    color-mix(in srgb, var(--accent-2) 15%, transparent) 100%
   );
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
@@ -126,14 +122,14 @@ body {
 .liquid-glass-interactive:hover {
   background: var(--surface-glass-hover);
   border-color: var(--border-glass-highlight);
-  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.75), 0 0 18px rgba(197, 160, 89, 0.18);
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.75), 0 0 18px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 /* Fluid refraction highlight */
 .refraction-glow {
   background: radial-gradient(
     600px circle at var(--x, 50%) var(--y, 50%),
-    rgba(197, 160, 89, 0.08),
+    color-mix(in srgb, var(--accent) 8%, transparent),
     transparent 45%
   );
 }
@@ -147,11 +143,11 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(197, 160, 89, 0.22);
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(197, 160, 89, 0.42);
+  background: color-mix(in srgb, var(--accent) 42%, transparent);
 }
 
 /* Subtle Shimmer for Thinking / Loading */
@@ -167,9 +163,9 @@ body {
 .animate-liquid-shimmer {
   background: linear-gradient(
     90deg,
-    rgba(197, 160, 89, 0.05) 25%,
-    rgba(216, 182, 111, 0.2) 50%,
-    rgba(197, 160, 89, 0.05) 75%
+    color-mix(in srgb, var(--accent) 5%, transparent) 25%,
+    color-mix(in srgb, var(--accent-hover) 20%, transparent) 50%,
+    color-mix(in srgb, var(--accent) 5%, transparent) 75%
   );
   background-size: 200% 100%;
   animation: liquid-shimmer 2.2s infinite ease-in-out;
@@ -177,7 +173,7 @@ body {
 
 /* Terminal scanline subtle texture */
 .terminal-grid {
-  background-image: linear-gradient(rgba(197, 160, 89, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(197, 160, 89, 0.03) 1px, transparent 1px);
+  background-image: linear-gradient(color-mix(in srgb, var(--accent) 3%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 3%, transparent) 1px, transparent 1px);
   background-size: 20px 20px;
 }

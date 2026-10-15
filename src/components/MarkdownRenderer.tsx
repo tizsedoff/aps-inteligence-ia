@@ -26,7 +26,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, onS
         parts.push(
           <div
             key={`text-${lastIndex}`}
-            className="prose prose-invert max-w-none space-y-3 leading-relaxed text-[#d9ded7] prose-headings:font-serif-luxury prose-headings:text-[#f4e2b8] prose-a:text-[#c5a059] prose-strong:text-[#f7e7ce] prose-code:font-mono-code prose-code:text-[#d8b66f] prose-code:bg-[#c5a059]/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded"
+            className="prose prose-invert max-w-none space-y-3 leading-relaxed text-[color:var(--text-primary)] prose-headings:font-serif-luxury prose-headings:text-[color:var(--accent-soft)] prose-a:text-[color:var(--accent)] prose-strong:text-[color:var(--accent-soft)] prose-code:font-mono-code prose-code:text-[color:var(--accent-hover)] prose-code:bg-[color:var(--accent)]/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded"
             dangerouslySetInnerHTML={{ __html: rawHtml }}
           />
         );
@@ -45,29 +45,29 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, onS
       parts.push(
         <div
           key={`code-${match.index}`}
-          className="my-4 overflow-hidden rounded-xl border border-[#c5a059]/25 bg-[#070d09]/90 shadow-2xl backdrop-blur-xl"
+          className="my-4 overflow-hidden rounded-xl border border-[color:var(--accent)]/25 bg-[color:var(--surface-0)]/90 shadow-2xl backdrop-blur-xl"
         >
           {/* Header Bar */}
-          <div className="flex items-center justify-between border-b border-[#c5a059]/15 bg-[#0d1611]/80 px-4 py-2 text-xs font-mono-code">
+          <div className="flex items-center justify-between border-b border-[color:var(--accent)]/15 bg-[color:var(--surface-2)]/80 px-4 py-2 text-xs font-mono-code">
             <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-[#c5a059]" />
-              <span className="uppercase tracking-wider text-[#c5a059] font-medium">{lang}</span>
+              <span className="h-2 w-2 rounded-full bg-[color:var(--accent)]" />
+              <span className="uppercase tracking-wider text-[color:var(--accent)] font-medium">{lang}</span>
             </div>
             <div className="flex items-center gap-2">
               {onSendToCli && (
                 <button
                   onClick={() => onSendToCli(code, lang)}
-                  className="flex items-center gap-1.5 rounded-md border border-[#c5a059]/30 bg-[#c5a059]/10 px-2.5 py-1 text-xs text-[#f4e2b8] transition-colors hover:bg-[#c5a059]/20 hover:text-white"
+                  className="flex items-center gap-1.5 rounded-md border border-[color:var(--accent)]/30 bg-[color:var(--accent)]/10 px-2.5 py-1 text-xs text-[color:var(--accent-soft)] transition-colors hover:bg-[color:var(--accent)]/20 hover:text-white"
                   title="Abrir en la consola CLI de APS Hard Work"
                 >
-                  <Terminal className="h-3.5 w-3.5 text-[#c5a059]" />
+                  <Terminal className="h-3.5 w-3.5 text-[color:var(--accent)]" />
                   <span className="hidden sm:inline">Cargar en </span>
                   <span>CLI</span>
                 </button>
               )}
               <button
                 onClick={handleCopy}
-                className="flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs text-[#a7b3a5] transition-colors hover:bg-white/10 hover:text-white"
+                className="flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs text-[color:var(--text-secondary)] transition-colors hover:bg-white/10 hover:text-white"
               >
                 {copiedIndex === currentBlockIdx ? (
                   <>
@@ -85,7 +85,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, onS
           </div>
 
           {/* Code Body */}
-          <pre className="overflow-x-auto p-4 text-xs md:text-sm font-mono-code leading-relaxed text-[#e0e7df]">
+          <pre className="overflow-x-auto p-4 text-xs md:text-sm font-mono-code leading-relaxed text-[color:var(--text-primary)]">
             <code>{code}</code>
           </pre>
         </div>
@@ -101,7 +101,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, onS
       parts.push(
         <div
           key={`text-${lastIndex}`}
-          className="prose prose-invert max-w-none space-y-3 leading-relaxed text-[#d9ded7] prose-headings:font-serif-luxury prose-headings:text-[#f4e2b8] prose-a:text-[#c5a059] prose-strong:text-[#f7e7ce] prose-code:font-mono-code prose-code:text-[#d8b66f] prose-code:bg-[#c5a059]/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded"
+          className="prose prose-invert max-w-none space-y-3 leading-relaxed text-[color:var(--text-primary)] prose-headings:font-serif-luxury prose-headings:text-[color:var(--accent-soft)] prose-a:text-[color:var(--accent)] prose-strong:text-[color:var(--accent-soft)] prose-code:font-mono-code prose-code:text-[color:var(--accent-hover)] prose-code:bg-[color:var(--accent)]/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded"
           dangerouslySetInnerHTML={{ __html: rawHtml }}
         />
       );

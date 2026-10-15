@@ -255,12 +255,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          className="relative z-10 w-full max-w-md rounded-3xl border border-[#c5a059]/40 bg-[#070d0a]/95 p-5 sm:p-7 shadow-2xl backdrop-blur-2xl liquid-glass-real"
+          className="relative z-10 w-full max-w-md rounded-3xl border border-[color:var(--accent)]/40 bg-[color:var(--surface-0)]/95 p-5 sm:p-7 shadow-2xl backdrop-blur-2xl liquid-glass-real"
         >
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute right-4 top-4 rounded-xl p-2 text-[#8e9c8c] hover:bg-white/10 hover:text-white transition-colors"
+            className="absolute right-4 top-4 rounded-xl p-2 text-[color:var(--text-secondary)] hover:bg-white/10 hover:text-white transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
@@ -273,7 +273,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <h2 className="text-xl font-bold font-serif-luxury text-white">
               {authMode === 'login' ? 'INICIAR SESIÓN' : 'CREAR CUENTA'}
             </h2>
-            <p className="text-xs text-[#8e9c8c]">
+            <p className="text-xs text-[color:var(--text-secondary)]">
               Accede a tus modelos, memoria viva y configuraciones
             </p>
           </div>
@@ -288,8 +288,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               }}
               className={`flex-1 rounded-xl py-2 text-xs font-serif-luxury font-bold transition-all ${
                 authMode === 'login'
-                  ? 'bg-gradient-to-r from-[#00cec9] to-[#0984e3] text-black shadow-md'
-                  : 'text-[#8e9c8c] hover:text-white'
+                  ? 'bg-gradient-to-r from-[color:var(--accent)] to-[color:var(--accent-2)] text-black shadow-md'
+                  : 'text-[color:var(--text-secondary)] hover:text-white'
               }`}
             >
               INICIAR SESIÓN
@@ -302,8 +302,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               }}
               className={`flex-1 rounded-xl py-2 text-xs font-serif-luxury font-bold transition-all ${
                 authMode === 'register'
-                  ? 'bg-gradient-to-r from-[#00cec9] to-[#0984e3] text-black shadow-md'
-                  : 'text-[#8e9c8c] hover:text-white'
+                  ? 'bg-gradient-to-r from-[color:var(--accent)] to-[color:var(--accent-2)] text-black shadow-md'
+                  : 'text-[color:var(--text-secondary)] hover:text-white'
               }`}
             >
               CREAR CUENTA
@@ -324,7 +324,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       setAuthMode('login');
                       setAuthError('');
                     }}
-                    className="flex-1 rounded-lg bg-[#00cec9] py-1.5 px-2 text-[11px] font-bold text-black hover:bg-[#00cec9]/90 transition-all text-center"
+                    className="flex-1 rounded-lg bg-[color:var(--accent)] py-1.5 px-2 text-[11px] font-bold text-black hover:bg-[color:var(--accent)]/90 transition-all text-center"
                   >
                     Iniciar Sesión con este correo
                   </button>
@@ -348,7 +348,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       setAuthMode('register');
                       setAuthError('');
                     }}
-                    className="w-full rounded-lg bg-[#00cec9] py-1.5 px-2 text-[11px] font-bold text-black hover:bg-[#00cec9]/90 transition-all text-center"
+                    className="w-full rounded-lg bg-[color:var(--accent)] py-1.5 px-2 text-[11px] font-bold text-black hover:bg-[color:var(--accent)]/90 transition-all text-center"
                   >
                     Crear cuenta con este correo
                   </button>
@@ -361,15 +361,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           <form onSubmit={handleModalAuthSubmit} className="space-y-3.5">
             {authMode === 'register' && (
               <div>
-                <label className="block text-[10px] font-mono-code text-[#8e9c8c] uppercase mb-1">Nombre</label>
+                <label className="block text-[10px] font-mono-code text-[color:var(--text-secondary)] uppercase mb-1">Nombre</label>
                 <div className="relative">
-                  <User className="absolute left-3 top-2.5 h-4 w-4 text-[#8e9c8c]" />
+                  <User className="absolute left-3 top-2.5 h-4 w-4 text-[color:var(--text-secondary)]" />
                   <input
                     type="text"
                     value={authName}
                     onChange={(e) => setAuthName(e.target.value)}
                     placeholder="Tu nombre completo"
-                    className="w-full rounded-xl border border-white/15 bg-black/60 pl-9 pr-3 py-2 text-xs text-white placeholder-white/30 focus:border-[#00cec9] outline-none"
+                    className="w-full rounded-xl border border-white/15 bg-black/60 pl-9 pr-3 py-2 text-xs text-white placeholder-white/30 focus:border-[color:var(--accent)] outline-none"
                     required
                   />
                 </div>
@@ -377,30 +377,30 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             )}
 
             <div>
-              <label className="block text-[10px] font-mono-code text-[#8e9c8c] uppercase mb-1">Correo Electrónico</label>
+              <label className="block text-[10px] font-mono-code text-[color:var(--text-secondary)] uppercase mb-1">Correo Electrónico</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-2.5 h-4 w-4 text-[#8e9c8c]" />
+                <Mail className="absolute left-3 top-2.5 h-4 w-4 text-[color:var(--text-secondary)]" />
                 <input
                   type="email"
                   value={authEmail}
                   onChange={(e) => setAuthEmail(e.target.value)}
                   placeholder="ejemplo@correo.com"
-                  className="w-full rounded-xl border border-white/15 bg-black/60 pl-9 pr-3 py-2 text-xs text-white placeholder-white/30 focus:border-[#00cec9] outline-none"
+                  className="w-full rounded-xl border border-white/15 bg-black/60 pl-9 pr-3 py-2 text-xs text-white placeholder-white/30 focus:border-[color:var(--accent)] outline-none"
                   required
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-[10px] font-mono-code text-[#8e9c8c] uppercase mb-1">Contraseña</label>
+              <label className="block text-[10px] font-mono-code text-[color:var(--text-secondary)] uppercase mb-1">Contraseña</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-2.5 h-4 w-4 text-[#8e9c8c]" />
+                <Lock className="absolute left-3 top-2.5 h-4 w-4 text-[color:var(--text-secondary)]" />
                 <input
                   type="password"
                   value={authPassword}
                   onChange={(e) => setAuthPassword(e.target.value)}
                   placeholder="Mínimo 6 caracteres"
-                  className="w-full rounded-xl border border-white/15 bg-black/60 pl-9 pr-3 py-2 text-xs text-white placeholder-white/30 focus:border-[#00cec9] outline-none"
+                  className="w-full rounded-xl border border-white/15 bg-black/60 pl-9 pr-3 py-2 text-xs text-white placeholder-white/30 focus:border-[color:var(--accent)] outline-none"
                   required
                 />
               </div>
@@ -409,7 +409,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <button
               type="submit"
               disabled={authLoading}
-              className="w-full mt-2 rounded-xl border border-white/20 bg-gradient-to-r from-[#00cec9] via-[#0984e3] to-[#6c5ce7] py-2.5 text-xs font-serif-luxury font-bold text-white shadow-lg hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2"
+              className="w-full mt-2 rounded-xl border border-white/20 bg-gradient-to-r from-[color:var(--accent)] via-[color:var(--accent-2)] to-[color:var(--accent-2)] py-2.5 text-xs font-serif-luxury font-bold text-white shadow-lg hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2"
             >
               {authLoading ? (
                 <>
@@ -624,12 +624,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
-        className="relative z-10 w-full max-w-xl max-h-[92vh] overflow-y-auto rounded-3xl border border-[#c5a059]/40 bg-[#070d0a]/95 p-4 sm:p-6 shadow-2xl backdrop-blur-2xl liquid-glass-real scrollbar-none"
+        className="relative z-10 w-full max-w-xl max-h-[92vh] overflow-y-auto rounded-3xl border border-[color:var(--accent)]/40 bg-[color:var(--surface-0)]/95 p-4 sm:p-6 shadow-2xl backdrop-blur-2xl liquid-glass-real scrollbar-none"
       >
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 rounded-xl p-2 text-[#8e9c8c] hover:bg-white/10 hover:text-white transition-colors"
+          className="absolute right-4 top-4 rounded-xl p-2 text-[color:var(--text-secondary)] hover:bg-white/10 hover:text-white transition-colors"
           title="Cerrar modal"
         >
           <X className="h-5 w-5" />
@@ -642,8 +642,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             onClick={() => setActiveTab('profile')}
             className={`flex-1 min-w-[90px] rounded-xl py-2 px-2 text-xs font-serif-luxury font-bold tracking-wider transition-all whitespace-nowrap ${
               activeTab === 'profile'
-                ? 'bg-gradient-to-r from-[#c5a059] to-[#d8b66f] text-[#070c09] shadow-md'
-                : 'text-[#8e9c8c] hover:text-white'
+                ? 'bg-gradient-to-r from-[color:var(--accent)] to-[color:var(--accent-hover)] text-[color:var(--on-accent)] shadow-md'
+                : 'text-[color:var(--text-secondary)] hover:text-white'
             }`}
           >
             MI PERFIL
@@ -653,8 +653,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             onClick={() => setActiveTab('memory')}
             className={`flex-1 min-w-[120px] rounded-xl py-2 px-2 text-xs font-serif-luxury font-bold tracking-wider transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${
               activeTab === 'memory'
-                ? 'bg-gradient-to-r from-[#00cec9] to-[#0984e3] text-black shadow-md font-extrabold'
-                : 'text-[#8e9c8c] hover:text-white'
+                ? 'bg-gradient-to-r from-[color:var(--accent)] to-[color:var(--accent-2)] text-black shadow-md font-extrabold'
+                : 'text-[color:var(--text-secondary)] hover:text-white'
             }`}
           >
             <Brain className="h-3.5 w-3.5" />
@@ -670,8 +670,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             onClick={() => setActiveTab('membership')}
             className={`flex-1 min-w-[110px] rounded-xl py-2 px-2 text-xs font-serif-luxury font-bold tracking-wider transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${
               activeTab === 'membership'
-                ? 'bg-gradient-to-r from-[#c5a059] to-[#d8b66f] text-[#070c09] shadow-md'
-                : 'text-[#8e9c8c] hover:text-white'
+                ? 'bg-gradient-to-r from-[color:var(--accent)] to-[color:var(--accent-hover)] text-[color:var(--on-accent)] shadow-md'
+                : 'text-[color:var(--text-secondary)] hover:text-white'
             }`}
           >
             <CreditCard className="h-3.5 w-3.5" />
@@ -704,13 +704,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 name={currentUser.name}
                 isAdmin={currentUser.isAdmin}
                 size="xl"
-                className="ring-4 ring-[#c5a059]/30"
+                className="ring-4 ring-[color:var(--accent)]/30"
               />
 
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="absolute -bottom-1 -right-1 rounded-full border border-[#c5a059] bg-[#070d0a] p-2 text-[#f4e2b8] hover:bg-[#c5a059] hover:text-[#070c09] transition-all shadow-lg group"
+                className="absolute -bottom-1 -right-1 rounded-full border border-[color:var(--accent)] bg-[color:var(--surface-0)] p-2 text-[color:var(--accent-soft)] hover:bg-[color:var(--accent)] hover:text-[color:var(--on-accent)] transition-all shadow-lg group"
                 title="Cambiar foto de perfil desde tus archivos"
               >
                 <Camera className="h-4 w-4 group-hover:scale-110 transition-transform" />
@@ -730,7 +730,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="text-xs font-mono-code text-[#c5a059] hover:underline flex items-center justify-center gap-1.5 mx-auto"
+                className="text-xs font-mono-code text-[color:var(--accent)] hover:underline flex items-center justify-center gap-1.5 mx-auto"
               >
                 <Upload className="h-3.5 w-3.5" />
                 <span>Subir nueva foto de perfil</span>
@@ -739,7 +739,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
             {/* Editable Name Section */}
             <div className="space-y-1.5">
-              <div className="inline-flex items-center gap-1.5 rounded-full border border-[#c5a059]/30 bg-[#c5a059]/10 px-3 py-0.5 text-[10px] font-mono-code text-[#f4e2b8] mb-1">
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-[color:var(--accent)]/30 bg-[color:var(--accent)]/10 px-3 py-0.5 text-[10px] font-mono-code text-[color:var(--accent-soft)] mb-1">
                 <span>{currentUser.isAdmin ? '★ ADMINISTRADOR SUPREMO' : 'USUARIO ACTIVO'}</span>
               </div>
 
@@ -755,7 +755,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     }}
                     placeholder="Tu nombre..."
                     autoFocus
-                    className="flex-1 rounded-xl border border-[#c5a059]/50 bg-[#0c1610] px-3 py-1.5 text-sm font-bold text-[#f4e2b8] outline-none text-center"
+                    className="flex-1 rounded-xl border border-[color:var(--accent)]/50 bg-[color:var(--surface-2)] px-3 py-1.5 text-sm font-bold text-[color:var(--accent-soft)] outline-none text-center"
                   />
                   <button
                     onClick={handleSaveName}
@@ -769,7 +769,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       setNameInput(currentUser.name);
                       setIsEditingName(false);
                     }}
-                    className="rounded-xl border border-white/10 bg-white/5 p-2 text-[#8e9c8c] hover:bg-white/10"
+                    className="rounded-xl border border-white/10 bg-white/5 p-2 text-[color:var(--text-secondary)] hover:bg-white/10"
                     title="Cancelar"
                   >
                     <X className="h-4 w-4" />
@@ -777,7 +777,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </div>
               ) : (
                 <div className="flex items-center justify-center gap-2">
-                  <h3 className="font-serif-luxury text-xl sm:text-2xl font-bold tracking-wider text-[#f4e2b8]">
+                  <h3 className="font-serif-luxury text-xl sm:text-2xl font-bold tracking-wider text-[color:var(--accent-soft)]">
                     {currentUser.name}
                   </h3>
                   <button
@@ -785,7 +785,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       setNameInput(currentUser.name);
                       setIsEditingName(true);
                     }}
-                    className="rounded-lg p-1 text-[#8e9c8c] hover:bg-white/10 hover:text-[#f4e2b8] transition-colors"
+                    className="rounded-lg p-1 text-[color:var(--text-secondary)] hover:bg-white/10 hover:text-[color:var(--accent-soft)] transition-colors"
                     title="Editar nombre"
                   >
                     <Edit2 className="h-3.5 w-3.5" />
@@ -793,29 +793,29 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </div>
               )}
 
-              <p className="text-xs font-mono-code text-[#8e9c8c]">{currentUser.email}</p>
+              <p className="text-xs font-mono-code text-[color:var(--text-secondary)]">{currentUser.email}</p>
             </div>
 
             {/* Account Details Box */}
-            <div className="rounded-2xl border border-[#c5a059]/20 bg-[#0e1a14]/90 p-4 text-left space-y-3 text-xs">
-              <div className="flex justify-between items-center text-[#8e9c8c]">
+            <div className="rounded-2xl border border-[color:var(--accent)]/20 bg-[color:var(--surface-2)]/90 p-4 text-left space-y-3 text-xs">
+              <div className="flex justify-between items-center text-[color:var(--text-secondary)]">
                 <span>Membresía Actual:</span>
-                <span className="font-serif-luxury font-bold text-[#f4e2b8] text-xs flex items-center gap-1.5">
-                  <Zap className="h-3.5 w-3.5 text-[#c5a059]" />
+                <span className="font-serif-luxury font-bold text-[color:var(--accent-soft)] text-xs flex items-center gap-1.5">
+                  <Zap className="h-3.5 w-3.5 text-[color:var(--accent)]" />
                   {currentUser.membership}
                 </span>
               </div>
-              <div className="flex justify-between items-center text-[#8e9c8c]">
+              <div className="flex justify-between items-center text-[color:var(--text-secondary)]">
                 <span>Memoria de la IA:</span>
                 <button
                   onClick={() => setActiveTab('memory')}
-                  className="text-[#00cec9] font-mono-code hover:underline flex items-center gap-1"
+                  className="text-[color:var(--accent)] font-mono-code hover:underline flex items-center gap-1"
                 >
                   <Brain className="h-3 w-3" />
                   <span>{memoriesList.length} recuerdos guardados (Ver/Editar)</span>
                 </button>
               </div>
-              <div className="flex justify-between items-center text-[#8e9c8c]">
+              <div className="flex justify-between items-center text-[color:var(--text-secondary)]">
                 <span>Rol en el Sistema:</span>
                 <span
                   className={
@@ -834,7 +834,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   )}
                 </span>
               </div>
-              <div className="flex justify-between items-center text-[#8e9c8c]">
+              <div className="flex justify-between items-center text-[color:var(--text-secondary)]">
                 <span>Base de Datos:</span>
                 <span className="text-emerald-400 font-mono-code flex items-center gap-1">
                   <CheckCircle2 className="h-3 w-3" />
@@ -855,7 +855,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
               <button
                 onClick={() => setActiveTab('memory')}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-[#00cec9]/40 bg-[#00cec9]/20 py-2.5 text-xs font-bold text-[#00cec9] shadow-md hover:bg-[#00cec9]/30 transition-all"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-[color:var(--accent)]/40 bg-[color:var(--accent)]/20 py-2.5 text-xs font-bold text-[color:var(--accent)] shadow-md hover:bg-[color:var(--accent)]/30 transition-all"
               >
                 <Brain className="h-4 w-4" />
                 <span>Configurar Memoria</span>
@@ -870,24 +870,24 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             {/* Header description */}
             <div className="text-left space-y-1 border-b border-white/10 pb-3">
               <div className="flex items-center gap-2">
-                <Brain className="h-5 w-5 text-[#00cec9]" />
+                <Brain className="h-5 w-5 text-[color:var(--accent)]" />
                 <h3 className="font-serif-luxury text-base sm:text-lg font-bold text-white tracking-wide">
                   MEMORIA VIVA Y APRENDIZAJE DE LA IA
                 </h3>
               </div>
-              <p className="text-xs text-[#8e9c8c] leading-relaxed">
+              <p className="text-xs text-[color:var(--text-secondary)] leading-relaxed">
                 La IA aprende y guarda automáticamente cosas que vas hablando en tus chats (preferencias, proyectos, estilo). También puedes escribirle instrucciones directas o agregar recuerdos manualmente.
               </p>
             </div>
 
             {/* Direct Custom Instructions Section */}
-            <div className="rounded-2xl border border-white/10 bg-[#09120d] p-3.5 space-y-2.5">
+            <div className="rounded-2xl border border-white/10 bg-[color:var(--surface-1)] p-3.5 space-y-2.5">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-[#f4e2b8] flex items-center gap-1.5 font-serif-luxury">
-                  <MessageSquare className="h-3.5 w-3.5 text-[#c5a059]" />
+                <span className="text-xs font-bold text-[color:var(--accent-soft)] flex items-center gap-1.5 font-serif-luxury">
+                  <MessageSquare className="h-3.5 w-3.5 text-[color:var(--accent)]" />
                   Instrucciones directas para la IA
                 </span>
-                <span className="text-[10px] text-[#738271] font-mono-code">
+                <span className="text-[10px] text-[color:var(--text-muted)] font-mono-code">
                   Siempre activas
                 </span>
               </div>
@@ -896,13 +896,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 onChange={(e) => setCustomInstructions(e.target.value)}
                 placeholder="Ejemplo: 'Háblame de tú', 'Prefiero código en TypeScript estricto', 'Estoy creando una startup de e-commerce', 'No uses introducciones largas'..."
                 rows={3}
-                className="w-full resize-none rounded-xl border border-white/10 bg-black/60 p-2.5 text-xs text-[#e8f0e6] placeholder-[#576954] focus:border-[#00cec9]/50 focus:outline-none font-sans"
+                className="w-full resize-none rounded-xl border border-white/10 bg-black/60 p-2.5 text-xs text-[color:var(--text-primary)] placeholder-[color:var(--text-muted)] focus:border-[color:var(--accent)]/50 focus:outline-none font-sans"
               />
               <div className="flex justify-end">
                 <button
                   onClick={handleSaveInstructions}
                   disabled={isSavingInstructions}
-                  className="flex items-center gap-1.5 rounded-xl border border-[#00cec9]/40 bg-[#00cec9]/25 px-3 py-1.5 text-xs font-bold text-[#fbf5e8] hover:bg-[#00cec9]/40 transition-all shadow-sm"
+                  className="flex items-center gap-1.5 rounded-xl border border-[color:var(--accent)]/40 bg-[color:var(--accent)]/25 px-3 py-1.5 text-xs font-bold text-[color:var(--text-primary)] hover:bg-[color:var(--accent)]/40 transition-all shadow-sm"
                 >
                   <Save className="h-3.5 w-3.5" />
                   <span>Guardar Instrucciones</span>
@@ -911,8 +911,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </div>
 
             {/* Add Memory Item Manually */}
-            <div className="rounded-2xl border border-white/10 bg-[#09120d] p-3.5 space-y-2.5">
-              <span className="text-xs font-bold text-[#f4e2b8] flex items-center gap-1.5 font-serif-luxury">
+            <div className="rounded-2xl border border-white/10 bg-[color:var(--surface-1)] p-3.5 space-y-2.5">
+              <span className="text-xs font-bold text-[color:var(--accent-soft)] flex items-center gap-1.5 font-serif-luxury">
                 <Plus className="h-3.5 w-3.5 text-emerald-400" />
                 Agregar dato o preferencia a la memoria
               </span>
@@ -925,13 +925,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     if (e.key === 'Enter') handleAddMemory();
                   }}
                   placeholder="Dato que la IA debe recordar (ej: 'Mi framework favorito es React')..."
-                  className="flex-1 rounded-xl border border-white/10 bg-black/60 px-3 py-1.5 text-xs text-[#e8f0e6] placeholder-[#576954] focus:border-[#00cec9]/50 focus:outline-none"
+                  className="flex-1 rounded-xl border border-white/10 bg-black/60 px-3 py-1.5 text-xs text-[color:var(--text-primary)] placeholder-[color:var(--text-muted)] focus:border-[color:var(--accent)]/50 focus:outline-none"
                 />
                 <div className="flex gap-1.5">
                   <select
                     value={newMemoryCategory}
                     onChange={(e: any) => setNewMemoryCategory(e.target.value)}
-                    className="rounded-xl border border-white/10 bg-black/80 px-2 py-1.5 text-xs text-[#f4e2b8] focus:outline-none"
+                    className="rounded-xl border border-white/10 bg-black/80 px-2 py-1.5 text-xs text-[color:var(--accent-soft)] focus:outline-none"
                   >
                     <option value="general">General</option>
                     <option value="preference">Preferencia</option>
@@ -951,8 +951,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
             {/* List of Stored Memories */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs text-[#8e9c8c]">
-                <span className="font-serif-luxury font-bold text-[#f4e2b8]">
+              <div className="flex items-center justify-between text-xs text-[color:var(--text-secondary)]">
+                <span className="font-serif-luxury font-bold text-[color:var(--accent-soft)]">
                   Recuerdos almacenados en tu perfil ({memoriesList.length})
                 </span>
                 <span className="text-[10px] text-emerald-400 font-mono-code">
@@ -961,10 +961,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </div>
 
               {memoriesList.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-white/15 p-6 text-center text-xs text-[#738271]">
-                  <Brain className="mx-auto h-6 w-6 text-[#738271] mb-2 stroke-1" />
+                <div className="rounded-2xl border border-dashed border-white/15 p-6 text-center text-xs text-[color:var(--text-muted)]">
+                  <Brain className="mx-auto h-6 w-6 text-[color:var(--text-muted)] mb-2 stroke-1" />
                   <p>Aún no hay recuerdos guardados.</p>
-                  <p className="text-[11px] text-[#556353] mt-1">
+                  <p className="text-[11px] text-[color:var(--text-muted)] mt-1">
                     A medida que hables con la IA en el chat, aprenderá tus datos automáticamente, o puedes agregarlos arriba.
                   </p>
                 </div>
@@ -976,14 +976,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       className="group flex items-start justify-between gap-2.5 rounded-xl border border-white/10 bg-black/40 p-2.5 hover:border-white/20 transition-all"
                     >
                       <div className="flex items-start gap-2 min-w-0">
-                        <span className="mt-0.5 rounded-md border border-[#00cec9]/30 bg-[#00cec9]/10 px-1.5 py-0.5 text-[9px] font-mono-code text-[#00cec9] shrink-0 uppercase">
+                        <span className="mt-0.5 rounded-md border border-[color:var(--accent)]/30 bg-[color:var(--accent)]/10 px-1.5 py-0.5 text-[9px] font-mono-code text-[color:var(--accent)] shrink-0 uppercase">
                           {mem.category}
                         </span>
                         <div className="min-w-0">
-                          <p className="text-xs text-[#e8ebe4] leading-snug break-words">
+                          <p className="text-xs text-[color:var(--text-primary)] leading-snug break-words">
                             {mem.fact}
                           </p>
-                          <span className="text-[9px] text-[#576954] font-mono-code">
+                          <span className="text-[9px] text-[color:var(--text-muted)] font-mono-code">
                             {mem.source === 'auto' ? '✦ Aprendido de la conversación' : 'Manual'} ·{' '}
                             {new Date(mem.timestamp).toLocaleDateString()}
                           </span>
@@ -992,7 +992,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
                       <button
                         onClick={() => handleDeleteMemory(mem.id)}
-                        className="rounded-lg p-1 text-[#8e9c8c] hover:bg-red-950/50 hover:text-red-400 transition-colors shrink-0"
+                        className="rounded-lg p-1 text-[color:var(--text-secondary)] hover:bg-red-950/50 hover:text-red-400 transition-colors shrink-0"
                         title="Olvidar este recuerdo"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -1012,7 +1012,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <h3 className="text-base sm:text-lg font-bold tracking-wider text-white">
                 PLANES DE MEMBRESÍA APS
               </h3>
-              <p className="text-xs text-[#8e9c8c]">
+              <p className="text-xs text-[color:var(--text-secondary)]">
                 Mejora tu nivel para desbloquear límites de tokens más altos, consola de código y razonamiento continuo.
               </p>
             </div>
@@ -1027,7 +1027,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     key={plan.id}
                     className={`rounded-2xl border p-4 transition-all relative overflow-hidden ${
                       isCurrent
-                        ? 'border-[#00cec9] bg-[#00cec9]/15 shadow-lg'
+                        ? 'border-[color:var(--accent)] bg-[color:var(--accent)]/15 shadow-lg'
                         : 'border-white/10 bg-black/40 hover:border-white/20'
                     }`}
                   >
@@ -1037,11 +1037,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           <span className="text-sm font-bold text-white">
                             {plan.name}
                           </span>
-                          <span className="rounded-full border border-[#00cec9]/30 bg-[#00cec9]/10 px-2 py-0.5 text-[9px] font-mono-code text-[#00cec9]">
+                          <span className="rounded-full border border-[color:var(--accent)]/30 bg-[color:var(--accent)]/10 px-2 py-0.5 text-[9px] font-mono-code text-[color:var(--accent)]">
                             {plan.badge}
                           </span>
                         </div>
-                        <p className="text-xs text-[#8e9c8c] mt-1">{plan.description}</p>
+                        <p className="text-xs text-[color:var(--text-secondary)] mt-1">{plan.description}</p>
                       </div>
 
                       <div className="text-right shrink-0">
@@ -1051,7 +1051,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       </div>
                     </div>
 
-                    <div className="mt-3 pt-3 border-t border-white/5 flex flex-wrap gap-2 text-[10px] text-[#8e9c8c] font-mono-code">
+                    <div className="mt-3 pt-3 border-t border-white/5 flex flex-wrap gap-2 text-[10px] text-[color:var(--text-secondary)] font-mono-code">
                       {plan.features.map((feat, i) => (
                         <div key={i} className="flex items-center gap-1">
                           <Check className="h-3 w-3 text-emerald-400" />
@@ -1070,7 +1070,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         <button
                           onClick={() => handlePayMembership(plan.id)}
                           disabled={isPaying}
-                          className="flex items-center gap-1.5 rounded-xl border border-white/20 bg-gradient-to-r from-[#00cec9] to-[#0984e3] px-4 py-2 text-xs font-bold text-black shadow-md hover:brightness-110 active:scale-95 transition-all"
+                          className="flex items-center gap-1.5 rounded-xl border border-white/20 bg-gradient-to-r from-[color:var(--accent)] to-[color:var(--accent-2)] px-4 py-2 text-xs font-bold text-black shadow-md hover:brightness-110 active:scale-95 transition-all"
                         >
                           <CreditCard className="h-3.5 w-3.5" />
                           <span>{isPaying ? 'Activando...' : `Activar ${plan.name}`}</span>
