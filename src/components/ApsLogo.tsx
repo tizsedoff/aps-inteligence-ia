@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import compactDefault from '../assets/images/logo-compact.png';
+import largeDefault from '../assets/images/logo-large.png';
 
 interface ApsLogoProps {
   variant?: 'compact' | 'full' | 'icon';
@@ -10,11 +12,10 @@ interface ApsLogoProps {
 
 /**
  * APS Official Logo Component
- * - Uses REAL IMAGE (<img />) passed by the user, strictly without code-drawn SVG recreation.
+ * - Uses the EXACT images provided by the user (compact emblem and full logo with typography).
  * - 'compact' / 'icon': For small spaces (send button replacing the arrow, and hamburger 3-bars).
- * - 'full': For larger spaces (Header, Sidebar brand, Welcome hero, Auth modal).
- * - Seamlessly integrates with dark background (transparent PNG / WebP / SVG).
- * - Reads from localStorage / VisualCustomization or default /logo-compact.png and /logo-large.png.
+ * - 'full': For larger spaces (Header brand, Sidebar, Welcome hero, Auth modal).
+ * - Transparent PNG cleanly integrated with dark glass backgrounds.
  */
 export const ApsLogo: React.FC<ApsLogoProps> = ({
   variant = 'compact',
@@ -23,23 +24,29 @@ export const ApsLogo: React.FC<ApsLogoProps> = ({
   glow = false,
   alt = 'APS Logo',
 }) => {
-  const [compactSrc, setCompactSrc] = useState<string>('/logo-compact.png');
-  const [largeSrc, setLargeSrc] = useState<string>('/logo-large.png');
-  const [imgError, setImgError] = useState<boolean>(false);
+  const [compactSrc, setCompactSrc] = useState<string>(compactDefault);
+  const [largeSrc, setLargeSrc] = useState<string>(largeDefault);
 
   useEffect(() => {
-    // Load custom uploaded images if present in localStorage or window state
+    // Check if user uploaded a custom logo via Visual Customizer
     const savedCompact = localStorage.getItem('aps_logo_compact');
-    if (savedCompact) setCompactSrc(savedCompact);
+    if (savedCompact && savedCompact.startsWith('data:image')) {
+      setCompactSrc(savedCompact);
+    }
 
     const savedLarge = localStorage.getItem('aps_logo_large');
-    if (savedLarge) setLargeSrc(savedLarge);
+    if (savedLarge && savedLarge.startsWith('data:image')) {
+      setLargeSrc(savedLarge);
+    }
 
     const handleStorageChange = () => {
       const c = localStorage.getItem('aps_logo_compact');
-      if (c) setCompactSrc(c);
+      if (c && c.startsWith('data:image')) setCompactSrc(c);
+      else setCompactSrc(compactDefault);
+
       const l = localStorage.getItem('aps_logo_large');
-      if (l) setLargeSrc(l);
+      if (l && l.startsWith('data:image')) setLargeSrc(l);
+      else setLargeSrc(largeDefault);
     };
 
     window.addEventListener('storage', handleStorageChange);
@@ -53,45 +60,36 @@ export const ApsLogo: React.FC<ApsLogoProps> = ({
   const isCompact = variant === 'compact' || variant === 'icon';
   const targetSrc = isCompact ? compactSrc : largeSrc;
 
-  // COMPACT LOGO: For send arrow and 3 bars
+  // COMPACT LOGO: For send arrow, 3-bars hamburger menu, small indicators
   if (isCompact) {
     return (
       <img
         src={targetSrc}
         alt={alt}
-        className={`object-contain transition-all duration-300 select-none ${
-          glow ? 'drop-shadow-[0_0_10px_rgba(0,206,201,0.7)]' : 'drop-shadow-sm'
+        className={`object-contain select-none transition-all duration-300 ${
+          size ? '' : 'h-full w-full max-h-full max-w-full'
+        } ${
+          glow ? 'drop-shadow-[0_0_12px_rgba(0,206,201,0.65)]' : 'drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]'
         } ${className}`}
         style={size ? { width: size, height: size } : undefined}
-        onError={() => {
-          // If png fails, try .svg or .webp
-          if (targetSrc.endsWith('.png')) {
-            setCompactSrc('/logo-compact.svg');
-          } else {
-            setImgError(true);
-          }
-        }}
+        loading="eager"
       />
     );
   }
 
-  // FULL LOGO: For larger spaces (Header, Sidebar, Login)
+  // FULL LOGO: For larger spaces (Header, Sidebar brand, Welcome screen, Auth modals)
   return (
-    <div className={`inline-flex items-center gap-3 select-none ${className}`}>
+    <div className={`inline-flex items-center justify-center select-none ${className}`}>
       <img
-        src={largeSrc}
+        src={targetSrc}
         alt={alt}
-        className={`h-9 w-auto max-w-[180px] sm:h-10 sm:max-w-[220px] object-contain transition-all duration-300 ${
-          glow ? 'drop-shadow-[0_0_15px_rgba(0,206,201,0.5)]' : 'drop-shadow-md'
+        className={`w-auto object-contain transition-all duration-300 ${
+          size ? 'max-w-none' : 'h-9 max-w-[200px] sm:h-11 sm:max-w-[260px]'
+        } ${
+          glow ? 'drop-shadow-[0_0_18px_rgba(0,206,201,0.55)]' : 'drop-shadow-[0_3px_12px_rgba(0,0,0,0.7)]'
         }`}
         style={size ? { height: size } : undefined}
-        onError={() => {
-          if (largeSrc.endsWith('.png')) {
-            setLargeSrc('/logo-large.svg');
-          } else {
-            setImgError(true);
-          }
-        }}
+        loading="eager"
       />
     </div>
   );

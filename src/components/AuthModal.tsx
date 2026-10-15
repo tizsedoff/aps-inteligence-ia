@@ -268,7 +268,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           {/* Header */}
           <div className="text-center space-y-1 mb-5">
             <div className="flex justify-center mb-1">
-              <ApsLogo variant="compact" glow className="h-10 w-10" />
+              <ApsLogo variant="full" glow size={42} className="mx-auto" />
             </div>
             <h2 className="text-xl font-bold font-serif-luxury text-white">
               {authMode === 'login' ? 'INICIAR SESIÓN' : 'CREAR CUENTA'}

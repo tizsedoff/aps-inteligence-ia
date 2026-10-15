@@ -122,7 +122,7 @@ export const ChatTimeline: React.FC<ChatTimelineProps> = ({
           >
             {/* APS Logo in larger space */}
             <div className="mb-2">
-              <ApsLogo variant="full" />
+              <ApsLogo variant="full" glow size={56} className="mx-auto" />
             </div>
 
             {/* HOLA (NOMBRE) */}

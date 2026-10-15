@@ -75,13 +75,17 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="flex w-full items-center justify-between px-2 sm:px-4 py-2 sm:py-2.5 md:px-8 gap-1.5 sm:gap-3">
         {/* LEFT: Hamburger + MODELO APS... Card */}
         <div className="flex items-center gap-1.5 sm:gap-4 shrink-0">
-          {/* Hamburger / APS Logo Menu Icon */}
+          {/* Hamburger / Menu Button replaced with Compact APS Logo as instructed */}
           <button
             onClick={onOpenSidebar}
-            className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-white/15 bg-white/5 hover:bg-white/15 hover:border-white/30 transition-all shadow-md active:scale-95 group p-1.5"
+            className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 hover:border-[#00cec9]/40 hover:shadow-[0_0_15px_rgba(0,206,201,0.3)] transition-all shadow-md active:scale-95 group p-1.5 shrink-0"
             title="Abrir menú APS"
           >
-            <ApsLogo variant="compact" className="h-full w-full object-contain group-hover:scale-105 transition-transform" />
+            <ApsLogo
+              variant="compact"
+              glow
+              className="h-full w-full object-contain group-hover:scale-110 transition-transform duration-200"
+            />
           </button>
 
           {/* Big Rounded 'MODELO APS...' Card */}
@@ -153,8 +157,12 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* CENTER: Solo CODIGO o CHAT Selector */}
-        <div className="flex items-center rounded-2xl border border-white/20 bg-black/70 p-1 shadow-2xl backdrop-blur-2xl shrink-0">
+        {/* CENTER: Full APS Logo on larger screens + Solo CODIGO o CHAT Selector */}
+        <div className="flex items-center gap-4">
+          <div className="hidden xl:flex items-center">
+            <ApsLogo variant="full" glow size={34} />
+          </div>
+          <div className="flex items-center rounded-2xl border border-white/20 bg-black/70 p-1 shadow-2xl backdrop-blur-2xl shrink-0">
           <button
             onClick={() => onSelectView('chat')}
             className={`flex items-center gap-1.5 sm:gap-2 rounded-xl px-3 sm:px-5 py-1.5 text-xs sm:text-sm font-serif-luxury font-bold tracking-wider transition-all duration-300 ${
@@ -185,6 +193,7 @@ export const Header: React.FC<HeaderProps> = ({
             <span>CODIGO</span>
           </button>
         </div>
+      </div>
 
         {/* RIGHT: Actions, Studio Customizer, Terms & User Avatar */}
         <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">

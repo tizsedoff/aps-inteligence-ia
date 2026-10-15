@@ -227,11 +227,11 @@ export const InputDock: React.FC<InputDockProps> = ({
             <span className="text-[10px]">Pensamiento</span>
           </button>
 
-          {/* Right: Circular Send Button (Cyan circle with upward arrow as in mockup) */}
+          {/* Right: Send Button with Compact APS Logo replacing the arrow */}
           {isLoading ? (
             <button
               onClick={onStopGeneration}
-              className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-full bg-red-600 text-white shadow-lg hover:scale-105 active:scale-95 transition-all"
+              className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-full bg-red-600/90 text-white shadow-[0_0_15px_rgba(239,68,68,0.5)] hover:scale-105 active:scale-95 transition-all"
               title="Detener generación"
             >
               <StopCircle className="h-5 w-5 animate-spin" />
@@ -240,14 +240,26 @@ export const InputDock: React.FC<InputDockProps> = ({
             <button
               onClick={handleSubmit}
               disabled={!text.trim() && attachments.length === 0}
-              className={`flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-full transition-all duration-300 p-2 ${
+              className={`group relative flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl sm:rounded-2xl transition-all duration-300 p-2 overflow-hidden ${
                 text.trim() || attachments.length > 0
-                  ? 'bg-gradient-to-tr from-[#00cec9] to-[#81ecec] hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(0,206,201,0.5)] cursor-pointer'
-                  : 'bg-white/10 hover:bg-white/15 cursor-not-allowed opacity-60'
+                  ? 'border border-[#00cec9]/80 bg-gradient-to-b from-[#0e2a24]/90 to-[#03130e]/95 hover:border-[#00cec9] hover:from-[#133d34] hover:to-[#061e16] hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(0,206,201,0.55)] cursor-pointer'
+                  : 'border border-white/15 bg-white/5 opacity-80 hover:opacity-100 hover:border-white/30 cursor-pointer'
               }`}
               title="Enviar idea (APS)"
             >
-              <ApsLogo variant="compact" className="h-full w-full object-contain" />
+              {/* Radial glow background when ready to send */}
+              {(text.trim() || attachments.length > 0) && (
+                <div className="absolute inset-0 bg-radial from-[#00cec9]/30 via-transparent to-transparent pointer-events-none" />
+              )}
+              <ApsLogo
+                variant="compact"
+                glow={Boolean(text.trim() || attachments.length > 0)}
+                className={`relative z-10 h-full w-full object-contain transition-all duration-300 ${
+                  text.trim() || attachments.length > 0
+                    ? 'scale-105 group-hover:scale-110 drop-shadow-[0_0_10px_rgba(0,206,201,0.8)]'
+                    : 'opacity-90 group-hover:opacity-100'
+                }`}
+              />
             </button>
           )}
         </div>

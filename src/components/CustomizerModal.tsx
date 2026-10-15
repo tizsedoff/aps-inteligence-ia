@@ -1,6 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { VisualCustomization } from '../types';
 import { THEME_PRESETS, CURATED_WALLPAPERS, DEFAULT_CUSTOMIZATION } from '../constants/themePresets';
+import compactDefault from '../assets/images/logo-compact.png';
+import largeDefault from '../assets/images/logo-large.png';
 import {
   X,
   Palette,
@@ -679,13 +681,12 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
                     {/* Live Preview on Dark Background */}
                     <div className="flex items-center justify-center h-28 rounded-xl border border-white/10 bg-black/60 p-4 relative group">
                       <img
-                        src={customization.logoCompact || localStorage.getItem('aps_logo_compact') || '/logo-compact.png'}
+                        src={customization.logoCompact || localStorage.getItem('aps_logo_compact') || compactDefault}
                         alt="Logo Chiquito Preview"
                         className="max-h-16 max-w-16 object-contain drop-shadow-[0_0_12px_rgba(0,206,201,0.5)]"
                         onError={(e) => {
-                          // Fallback to svg or display icon indicator
                           const target = e.currentTarget;
-                          if (!target.src.endsWith('.svg')) target.src = '/logo-compact.svg';
+                          target.src = compactDefault;
                         }}
                       />
                       <span className="absolute bottom-1 right-2 text-[9px] font-mono text-white/40">
@@ -733,12 +734,12 @@ export const CustomizerModal: React.FC<CustomizerModalProps> = ({
                     {/* Live Preview on Dark Background */}
                     <div className="flex items-center justify-center h-28 rounded-xl border border-white/10 bg-black/60 p-4 relative group">
                       <img
-                        src={customization.logoLarge || localStorage.getItem('aps_logo_large') || '/logo-large.png'}
+                        src={customization.logoLarge || localStorage.getItem('aps_logo_large') || largeDefault}
                         alt="Logo Grande Preview"
                         className="max-h-16 max-w-[200px] object-contain drop-shadow-[0_0_12px_rgba(197,160,89,0.5)]"
                         onError={(e) => {
                           const target = e.currentTarget;
-                          if (!target.src.endsWith('.svg')) target.src = '/logo-large.svg';
+                          target.src = largeDefault;
                         }}
                       />
                       <span className="absolute bottom-1 right-2 text-[9px] font-mono text-white/40">
