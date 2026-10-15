@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { CliFile, CliExecutionResult, Attachment } from '../types';
 import {
-  Terminal as TerminalIcon,
   Play,
   Download,
   Copy,
@@ -11,16 +10,22 @@ import {
   FileCode,
   Eye,
   RefreshCw,
-  CornerDownLeft,
   X,
   Code2,
   Brain,
   Maximize2,
   Minimize2,
-  Columns,
   Monitor,
+  Tablet,
   Smartphone,
-  ExternalLink,
+  MessageSquare,
+  Plus,
+  ArrowUp,
+  Loader2,
+  AlertTriangle,
+  CheckCircle2,
+  Zap,
+  Info,
 } from 'lucide-react';
 
 // Helper to construct fully bundled and self-contained preview HTML for multi-file projects
@@ -95,19 +100,208 @@ function buildCombinedPreviewHtml(allFiles: CliFile[], activeFile?: CliFile): st
   <meta charset="utf-8">
   <title>Vista Previa APS</title>
   <style>
-    body { font-family: system-ui, -apple-system, sans-serif; background: #070d09; color: #fbf5e8; padding: 24px; margin: 0; }
-    h2 { color: #f4e2b8; border-bottom: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); padding-bottom: 10px; font-size: 1.1rem; }
-    p { color: #8e9c8c; font-size: 0.85rem; }
-    pre { background: #0c1611; border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent); padding: 16px; border-radius: 8px; color: #98e6a5; overflow: auto; font-size: 0.8rem; font-family: monospace; white-space: pre-wrap; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #0f1115; color: #e8eaed; padding: 24px; margin: 0; }
+    h2 { color: #ffffff; border-bottom: 1px solid #2a2f3a; padding-bottom: 10px; font-size: 1.1rem; }
+    p { color: #9aa3b2; font-size: 0.85rem; }
+    pre { background: #161a22; border: 1px solid #2a2f3a; padding: 16px; border-radius: 8px; color: #d6deeb; overflow: auto; font-size: 0.8rem; font-family: monospace; white-space: pre-wrap; }
   </style>
 </head>
 <body>
-  <h2>APS HARD WORK — Vista de Código (${activeFile?.filename || 'archivo'})</h2>
-  <p>Renderizando código en tiempo real. Escribe o modifica líneas para ver el progreso aquí mismo.</p>
+  <h2>${activeFile?.filename || 'archivo'}</h2>
+  <p>Este archivo no es una página web, así que se muestra su código. Usa «Ejecutar» en la pestaña Código para correrlo.</p>
   <pre>${codeToDisplay.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
 </body>
 </html>`;
 }
+
+type LogItem = {
+  type: 'input' | 'stdout' | 'stderr' | 'system' | 'thinking';
+  text: string;
+  time: string;
+};
+
+type Viewport = 'full' | 'tablet' | 'mobile';
+
+const EXAMPLE_PROMPTS = [
+  { title: 'Juego de Snake', desc: 'Clásico, con canvas y puntaje', cmd: 'Crea un juego de Snake en HTML con Canvas' },
+  { title: 'Calculadora', desc: 'Interactiva y elegante', cmd: 'Haz una calculadora interactiva y elegante' },
+  { title: 'App de notas', desc: 'Guarda tus notas en el navegador', cmd: 'Crea una app de notas con localStorage' },
+  { title: 'Cronómetro', desc: 'Con vueltas y reinicio', cmd: 'Crea un cronómetro interactivo con vueltas' },
+];
+
+const FOLLOW_UPS = [
+  'Mejora el diseño visual',
+  'Hazlo responsive para celular',
+  'Agrega animaciones suaves',
+  'Cambia la paleta de colores',
+];
+
+/** Una entrada del historial, mostrada como conversación en lugar de log de terminal. */
+const LogEntry: React.FC<{ log: LogItem }> = ({ log }) => {
+  const text = log.text;
+
+  if (log.type === 'input') {
+    const clean = text.replace(/^aps@hardwork:~\$\s*/, '');
+    return (
+      <div className="flex justify-end">
+        <div
+          className="max-w-[90%] break-words rounded-2xl rounded-br-md border border-[color:var(--accent)]/30 bg-[color:var(--accent)]/15 px-3.5 py-2 text-[13px] leading-snug text-[color:var(--text-primary)]"
+          title={log.time}
+        >
+          {clean}
+        </div>
+      </div>
+    );
+  }
+
+  if (log.type === 'stderr') {
+    return (
+      <div className="flex gap-2 rounded-xl border border-red-500/40 bg-red-500/10 px-3 py-2.5 text-[13px] text-red-300">
+        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+        <div className="min-w-0 whitespace-pre-wrap break-words">{text}</div>
+      </div>
+    );
+  }
+
+  if (log.type === 'stdout') {
+    return (
+      <div className="rounded-xl border border-white/10 bg-[color:var(--surface-0)] px-3 py-2.5">
+        <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-[color:var(--text-muted)]">
+          Resultado
+        </div>
+        <pre className="whitespace-pre-wrap break-words font-mono-code text-xs leading-relaxed text-[color:var(--text-primary)]">
+          {text}
+        </pre>
+      </div>
+    );
+  }
+
+  if (log.type === 'thinking') {
+    // El aviso genérico "Procesando..." ya lo cubre el indicador de progreso.
+    if (!text.startsWith('Razonamiento:')) return null;
+    return (
+      <details className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-[color:var(--text-secondary)]">
+        <summary className="flex cursor-pointer select-none items-center gap-1.5 font-medium">
+          <Brain className="h-3.5 w-3.5 text-[color:var(--accent)]" />
+          Ver cómo lo pensó la IA
+        </summary>
+        <div className="mt-2 whitespace-pre-wrap leading-relaxed">
+          {text.replace(/^Razonamiento:\s*/, '')}
+        </div>
+      </details>
+    );
+  }
+
+  // system
+  const ok = text.startsWith('✔');
+  const fail = text.startsWith('✖');
+  const bolt = text.startsWith('⚡');
+  const body = text.replace(/^[✔✖⚡]\s*/, '');
+
+  if (body.includes('\n')) {
+    return (
+      <div className="rounded-xl border border-white/10 bg-[color:var(--surface-0)] px-3 py-2.5">
+        <pre className="whitespace-pre-wrap break-words font-mono-code text-xs leading-relaxed text-[color:var(--text-secondary)]">
+          {body}
+        </pre>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`flex items-start gap-2 px-1 text-[13px] leading-snug ${
+        fail ? 'text-red-300' : 'text-[color:var(--text-secondary)]'
+      }`}
+    >
+      {ok ? (
+        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+      ) : fail ? (
+        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+      ) : bolt ? (
+        <Zap className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--accent)]" />
+      ) : (
+        <Info className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--text-muted)]" />
+      )}
+      <span className="min-w-0 break-words">{body}</span>
+    </div>
+  );
+};
+
+/** Selector de tamaño de pantalla (escritorio / tablet / móvil). */
+const ViewportSwitch: React.FC<{ value: Viewport; onChange: (v: Viewport) => void }> = ({
+  value,
+  onChange,
+}) => {
+  const options: { id: Viewport; label: string; icon: React.ReactNode }[] = [
+    { id: 'full', label: 'Escritorio', icon: <Monitor className="h-3.5 w-3.5" /> },
+    { id: 'tablet', label: 'Tablet', icon: <Tablet className="h-3.5 w-3.5" /> },
+    { id: 'mobile', label: 'Móvil', icon: <Smartphone className="h-3.5 w-3.5" /> },
+  ];
+  return (
+    <div className="flex items-center rounded-lg border border-white/10 bg-[color:var(--surface-0)] p-0.5">
+      {options.map((o) => (
+        <button
+          key={o.id}
+          onClick={() => onChange(o.id)}
+          title={`Ver como ${o.label.toLowerCase()}`}
+          aria-label={o.label}
+          className={`flex items-center rounded-md px-2 py-1 transition-colors ${
+            value === o.id
+              ? 'bg-[color:var(--accent)]/25 text-[color:var(--text-primary)]'
+              : 'text-[color:var(--text-muted)] hover:text-[color:var(--text-primary)]'
+          }`}
+        >
+          {o.icon}
+        </button>
+      ))}
+    </div>
+  );
+};
+
+/** Iframe de vista previa con marco según el tamaño elegido. */
+const PreviewFrame: React.FC<{
+  srcDoc: string;
+  frameKey: string;
+  viewport: Viewport;
+  title: string;
+}> = ({ srcDoc, frameKey, viewport, title }) => (
+  <div className="flex h-full w-full items-start justify-center overflow-auto bg-[color:var(--surface-0)]">
+    <div
+      className={`bg-white transition-all duration-300 ${
+        viewport === 'full'
+          ? 'h-full w-full'
+          : `my-3 h-[calc(100%-1.5rem)] max-w-full overflow-hidden rounded-2xl border border-white/15 shadow-2xl ${
+              viewport === 'mobile' ? 'w-[390px]' : 'w-[768px]'
+            }`
+      }`}
+    >
+      <iframe
+        key={frameKey}
+        title={title}
+        srcDoc={srcDoc}
+        className="h-full w-full border-none bg-white"
+        sandbox="allow-scripts allow-modals allow-same-origin allow-forms"
+      />
+    </div>
+  </div>
+);
+
+/** Botón de icono con etiqueta accesible. */
+const IconButton: React.FC<{
+  title: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}> = ({ title, onClick, children }) => (
+  <button
+    onClick={onClick}
+    title={title}
+    aria-label={title}
+    className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-[color:var(--text-secondary)] transition-colors hover:bg-white/10 hover:text-[color:var(--text-primary)]"
+  >
+    {children}
+  </button>
+);
 
 interface CliConsoleProps {
   initialCode?: string;
@@ -130,15 +324,17 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
   const [historyIndex, setHistoryIndex] = useState<number>(-1);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Requirement 1: MUST APPEAR DIRECTLY IN CONSOLA ('terminal')
-  const [activeTab, setActiveTab] = useState<'terminal' | 'editor' | 'preview'>('terminal');
+  // Vista activa: 'orders' (conversación con la IA), 'preview' o 'code'.
+  // En pantallas grandes las órdenes siempre se ven a la izquierda.
+  const [activeTab, setActiveTab] = useState<'orders' | 'preview' | 'code'>('orders');
 
   // Requirement 2: FULL SCREEN PREVIEW TOGGLE
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
   const [previewViewport, setPreviewViewport] = useState<'full' | 'tablet' | 'mobile'>('full');
 
-  // Requirement 3: SPLIT VIEW FOR LINE-BY-LINE LIVE PROGRESS
-  const [isSplitView, setIsSplitView] = useState(false);
+  // Falso hasta que haya código real (generado, importado o escrito a mano)
+  const [hasContent, setHasContent] = useState(Boolean(initialCode));
+  const [codeScrollTop, setCodeScrollTop] = useState(0);
   const [lineProgress, setLineProgress] = useState<{
     filename: string;
     current: number;
@@ -162,19 +358,19 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
   <title>APS HARD WORK</title>
   <style>
     body {
-      background: #050a07;
-      color: #fbf5e8;
-      font-family: monospace;
+      background: #0f1115;
+      color: #e8eaed;
+      font-family: system-ui, sans-serif;
       padding: 24px;
       margin: 0;
     }
-    h1 { color: #f4e2b8; font-size: 1.2rem; }
-    p { color: #8e9c8c; font-size: 0.9rem; }
+    h1 { color: #ffffff; font-size: 1.2rem; }
+    p { color: #9aa3b2; font-size: 0.9rem; }
   </style>
 </head>
 <body>
-  <h1>APS HARD WORK — Workspace Activo</h1>
-  <p>Consola lista. Escribe cualquier orden en la terminal o crea archivos con la IA.</p>
+  <h1>Tu proyecto</h1>
+  <p>Escribe una orden para que la IA cree algo aquí.</p>
 </body>
 </html>`,
       description: 'Documento web principal',
@@ -185,13 +381,7 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
   // Terminal logs: starts with welcoming prompt
   const [terminalLogs, setTerminalLogs] = useState<
     { type: 'input' | 'stdout' | 'stderr' | 'system' | 'thinking'; text: string; time: string }[]
-  >([
-    {
-      type: 'system',
-      text: 'APS HARD WORK — CLI DEVELOPMENT ENGINE v3.8 INICIADO [CONSOLA ACTIVA]\nEscribe cualquier orden en la consola (ej: "crea un juego de snake", "haz una calculadora", "escribe un algoritmo") y la IA escribirá el código línea por línea en tiempo real con sincronización visual en Vista Previa.',
-      time: new Date().toLocaleTimeString(),
-    },
-  ]);
+  >([]);
 
   // Uploaded files in CLI
   const [cliAttachments, setCliAttachments] = useState<Attachment[]>([]);
@@ -211,8 +401,8 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
   }, [isFullScreenPreview]);
 
   useEffect(() => {
-    terminalBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [terminalLogs]);
+    terminalBottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [terminalLogs, lineProgress?.current, isProcessing]);
 
   // When initialCode changes from outside, add to files and notify in terminal
   useEffect(() => {
@@ -233,9 +423,10 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
         setFiles((prev) => [...prev, newSnippetFile]);
         setActiveFileIndex(files.length);
       }
+      setHasContent(true);
       addLog('system', `✔ Snippet importado desde el chat cargado en el espacio de trabajo.`);
       // Keep terminal view as primary per user requirement
-      setActiveTab('terminal');
+      setActiveTab('orders');
     }
   }, [initialCode, initialLang]);
 
@@ -298,11 +489,12 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
     const newFile: CliFile = {
       filename: defaultName,
       language: 'html',
-      code: `<!DOCTYPE html>\n<html>\n<head>\n  <style>body { background: #070d09; color: #fbf5e8; font-family: sans-serif; padding: 20px; }</style>\n</head>\n<body>\n  <h1>Nuevo archivo</h1>\n  <p>Escribe tu código línea por línea para ver el progreso en tiempo real.</p>\n</body>\n</html>\n`,
+      code: `<!DOCTYPE html>\n<html>\n<head>\n  <style>body { background: #ffffff; color: #1f2937; font-family: system-ui, sans-serif; padding: 20px; }</style>\n</head>\n<body>\n  <h1>Nuevo archivo</h1>\n  <p>Edita el código o pídele cambios a la IA.</p>\n</body>\n</html>\n`,
       description: 'Nuevo archivo en blanco',
     };
     setFiles((prev) => [...prev, newFile]);
     setActiveFileIndex(files.length);
+    setHasContent(true);
     addLog('system', `✔ Creado nuevo archivo: '${defaultName}'`);
   };
 
@@ -320,6 +512,7 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
 
   // Progressive line-by-line stream implementation for generated code
   const streamCodeLineByLine = async (incomingFiles: CliFile[]) => {
+    setHasContent(true);
     for (const newFile of incomingFiles) {
       const lines = newFile.code.split('\n');
       const totalLines = lines.length;
@@ -338,7 +531,7 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
 
       addLog(
         'system',
-        `⚡ Escribiendo '${newFile.filename}' línea por línea (${totalLines} líneas)...`
+        `⚡ Escribiendo ${newFile.filename} (${totalLines} líneas)…`
       );
 
       // Stream in progressive chunks of 2-4 lines every 20ms
@@ -370,7 +563,7 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
     }
 
     setLineProgress(null);
-    addLog('system', `✔ 100% de líneas generadas y sincronizadas en la Vista Previa.`);
+    addLog('system', `✔ Listo: el código está generado y ya se ve en la vista previa.`);
   };
 
   // Run the current active file in simulated / real JS sandbox
@@ -393,7 +586,7 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
       return;
     }
 
-    setActiveTab('terminal');
+    setActiveTab('orders');
     addLog('input', `run ${currentFile.filename}`);
     addLog('system', `Compilando y ejecutando '${currentFile.filename}' en sandbox virtual...`);
 
@@ -472,26 +665,25 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
       return;
     }
     if (rawCmd === 'split') {
-      setIsSplitView((prev) => !prev);
+      setActiveTab('code');
       setIsProcessing(false);
       return;
     }
     if (rawCmd === 'editor') {
-      setActiveTab('editor');
+      setActiveTab('code');
       setIsProcessing(false);
       return;
     }
     if (rawCmd === 'help') {
       addLog(
         'system',
-        `Comandos de APS HARD WORK CLI:
-  <cualquier orden>          Escribe lo que quieres que cree la IA (ej: "juego de snake", "calculadora")
-  fullscreen                 Agranda la vista previa a pantalla completa
-  split                      Activa/desactiva la vista dividida (Código + Preview en vivo)
-  preview                    Muestra el render interactivo en la pestaña Vista Previa
-  editor                     Abre el editor de código con numeración de líneas
-  run                        Ejecuta el archivo actual en el sandbox
-  clear                      Limpia los registros de la consola`
+        `Comandos disponibles:
+  <cualquier texto>   Pídele a la IA que cree o cambie algo (ej: "juego de snake")
+  preview             Ir a la vista previa
+  editor              Ir al código
+  fullscreen          Vista previa a pantalla completa
+  run                 Ejecutar el archivo actual
+  clear               Limpiar el historial`
       );
       setIsProcessing(false);
       return;
@@ -540,6 +732,8 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
         if (result.generatedFiles && result.generatedFiles.length > 0) {
           await streamCodeLineByLine(result.generatedFiles);
           setPreviewKey((k) => k + 1);
+          // En celular, al terminar llevamos al usuario directo al resultado
+          if (window.matchMedia('(max-width: 1023px)').matches) setActiveTab('preview');
         }
       } else {
         addLog('stderr', data.error || 'Error desconocido en el motor CLI.');
@@ -602,631 +796,448 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
   // Code line count for active file
   const activeLineCount = currentFile?.code.split('\n').length || 1;
 
+  const showRun = Boolean(currentFile && !currentFile.filename.endsWith('.html'));
+  const hasLogs = terminalLogs.some((l) => !(l.type === 'thinking' && !l.text.startsWith('Razonamiento:')));
+  const progressPct = lineProgress
+    ? Math.round((lineProgress.current / Math.max(1, lineProgress.total)) * 100)
+    : 0;
+  const canSend = command.trim().length > 0 && !isProcessing;
+  const showOrders = activeTab === 'orders';
+  const rightIsCode = activeTab === 'code';
+
+  const mobileTabs: { id: 'orders' | 'preview' | 'code'; label: string; icon: React.ReactNode }[] = [
+    { id: 'orders', label: 'Órdenes', icon: <MessageSquare className="h-4 w-4" /> },
+    { id: 'preview', label: 'Vista previa', icon: <Eye className="h-4 w-4" /> },
+    { id: 'code', label: 'Código', icon: <Code2 className="h-4 w-4" /> },
+  ];
+
+  const tabBtn = (active: boolean) =>
+    `flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] font-semibold transition-colors ${
+      active
+        ? 'bg-[color:var(--accent)]/25 text-[color:var(--text-primary)]'
+        : 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]'
+    }`;
+
   return (
-    <div className="flex flex-1 h-full w-full flex-col overflow-hidden p-0 sm:p-1 md:p-2 bg-[color:var(--surface-0)]">
-      <div className="flex h-full w-full flex-1 flex-col overflow-hidden rounded-none sm:rounded-xl border-0 sm:border border-[color:var(--accent)]/30 bg-[color:var(--surface-0)]/95 shadow-2xl backdrop-blur-2xl">
-        {/* Top Header Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[color:var(--accent)]/20 bg-[color:var(--surface-2)]/90 px-2.5 sm:px-4 py-2 sm:py-2.5 gap-2">
-          {/* Left: Engine Badge & File Tabs */}
-          <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto scrollbar-none pb-0.5 sm:pb-0">
-            <div className="flex items-center gap-1.5 sm:gap-2 pr-2 border-r border-[color:var(--accent)]/20 shrink-0">
-              <span className="flex h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full bg-[color:var(--accent)] shadow-[0_0_8px_#c5a059]" />
-              <span className="font-serif-luxury text-[11px] sm:text-xs font-bold tracking-wider text-[color:var(--accent-soft)] whitespace-nowrap">
-                <span className="hidden xs:inline sm:inline">APS HARD WORK </span>CLI
-              </span>
-            </div>
-
-            {/* File Tabs */}
-            <div className="flex items-center gap-1.5 shrink-0">
-              {files.map((file, idx) => (
-                <div
-                  key={file.filename}
-                  onClick={() => {
-                    setActiveFileIndex(idx);
-                  }}
-                  className={`flex items-center gap-1 sm:gap-1.5 rounded-lg px-2 sm:px-2.5 py-1 text-[11px] sm:text-xs font-mono-code transition-all cursor-pointer whitespace-nowrap ${
-                    activeFileIndex === idx
-                      ? 'border border-[color:var(--accent)]/40 bg-[color:var(--accent)]/20 text-[color:var(--text-primary)] shadow-sm font-semibold'
-                      : 'text-[color:var(--text-secondary)] hover:bg-white/5 hover:text-[color:var(--accent-hover)]'
-                  }`}
-                >
-                  <FileCode className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-[color:var(--accent)]" />
-                  <span>{file.filename}</span>
-                  {files.length > 1 && (
-                    <button
-                      onClick={(e) => handleDeleteFile(e, idx)}
-                      className="ml-1 text-[color:var(--text-secondary)] hover:text-red-400 p-0.5 rounded"
-                      title="Eliminar archivo"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  )}
-                </div>
-              ))}
-              <button
-                onClick={handleAddNewFile}
-                className="flex items-center gap-1 rounded-lg border border-dashed border-[color:var(--accent)]/30 px-2 py-1 text-[10px] sm:text-[11px] font-mono-code text-[color:var(--accent)] hover:bg-[color:var(--accent)]/10 transition-colors whitespace-nowrap"
-                title="Crear nuevo archivo en el workspace"
-              >
-                <span>+ Nuevo</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Right: View Toggles & Actions */}
-          <div className="flex items-center justify-between sm:justify-end gap-1.5 sm:gap-2">
-            {/* View Switcher: Consola is the First / Default Tab */}
-            <div className="flex items-center rounded-lg border border-[color:var(--accent)]/20 bg-[color:var(--surface-0)] p-0.5 text-xs">
-              <button
-                onClick={() => {
-                  setActiveTab('terminal');
-                  setIsSplitView(false);
-                }}
-                className={`flex items-center gap-1 rounded-md px-2 sm:px-2.5 py-1 transition-all ${
-                  activeTab === 'terminal' && !isSplitView
-                    ? 'bg-[color:var(--accent)]/25 text-[color:var(--accent-soft)] font-bold shadow-sm'
-                    : 'text-[color:var(--text-secondary)] hover:text-[color:var(--accent-soft)]'
-                }`}
-                title="Consola de órdenes de desarrollo"
-              >
-                <TerminalIcon className="h-3.5 w-3.5 text-[color:var(--accent)]" />
-                <span className="text-[11px] sm:text-xs">Consola</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  setActiveTab('editor');
-                  setIsSplitView(false);
-                }}
-                className={`flex items-center gap-1 rounded-md px-2 sm:px-2.5 py-1 transition-all ${
-                  activeTab === 'editor' && !isSplitView
-                    ? 'bg-[color:var(--accent)]/25 text-[color:var(--accent-soft)] font-bold shadow-sm'
-                    : 'text-[color:var(--text-secondary)] hover:text-[color:var(--accent-soft)]'
-                }`}
-                title="Editor de código"
-              >
-                <Code2 className="h-3.5 w-3.5 text-[color:var(--accent)]" />
-                <span className="text-[11px] sm:text-xs">Editor</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  setActiveTab('preview');
-                  setIsSplitView(false);
-                }}
-                className={`flex items-center gap-1 rounded-md px-2 sm:px-2.5 py-1 transition-all ${
-                  activeTab === 'preview' && !isSplitView
-                    ? 'bg-[color:var(--accent)]/25 text-[color:var(--accent-soft)] font-bold shadow-sm'
-                    : 'text-[color:var(--text-secondary)] hover:text-[color:var(--accent-soft)]'
-                }`}
-                title="Vista previa interactiva"
-              >
-                <Eye className="h-3.5 w-3.5 text-[color:var(--accent)]" />
-                <span className="text-[11px] sm:text-xs">
-                  <span className="hidden sm:inline">Vista </span>Previa
-                </span>
-              </button>
-
-              {/* Requirement 3: Split View for Line-by-Line Live Progress */}
-              <button
-                onClick={() => setIsSplitView((prev) => !prev)}
-                className={`flex items-center gap-1 rounded-md px-2 sm:px-2.5 py-1 transition-all border-l border-[color:var(--accent)]/20 ${
-                  isSplitView
-                    ? 'bg-emerald-500/25 text-emerald-200 font-bold shadow-sm'
-                    : 'text-[color:var(--text-secondary)] hover:text-[color:var(--accent-soft)]'
-                }`}
-                title="Ver código y vista previa lado a lado para ver el progreso línea por línea"
-              >
-                <Columns className="h-3.5 w-3.5 text-emerald-400" />
-                <span className="text-[11px] sm:text-xs hidden sm:inline">Dividido</span>
-              </button>
-            </div>
-
-            {/* Requirement 2: Full Screen Preview Button */}
+    <div className="flex h-full w-full flex-1 flex-col overflow-hidden bg-[color:var(--surface-0)] p-0 sm:p-2">
+      <div className="flex h-full w-full flex-1 flex-col overflow-hidden rounded-none border-0 border-white/10 bg-[color:var(--surface-1)] shadow-2xl sm:rounded-2xl sm:border">
+        {/* Selector de vista (solo celular): Órdenes / Vista previa / Código */}
+        <div className="flex items-center gap-1 border-b border-white/10 bg-[color:var(--surface-2)] p-1.5 lg:hidden">
+          {mobileTabs.map((t) => (
             <button
-              onClick={() => setIsFullScreenPreview(true)}
-              className="flex items-center gap-1 sm:gap-1.5 rounded-lg border border-[color:var(--accent)]/40 bg-[color:var(--accent)]/20 px-2.5 sm:px-3 py-1 text-xs font-serif-luxury font-semibold text-[color:var(--text-primary)] shadow-sm hover:bg-[color:var(--accent)]/35 active:scale-95 transition-all"
-              title="Agrandar vista previa a pantalla completa"
+              key={t.id}
+              onClick={() => setActiveTab(t.id)}
+              className={`flex flex-1 items-center justify-center ${tabBtn(activeTab === t.id)}`}
             >
-              <Maximize2 className="h-3 w-3 text-[color:var(--accent-soft)]" />
-              <span className="text-[11px] sm:text-xs hidden sm:inline">Full Screen</span>
-            </button>
-
-            <div className="flex items-center gap-1 sm:gap-1.5">
-              {/* Run Button */}
-              <button
-                onClick={executeActiveCode}
-                className="flex items-center gap-1 sm:gap-1.5 rounded-lg border border-[color:var(--accent)]/40 bg-gradient-to-r from-[color:var(--accent)]/30 to-emerald-600/30 px-2 sm:px-2.5 py-1 text-xs font-serif-luxury font-semibold text-[color:var(--text-primary)] shadow-sm hover:brightness-110 active:scale-95 transition-all"
-                title="Ejecutar archivo"
-              >
-                <Play className="h-3 w-3 fill-current text-[color:var(--accent-soft)]" />
-                <span className="text-[11px] sm:text-xs hidden md:inline">Ejecutar</span>
-              </button>
-
-              <button
-                onClick={handleCopyCode}
-                className="rounded-lg border border-[color:var(--accent)]/20 p-1.5 text-[color:var(--text-secondary)] hover:bg-[color:var(--accent)]/10 hover:text-[color:var(--accent-soft)] transition-colors"
-                title="Copiar código actual"
-              >
-                {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
-              </button>
-
-              <button
-                onClick={handleDownloadCode}
-                className="rounded-lg border border-[color:var(--accent)]/20 p-1.5 text-[color:var(--text-secondary)] hover:bg-[color:var(--accent)]/10 hover:text-[color:var(--accent-soft)] transition-colors"
-                title="Descargar archivo"
-              >
-                <Download className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Real-time Line-by-Line Progress Indicator if streaming or typing */}
-        {lineProgress && (
-          <div className="flex items-center justify-between border-b border-[color:var(--accent)]/30 bg-[color:var(--surface-2)] px-4 py-1.5 text-xs font-mono-code text-[color:var(--accent)] animate-pulse">
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
-              <span>
-                Transmitiendo línea por línea en <strong>{lineProgress.filename}</strong>:
-              </span>
-              <span className="font-bold text-[color:var(--text-primary)]">
-                Línea {lineProgress.current} de {lineProgress.total} (
-                {Math.round((lineProgress.current / lineProgress.total) * 100)}%)
-              </span>
-            </div>
-            <span className="text-[11px] text-[color:var(--accent)]">Sincronizando con Vista Previa...</span>
-          </div>
-        )}
-
-        {/* Quick Command Suggestions Strip */}
-        <div className="flex items-center gap-2 overflow-x-auto border-b border-[color:var(--accent)]/10 bg-[color:var(--surface-1)]/70 px-4 py-1.5 text-xs font-mono-code scrollbar-none">
-          <span className="text-[10px] text-[color:var(--text-muted)] uppercase tracking-wider">Órdenes sugeridas:</span>
-          {[
-            'Crea un juego de Snake en HTML con Canvas',
-            'Haz una calculadora interactiva y elegante',
-            'Crea una app de notas con localStorage',
-            'Crea un cronómetro interactivo con vueltas',
-            'Crea un juego de Pong con IA',
-            'run',
-            'fullscreen',
-            'clear',
-          ].map((promptCmd) => (
-            <button
-              key={promptCmd}
-              onClick={() => handleExecuteCommand(promptCmd)}
-              className="whitespace-nowrap rounded-md border border-[color:var(--accent)]/15 bg-[color:var(--surface-2)]/60 px-2 py-0.5 text-[11px] text-[color:var(--text-secondary)] hover:border-[color:var(--accent)]/40 hover:text-[color:var(--accent-soft)] transition-colors"
-            >
-              {promptCmd}
+              {t.icon}
+              <span>{t.label}</span>
             </button>
           ))}
         </div>
 
-        {/* Main Work Area */}
-        <div className="relative flex-1 overflow-hidden">
-          {/* SPLIT VIEW: Editor on Left, Live Preview on Right (Line-by-line sync) */}
-          {isSplitView ? (
-            <div className="flex h-full flex-col md:flex-row overflow-hidden">
-              {/* Left Pane: Code Editor with Line Numbers */}
-              <div className="flex flex-1 flex-col border-b md:border-b-0 md:border-r border-[color:var(--accent)]/20 bg-[color:var(--surface-0)] overflow-hidden">
-                <div className="flex items-center justify-between border-b border-[color:var(--accent)]/15 bg-[color:var(--surface-1)] px-3 py-1 text-[11px] font-mono-code text-[color:var(--text-secondary)]">
-                  <span>EDITOR — {currentFile?.filename}</span>
-                  <span className="text-[color:var(--accent)]">Líneas: {activeLineCount} (Edición en vivo)</span>
-                </div>
-                <div className="flex flex-1 overflow-auto p-3 font-mono-code text-xs md:text-sm leading-relaxed text-[color:var(--surface-4)]">
-                  <div className="select-none pr-3 text-right text-[color:var(--surface-4)]">
-                    {currentFile?.code.split('\n').map((_, i) => (
-                      <div key={i}>{i + 1}</div>
+        <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+          {/* ───────── IZQUIERDA: órdenes a la IA ───────── */}
+          <section
+            className={`${
+              showOrders ? 'flex' : 'hidden lg:flex'
+            } min-h-0 flex-1 flex-col border-white/10 lg:w-[38%] lg:min-w-[340px] lg:max-w-[520px] lg:flex-none lg:border-r xl:w-[34%]`}
+          >
+            <div className="hidden items-center gap-2 border-b border-white/10 bg-[color:var(--surface-2)] px-4 py-3 lg:flex">
+              <span
+                className={`h-2 w-2 rounded-full ${
+                  isProcessing ? 'animate-pulse bg-amber-400' : 'bg-emerald-400'
+                }`}
+              />
+              <h2 className="text-sm font-bold text-[color:var(--text-primary)]">Órdenes</h2>
+              <span className="ml-auto text-xs text-[color:var(--text-muted)]">
+                {isProcessing ? 'Trabajando…' : 'APS Hard Work · listo'}
+              </span>
+            </div>
+
+            {/* Historial */}
+            <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4 sm:px-4">
+              {!hasLogs && !isProcessing ? (
+                <div className="flex min-h-full flex-col justify-center">
+                  <div className="mb-5 text-center">
+                    <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl border border-[color:var(--accent)]/30 bg-[color:var(--accent)]/10">
+                      <Sparkles className="h-6 w-6 text-[color:var(--accent)]" />
+                    </div>
+                    <h3 className="text-base font-bold text-[color:var(--text-primary)]">
+                      ¿Qué quieres crear?
+                    </h3>
+                    <p className="mx-auto mt-1 max-w-[34ch] text-[13px] leading-relaxed text-[color:var(--text-secondary)]">
+                      Escribe una orden y la IA arma el código. El resultado se ve al instante en la
+                      vista previa.
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                    {EXAMPLE_PROMPTS.map((p) => (
+                      <button
+                        key={p.title}
+                        onClick={() => handleExecuteCommand(p.cmd)}
+                        className="rounded-xl border border-white/10 bg-[color:var(--surface-2)] px-3.5 py-3 text-left transition-all hover:border-[color:var(--accent)]/50 hover:bg-[color:var(--surface-3)]"
+                      >
+                        <div className="text-[13px] font-semibold text-[color:var(--text-primary)]">
+                          {p.title}
+                        </div>
+                        <div className="mt-0.5 text-xs text-[color:var(--text-secondary)]">{p.desc}</div>
+                      </button>
                     ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {terminalLogs.map((log, i) => (
+                    <LogEntry key={i} log={log} />
+                  ))}
+
+                  {lineProgress && (
+                    <div className="rounded-xl border border-[color:var(--accent)]/30 bg-[color:var(--accent)]/10 px-3.5 py-3">
+                      <div className="mb-2 flex items-center justify-between gap-2 text-[13px]">
+                        <span className="flex min-w-0 items-center gap-2 text-[color:var(--text-primary)]">
+                          <Loader2 className="h-4 w-4 shrink-0 animate-spin text-[color:var(--accent)]" />
+                          <span className="truncate">
+                            Escribiendo <strong className="font-mono-code">{lineProgress.filename}</strong>
+                          </span>
+                        </span>
+                        <span className="shrink-0 font-semibold text-[color:var(--accent)]">
+                          {progressPct}%
+                        </span>
+                      </div>
+                      <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+                        <div
+                          className="h-full rounded-full bg-[color:var(--accent)] transition-all duration-150"
+                          style={{ width: `${progressPct}%` }}
+                        />
+                      </div>
+                      <div className="mt-1.5 text-xs text-[color:var(--text-secondary)]">
+                        Línea {lineProgress.current} de {lineProgress.total} · la vista previa se actualiza sola
+                      </div>
+                    </div>
+                  )}
+
+                  {isProcessing && !lineProgress && (
+                    <div className="flex items-center gap-2 px-1 text-[13px] text-[color:var(--text-secondary)]">
+                      <Loader2 className="h-4 w-4 animate-spin text-[color:var(--accent)]" />
+                      <span>La IA está pensando tu orden…</span>
+                    </div>
+                  )}
+                </div>
+              )}
+              <div ref={terminalBottomRef} />
+            </div>
+
+            {/* Sugerencias para seguir editando */}
+            {hasContent && !isProcessing && (
+              <div className="flex gap-1.5 overflow-x-auto border-t border-white/10 px-3 py-2 scrollbar-none sm:px-4">
+                {FOLLOW_UPS.map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => handleExecuteCommand(f)}
+                    className="shrink-0 whitespace-nowrap rounded-full border border-white/10 bg-[color:var(--surface-2)] px-3 py-1 text-xs text-[color:var(--text-secondary)] transition-colors hover:border-[color:var(--accent)]/50 hover:text-[color:var(--text-primary)]"
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Entrada */}
+            <div className="border-t border-white/10 bg-[color:var(--surface-2)] p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+
+              {cliAttachments.length > 0 && (
+                <div className="mb-2 flex flex-wrap gap-1.5">
+                  {cliAttachments.map((att) => (
+                    <div
+                      key={att.id}
+                      className="flex items-center gap-1.5 rounded-lg border border-[color:var(--accent)]/30 bg-[color:var(--surface-3)] px-2 py-1 text-xs text-[color:var(--text-primary)]"
+                    >
+                      <Paperclip className="h-3 w-3 text-[color:var(--text-muted)]" />
+                      <span className="max-w-[140px] truncate">{att.name}</span>
+                      <button
+                        onClick={() => setCliAttachments((prev) => prev.filter((a) => a.id !== att.id))}
+                        className="text-[color:var(--text-muted)] hover:text-red-400"
+                        aria-label={`Quitar ${att.name}`}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex items-center gap-1.5 rounded-2xl border border-white/15 bg-[color:var(--surface-0)] py-1.5 pl-1.5 pr-1.5 transition-colors focus-within:border-[color:var(--accent)]/70">
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[color:var(--text-secondary)] transition-colors hover:bg-white/10 hover:text-[color:var(--text-primary)]"
+                  title="Adjuntar archivos o imágenes"
+                  aria-label="Adjuntar archivos o imágenes"
+                >
+                  <Paperclip className="h-4 w-4" />
+                </button>
+
+                <input
+                  ref={commandInputRef}
+                  type="text"
+                  value={command}
+                  onChange={(e) => setCommand(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={
+                    hasContent ? 'Pide un cambio: "agrega un botón de reiniciar"…' : 'Describe lo que quieres crear…'
+                  }
+                  className="min-w-0 flex-1 bg-transparent text-sm text-[color:var(--text-primary)] placeholder-[color:var(--text-muted)] focus:outline-none"
+                />
+
+                <button
+                  onClick={() => handleExecuteCommand()}
+                  disabled={!canSend}
+                  title="Enviar orden"
+                  aria-label="Enviar orden"
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all ${
+                    canSend
+                      ? 'bg-[color:var(--accent)] text-[color:var(--on-accent)] shadow-md hover:brightness-110 active:scale-95'
+                      : 'bg-white/5 text-[color:var(--text-muted)]'
+                  }`}
+                >
+                  {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-4 w-4" />}
+                </button>
+              </div>
+              <p className="mt-1.5 hidden px-1 text-[11px] text-[color:var(--text-muted)] sm:block">
+                Enter envía · ↑ repite la última orden · <code className="font-mono-code">help</code> muestra los comandos
+              </p>
+            </div>
+          </section>
+
+          {/* ───────── DERECHA: resultado ───────── */}
+          <section
+            className={`${
+              showOrders ? 'hidden lg:flex' : 'flex'
+            } relative min-h-0 min-w-0 flex-1 flex-col bg-[color:var(--surface-0)]`}
+          >
+            {/* Barra de progreso fina mientras se escribe el código */}
+            {lineProgress && (
+              <div className="absolute inset-x-0 top-0 z-10 h-0.5 bg-white/5">
+                <div
+                  className="h-full bg-[color:var(--accent)] transition-all duration-150"
+                  style={{ width: `${progressPct}%` }}
+                />
+              </div>
+            )}
+
+            <div className="flex flex-wrap items-center gap-2 border-b border-white/10 bg-[color:var(--surface-2)] px-3 py-2">
+              <div className="hidden items-center gap-1 rounded-xl border border-white/10 bg-[color:var(--surface-0)] p-0.5 lg:flex">
+                <button onClick={() => setActiveTab('preview')} className={tabBtn(!rightIsCode)}>
+                  <Eye className="h-4 w-4" />
+                  Vista previa
+                </button>
+                <button onClick={() => setActiveTab('code')} className={tabBtn(rightIsCode)}>
+                  <Code2 className="h-4 w-4" />
+                  Código
+                </button>
+              </div>
+
+              <div className="ml-auto flex items-center gap-1.5">
+                {rightIsCode ? (
+                  <>
+                    {showRun && (
+                      <button
+                        onClick={executeActiveCode}
+                        className="flex items-center gap-1.5 rounded-lg bg-[color:var(--accent)] px-3 py-1.5 text-[13px] font-semibold text-[color:var(--on-accent)] transition-all hover:brightness-110 active:scale-95"
+                        title="Ejecutar este archivo y ver el resultado en Órdenes"
+                      >
+                        <Play className="h-3.5 w-3.5 fill-current" />
+                        Ejecutar
+                      </button>
+                    )}
+                    <IconButton title={copied ? 'Copiado' : 'Copiar código'} onClick={handleCopyCode}>
+                      {copied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
+                    </IconButton>
+                    <IconButton title="Descargar archivo" onClick={handleDownloadCode}>
+                      <Download className="h-4 w-4" />
+                    </IconButton>
+                  </>
+                ) : (
+                  <>
+                    <div className="hidden sm:block">
+                      <ViewportSwitch value={previewViewport} onChange={setPreviewViewport} />
+                    </div>
+                    <IconButton title="Recargar vista previa" onClick={() => setPreviewKey((k) => k + 1)}>
+                      <RefreshCw className="h-4 w-4" />
+                    </IconButton>
+                    <button
+                      onClick={() => setIsFullScreenPreview(true)}
+                      className="flex items-center gap-1.5 rounded-lg border border-[color:var(--accent)]/40 bg-[color:var(--accent)]/15 px-3 py-1.5 text-[13px] font-semibold text-[color:var(--text-primary)] transition-all hover:bg-[color:var(--accent)]/30 active:scale-95"
+                      title="Ver a pantalla completa"
+                    >
+                      <Maximize2 className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Pantalla completa</span>
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Archivos (solo en la vista de código) */}
+            {rightIsCode && (
+              <div className="flex items-center gap-1.5 overflow-x-auto border-b border-white/10 bg-[color:var(--surface-1)] px-3 py-1.5 scrollbar-none">
+                {files.map((file, idx) => (
+                  <div
+                    key={file.filename}
+                    onClick={() => setActiveFileIndex(idx)}
+                    className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1 font-mono-code text-xs transition-colors ${
+                      activeFileIndex === idx
+                        ? 'border border-[color:var(--accent)]/40 bg-[color:var(--accent)]/15 font-semibold text-[color:var(--text-primary)]'
+                        : 'border border-transparent text-[color:var(--text-secondary)] hover:bg-white/5'
+                    }`}
+                  >
+                    <FileCode className="h-3.5 w-3.5 text-[color:var(--accent)]" />
+                    <span>{file.filename}</span>
+                    {files.length > 1 && (
+                      <button
+                        onClick={(e) => handleDeleteFile(e, idx)}
+                        className="rounded p-0.5 text-[color:var(--text-muted)] hover:text-red-400"
+                        title="Eliminar archivo"
+                        aria-label={`Eliminar ${file.filename}`}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button
+                  onClick={handleAddNewFile}
+                  className="flex shrink-0 items-center gap-1 rounded-lg border border-dashed border-[color:var(--accent)]/40 px-2.5 py-1 text-xs text-[color:var(--accent)] transition-colors hover:bg-[color:var(--accent)]/10"
+                  title="Crear un archivo nuevo"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Nuevo archivo
+                </button>
+                <span className="ml-auto shrink-0 pl-2 text-[11px] text-[color:var(--text-muted)]">
+                  {activeLineCount} líneas
+                </span>
+              </div>
+            )}
+
+            {/* Contenido */}
+            <div className="relative min-h-0 flex-1">
+              {rightIsCode ? (
+                <div className="relative h-full overflow-hidden bg-[color:var(--surface-0)]">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 overflow-hidden border-r border-white/5 bg-[color:var(--surface-1)] text-right font-mono-code text-[13px] leading-6 text-[color:var(--text-muted)]">
+                    <div
+                      className="px-2 py-3"
+                      style={{ transform: `translateY(${-codeScrollTop}px)` }}
+                    >
+                      {currentFile?.code.split('\n').map((_, i) => (
+                        <div key={i}>{i + 1}</div>
+                      ))}
+                    </div>
                   </div>
                   <textarea
                     value={currentFile?.code || ''}
                     onChange={(e) => {
                       const newCode = e.target.value;
+                      setHasContent(true);
                       setFiles((prev) => {
                         const updated = [...prev];
                         if (updated[activeFileIndex]) {
-                          updated[activeFileIndex].code = newCode;
+                          updated[activeFileIndex] = { ...updated[activeFileIndex], code: newCode };
                         }
                         return updated;
                       });
                     }}
-                    placeholder="// Escribe aquí tu código línea por línea..."
+                    onScroll={(e) => setCodeScrollTop(e.currentTarget.scrollTop)}
+                    wrap="off"
                     spellCheck={false}
-                    className="flex-1 resize-none bg-transparent font-mono-code outline-none text-[color:var(--text-primary)] selection:bg-[color:var(--accent)]/30"
+                    placeholder="// Escribe aquí tu código o pídele a la IA que lo cree"
+                    className="absolute inset-0 h-full w-full resize-none overflow-auto whitespace-pre bg-transparent py-3 pl-16 pr-4 font-mono-code text-[13px] leading-6 text-[color:var(--text-primary)] outline-none selection:bg-[color:var(--accent)]/30"
                   />
                 </div>
-              </div>
-
-              {/* Right Pane: Live Preview updating line-by-line */}
-              <div className="flex flex-1 flex-col bg-[color:var(--surface-2)] overflow-hidden">
-                <div className="flex items-center justify-between border-b border-[color:var(--accent)]/15 bg-[color:var(--surface-1)] px-3 py-1 text-[11px] font-mono-code text-[color:var(--text-secondary)]">
-                  <div className="flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399] animate-pulse" />
-                    <span className="text-[color:var(--accent-soft)] font-bold">VISTA PREVIA EN VIVO</span>
-                    <span className="hidden sm:inline text-[color:var(--text-muted)]">
-                      (Progreso actualizado línea por línea)
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setPreviewKey((k) => k + 1)}
-                      className="p-1 text-[color:var(--text-secondary)] hover:text-[color:var(--accent-soft)]"
-                      title="Refrescar vista previa"
-                    >
-                      <RefreshCw className="h-3 w-3" />
-                    </button>
-                    <button
-                      onClick={() => setIsFullScreenPreview(true)}
-                      className="flex items-center gap-1 rounded bg-[color:var(--accent)]/20 px-2 py-0.5 text-[10px] font-semibold text-[color:var(--accent-soft)] hover:bg-[color:var(--accent)]/40 transition-colors"
-                      title="Agrandar a Full Screen"
-                    >
-                      <Maximize2 className="h-3 w-3" />
-                      <span>Full Screen</span>
-                    </button>
-                  </div>
-                </div>
-                <div className="flex-1 w-full bg-white relative">
-                  <iframe
-                    key={`split-preview-${previewKey}`}
-                    title="Live Split Preview"
+              ) : (
+                <>
+                  <PreviewFrame
                     srcDoc={compiledPreviewHtml}
-                    className="h-full w-full border-none bg-white"
-                    sandbox="allow-scripts allow-modals allow-same-origin allow-forms"
+                    frameKey={`preview-${previewKey}`}
+                    viewport={previewViewport}
+                    title="Vista previa"
                   />
-                </div>
-              </div>
-            </div>
-          ) : (
-            <>
-              {/* Tab 1: Terminal Logs View (DEFAULT TAB) */}
-              {activeTab === 'terminal' && (
-                <div className="flex h-full flex-col overflow-y-auto bg-[color:var(--surface-0)] p-3 sm:p-4 font-mono-code text-xs leading-relaxed terminal-grid">
-                  {terminalLogs.map((log, i) => (
-                    <div key={i} className="mb-2">
-                      {log.type === 'input' && (
-                        <div className="text-[color:var(--accent-soft)] font-semibold">{log.text}</div>
-                      )}
-                      {log.type === 'stdout' && (
-                        <div className="whitespace-pre-wrap text-[color:var(--accent)]">{log.text}</div>
-                      )}
-                      {log.type === 'stderr' && (
-                        <div className="whitespace-pre-wrap text-red-400 font-semibold">{log.text}</div>
-                      )}
-                      {log.type === 'system' && (
-                        <div className="whitespace-pre-wrap text-[color:var(--accent-hover)]/90 italic">{log.text}</div>
-                      )}
-                      {log.type === 'thinking' && (
-                        <div className="flex items-start gap-1.5 text-[color:var(--accent)] bg-[color:var(--accent)]/10 p-2 rounded border border-[color:var(--accent)]/20">
-                          <Brain className="h-4 w-4 shrink-0 text-[color:var(--accent-soft)] animate-pulse" />
-                          <div className="whitespace-pre-wrap text-[11px]">{log.text}</div>
+                  {!hasContent && (
+                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-[color:var(--surface-0)] px-6 text-center">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-[color:var(--surface-2)]">
+                        <Eye className="h-6 w-6 text-[color:var(--text-muted)]" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-semibold text-[color:var(--text-primary)]">
+                          Aquí verás tu creación
                         </div>
-                      )}
-                    </div>
-                  ))}
-
-                  {/* Quick Shortcut Buttons in Terminal after generation */}
-                  <div className="my-2 flex flex-wrap items-center gap-2 pt-2 border-t border-[color:var(--accent)]/15">
-                    <button
-                      onClick={() => setActiveTab('preview')}
-                      className="flex items-center gap-1.5 rounded-lg border border-[color:var(--accent)]/30 bg-[color:var(--accent)]/15 px-3 py-1 text-[11px] font-semibold text-[color:var(--accent-soft)] hover:bg-[color:var(--accent)]/30 transition-all"
-                    >
-                      <Eye className="h-3 w-3 text-[color:var(--accent)]" />
-                      <span>Abrir Vista Previa</span>
-                    </button>
-                    <button
-                      onClick={() => setIsFullScreenPreview(true)}
-                      className="flex items-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/15 px-3 py-1 text-[11px] font-semibold text-emerald-200 hover:bg-emerald-500/30 transition-all"
-                    >
-                      <Maximize2 className="h-3 w-3" />
-                      <span>Agrandar a Full Screen</span>
-                    </button>
-                    <button
-                      onClick={() => setIsSplitView(true)}
-                      className="flex items-center gap-1.5 rounded-lg border border-[color:var(--accent)]/20 bg-white/5 px-3 py-1 text-[11px] text-[color:var(--accent-hover)] hover:bg-white/10 transition-all"
-                    >
-                      <Columns className="h-3 w-3" />
-                      <span>Vista Dividida (Línea por línea)</span>
-                    </button>
-                  </div>
-
-                  {isProcessing && (
-                    <div className="flex items-center gap-2 text-[color:var(--accent-hover)] animate-pulse my-2">
-                      <Sparkles className="h-3.5 w-3.5 animate-spin text-[color:var(--accent)]" />
-                      <span>APS HARD WORK está procesando el flujo de datos...</span>
+                        <p className="mx-auto mt-1 max-w-[32ch] text-[13px] leading-relaxed text-[color:var(--text-secondary)]">
+                          Escribe una orden en el panel de Órdenes y se irá armando en vivo.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setActiveTab('orders');
+                          setTimeout(() => commandInputRef.current?.focus(), 50);
+                        }}
+                        className="rounded-lg border border-[color:var(--accent)]/40 bg-[color:var(--accent)]/15 px-3.5 py-1.5 text-[13px] font-semibold text-[color:var(--text-primary)] transition-colors hover:bg-[color:var(--accent)]/30 lg:hidden"
+                      >
+                        Ir a Órdenes
+                      </button>
                     </div>
                   )}
-                  <div ref={terminalBottomRef} />
-                </div>
+                </>
               )}
-
-              {/* Tab 2: Code Editor View */}
-              {activeTab === 'editor' && (
-                <div className="flex h-full flex-col overflow-hidden bg-[color:var(--surface-0)]">
-                  {/* Editor status strip */}
-                  <div className="flex items-center justify-between border-b border-[color:var(--accent)]/15 bg-[color:var(--surface-1)] px-3 py-1.5 text-xs font-mono-code text-[color:var(--text-secondary)]">
-                    <div className="flex items-center gap-2">
-                      <FileCode className="h-3.5 w-3.5 text-[color:var(--accent)]" />
-                      <span className="text-[color:var(--text-primary)] font-semibold">{currentFile?.filename}</span>
-                      <span className="text-[11px] text-[color:var(--text-muted)]">
-                        ({activeLineCount} líneas de código)
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setIsSplitView(true)}
-                        className="flex items-center gap-1 rounded bg-[color:var(--accent)]/15 px-2 py-0.5 text-[11px] text-[color:var(--accent-soft)] hover:bg-[color:var(--accent)]/30 transition-all"
-                        title="Dividir pantalla para ver la vista previa al mismo tiempo"
-                      >
-                        <Columns className="h-3 w-3 text-emerald-400" />
-                        <span>Vista Dividida con Preview</span>
-                      </button>
-                      <button
-                        onClick={() => setIsFullScreenPreview(true)}
-                        className="flex items-center gap-1 rounded bg-[color:var(--accent)]/15 px-2 py-0.5 text-[11px] text-[color:var(--accent-soft)] hover:bg-[color:var(--accent)]/30 transition-all"
-                      >
-                        <Maximize2 className="h-3 w-3" />
-                        <span>Full Screen Preview</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-1 overflow-auto p-4 font-mono-code text-xs md:text-sm leading-relaxed text-[color:var(--surface-4)]">
-                    {/* Line numbers column */}
-                    <div className="select-none pr-4 text-right text-[color:var(--surface-4)]">
-                      {currentFile?.code.split('\n').map((_, i) => (
-                        <div key={i}>{i + 1}</div>
-                      ))}
-                    </div>
-                    {/* Code content with instantaneous live sync */}
-                    <textarea
-                      value={currentFile?.code || ''}
-                      onChange={(e) => {
-                        const newCode = e.target.value;
-                        setFiles((prev) => {
-                          const updated = [...prev];
-                          if (updated[activeFileIndex]) {
-                            updated[activeFileIndex].code = newCode;
-                          }
-                          return updated;
-                        });
-                      }}
-                      placeholder="// Escribe aquí tu código línea por línea..."
-                      spellCheck={false}
-                      className="flex-1 resize-none bg-transparent font-mono-code outline-none text-[color:var(--text-primary)] selection:bg-[color:var(--accent)]/30"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Tab 3: Live Preview Tab with Full Screen Button */}
-              {activeTab === 'preview' && (
-                <div className="flex h-full flex-col bg-[color:var(--surface-2)] overflow-hidden">
-                  <div className="flex items-center justify-between border-b border-[color:var(--accent)]/15 bg-[color:var(--surface-1)] px-3 py-1.5 text-xs font-mono-code">
-                    <div className="flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] animate-pulse" />
-                      <span className="text-[color:var(--accent-soft)] font-bold">VISTA PREVIA EN VIVO</span>
-                      <span className="text-[color:var(--text-secondary)] text-[11px] hidden sm:inline">
-                        — Sincronizado en tiempo real
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setPreviewKey((k) => k + 1)}
-                        className="flex items-center gap-1 rounded bg-white/5 px-2 py-1 text-xs text-[color:var(--text-secondary)] hover:text-[color:var(--accent-soft)] transition-colors"
-                        title="Recargar vista previa"
-                      >
-                        <RefreshCw className="h-3 w-3" />
-                        <span className="hidden sm:inline">Recargar</span>
-                      </button>
-
-                      {/* Requirement 2: Dedicated Full Screen button inside preview */}
-                      <button
-                        onClick={() => setIsFullScreenPreview(true)}
-                        className="flex items-center gap-1.5 rounded-lg border border-[color:var(--accent)]/40 bg-[color:var(--accent)]/25 px-2.5 py-1 text-xs font-semibold text-[color:var(--text-primary)] hover:bg-[color:var(--accent)]/40 active:scale-95 transition-all shadow-sm"
-                        title="Agrandar vista previa a pantalla completa"
-                      >
-                        <Maximize2 className="h-3.5 w-3.5 text-[color:var(--accent-soft)]" />
-                        <span>Agrandar a Full Screen</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="flex-1 w-full bg-white relative">
-                    <iframe
-                      key={`tab-preview-${previewKey}`}
-                      title="Preview"
-                      srcDoc={compiledPreviewHtml}
-                      className="h-full w-full border-none bg-white"
-                      sandbox="allow-scripts allow-modals allow-same-origin allow-forms"
-                    />
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-
-        {/* Bottom CLI Prompt Input Bar */}
-        <div className="border-t border-[color:var(--accent)]/25 bg-[color:var(--surface-1)] p-2 sm:p-3 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-          {/* Uploaded attachments in CLI */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            onChange={handleFileUpload}
-            className="hidden"
-          />
-
-          {cliAttachments.length > 0 && (
-            <div className="mb-2 flex flex-wrap gap-1.5 sm:gap-2">
-              {cliAttachments.map((att) => (
-                <div
-                  key={att.id}
-                  className="flex items-center gap-1.5 rounded-md border border-[color:var(--accent)]/30 bg-[color:var(--surface-3)] px-2 py-0.5 text-xs text-[color:var(--accent-soft)]"
-                >
-                  <span className="truncate max-w-[100px] sm:max-w-[120px]">{att.name}</span>
-                  <button
-                    onClick={() =>
-                      setCliAttachments((prev) => prev.filter((a) => a.id !== att.id))
-                    }
-                    className="text-[color:var(--text-secondary)] hover:text-red-400"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
             </div>
-          )}
-
-          <div className="flex items-center gap-1.5 sm:gap-2 rounded-xl border border-[color:var(--accent)]/30 bg-[color:var(--surface-0)] px-2.5 sm:px-3 py-1.5 sm:py-2 shadow-inner">
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="rounded-lg p-1 text-[color:var(--text-secondary)] hover:bg-white/10 hover:text-[color:var(--accent-hover)]"
-              title="Adjuntar datos / imágenes para procesar"
-            >
-              <Paperclip className="h-4 w-4" />
-            </button>
-
-            <span className="font-mono-code text-xs font-bold text-[color:var(--accent)] hidden sm:inline shrink-0">
-              aps@hardwork:~$
-            </span>
-            <span className="font-mono-code text-xs font-bold text-[color:var(--accent)] sm:hidden shrink-0">
-              ~$
-            </span>
-
-            <input
-              ref={commandInputRef}
-              type="text"
-              value={command}
-              onChange={(e) => setCommand(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Orden a la IA (ej: 'crea un juego de snake', 'calculadora')..."
-              className="flex-1 min-w-0 bg-transparent font-mono-code text-xs sm:text-sm text-[color:var(--accent-soft)] placeholder-[color:var(--text-muted)] focus:outline-none"
-            />
-
-            <button
-              onClick={() => handleExecuteCommand()}
-              disabled={isProcessing || !command.trim()}
-              className={`flex items-center gap-1 sm:gap-1.5 rounded-lg px-2.5 sm:px-3 py-1.5 text-xs font-mono-code font-semibold transition-all shrink-0 ${
-                command.trim() && !isProcessing
-                  ? 'border border-[color:var(--accent)]/50 bg-[color:var(--accent)]/30 text-[color:var(--text-primary)] shadow-sm hover:bg-[color:var(--accent)]/50 hover:scale-105 active:scale-95'
-                  : 'text-[color:var(--surface-4)] cursor-not-allowed'
-              }`}
-            >
-              <CornerDownLeft className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Enviar Orden</span>
-              <span className="sm:hidden">Enviar</span>
-            </button>
-          </div>
+          </section>
         </div>
       </div>
 
-      {/* REQUIREMENT 2: FULL SCREEN PREVIEW OVERLAY */}
+      {/* ───────── Pantalla completa ───────── */}
       {isFullScreenPreview && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-[color:var(--surface-0)] animate-in fade-in duration-200">
-          {/* Full Screen Top Control Bar */}
-          <div className="flex items-center justify-between border-b border-[color:var(--accent)]/30 bg-[color:var(--surface-2)] px-3 sm:px-5 py-2.5 sm:py-3 shadow-2xl">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <span className="flex h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full bg-emerald-400 shadow-[0_0_10px_#34d399] animate-pulse" />
-              <div className="flex flex-col">
-                <span className="font-serif-luxury text-xs sm:text-sm font-bold text-[color:var(--accent-soft)] tracking-wider">
-                  VISTA PREVIA — PANTALLA COMPLETA
-                </span>
-                <span className="text-[10px] text-[color:var(--text-secondary)] hidden xs:block">
-                  Progreso sincronizado en tiempo real línea por línea
-                </span>
-              </div>
-              <span className="hidden md:inline-block rounded-md border border-[color:var(--accent)]/30 bg-[color:var(--accent)]/15 px-2 py-0.5 text-xs font-mono-code text-[color:var(--text-primary)]">
+        <div className="fixed inset-0 z-50 flex flex-col bg-[color:var(--surface-0)]">
+          <div className="flex items-center justify-between gap-2 border-b border-white/10 bg-[color:var(--surface-2)] px-3 py-2.5 sm:px-5">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-400" />
+              <span className="truncate text-sm font-bold text-[color:var(--text-primary)]">
+                Vista previa a pantalla completa
+              </span>
+              <span className="hidden rounded-md border border-white/10 bg-white/5 px-2 py-0.5 font-mono-code text-xs text-[color:var(--text-secondary)] md:inline-block">
                 {currentFile?.filename || 'index.html'}
               </span>
             </div>
 
-            <div className="flex items-center gap-2">
-              {/* Responsive viewport selector */}
-              <div className="hidden sm:flex items-center rounded-lg border border-[color:var(--accent)]/20 bg-[color:var(--surface-0)] p-0.5 text-xs mr-2">
-                <button
-                  onClick={() => setPreviewViewport('full')}
-                  className={`flex items-center gap-1 rounded px-2 py-1 transition-colors ${
-                    previewViewport === 'full'
-                      ? 'bg-[color:var(--accent)]/20 text-[color:var(--accent-soft)] font-semibold'
-                      : 'text-[color:var(--text-secondary)] hover:text-[color:var(--accent-soft)]'
-                  }`}
-                  title="100% Pantalla"
-                >
-                  <Monitor className="h-3 w-3" />
-                  <span className="text-[11px]">100%</span>
-                </button>
-                <button
-                  onClick={() => setPreviewViewport('tablet')}
-                  className={`flex items-center gap-1 rounded px-2 py-1 transition-colors ${
-                    previewViewport === 'tablet'
-                      ? 'bg-[color:var(--accent)]/20 text-[color:var(--accent-soft)] font-semibold'
-                      : 'text-[color:var(--text-secondary)] hover:text-[color:var(--accent-soft)]'
-                  }`}
-                  title="Vista Tablet (768px)"
-                >
-                  <span className="text-[11px]">Tablet</span>
-                </button>
-                <button
-                  onClick={() => setPreviewViewport('mobile')}
-                  className={`flex items-center gap-1 rounded px-2 py-1 transition-colors ${
-                    previewViewport === 'mobile'
-                      ? 'bg-[color:var(--accent)]/20 text-[color:var(--accent-soft)] font-semibold'
-                      : 'text-[color:var(--text-secondary)] hover:text-[color:var(--accent-soft)]'
-                  }`}
-                  title="Vista Móvil (390px)"
-                >
-                  <Smartphone className="h-3 w-3" />
-                  <span className="text-[11px]">Móvil</span>
-                </button>
+            <div className="flex items-center gap-1.5">
+              <div className="hidden sm:block">
+                <ViewportSwitch value={previewViewport} onChange={setPreviewViewport} />
               </div>
-
-              <button
-                onClick={() => setPreviewKey((k) => k + 1)}
-                className="flex items-center gap-1.5 rounded-lg border border-[color:var(--accent)]/25 bg-[color:var(--surface-3)] px-2.5 sm:px-3 py-1.5 text-xs text-[color:var(--accent-soft)] hover:bg-[color:var(--accent)]/20 transition-all"
-                title="Recargar vista previa"
-              >
-                <RefreshCw className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Recargar</span>
-              </button>
-
+              <IconButton title="Recargar vista previa" onClick={() => setPreviewKey((k) => k + 1)}>
+                <RefreshCw className="h-4 w-4" />
+              </IconButton>
               <button
                 onClick={() => setIsFullScreenPreview(false)}
-                className="flex items-center gap-1.5 rounded-lg border border-[color:var(--accent)]/40 bg-[color:var(--accent)]/25 px-3 py-1.5 text-xs font-semibold text-[color:var(--text-primary)] hover:bg-[color:var(--accent)]/40 active:scale-95 transition-all shadow-md"
+                className="flex items-center gap-1.5 rounded-lg border border-[color:var(--accent)]/40 bg-[color:var(--accent)]/20 px-3 py-1.5 text-[13px] font-semibold text-[color:var(--text-primary)] transition-all hover:bg-[color:var(--accent)]/35 active:scale-95"
                 title="Salir de pantalla completa (Esc)"
               >
                 <Minimize2 className="h-4 w-4" />
-                <span>
-                  Salir <span className="hidden sm:inline">de Full Screen</span>
-                  <span className="text-[10px] text-[color:var(--text-secondary)] font-mono-code ml-1 hidden md:inline">
-                    (Esc)
-                  </span>
-                </span>
+                <span>Salir</span>
+                <span className="hidden font-mono-code text-[10px] text-[color:var(--text-muted)] md:inline">Esc</span>
               </button>
             </div>
           </div>
 
-          {/* Full Screen Iframe Container with optional viewport container */}
-          <div className="flex-1 w-full bg-[color:var(--surface-0)] flex items-center justify-center p-0 overflow-hidden">
-            <div
-              className={`h-full transition-all duration-300 bg-white ${
-                previewViewport === 'mobile'
-                  ? 'w-[390px] shadow-2xl border-x border-[color:var(--accent)]/30 rounded-xl my-4 overflow-hidden'
-                  : previewViewport === 'tablet'
-                  ? 'w-[768px] shadow-2xl border-x border-[color:var(--accent)]/30 rounded-xl my-4 overflow-hidden'
-                  : 'w-full'
-              }`}
-            >
-              <iframe
-                key={`fullscreen-preview-${previewKey}`}
-                title="Preview Fullscreen"
-                srcDoc={compiledPreviewHtml}
-                className="h-full w-full border-none bg-white"
-                sandbox="allow-scripts allow-modals allow-same-origin allow-forms"
-              />
-            </div>
+          <div className="min-h-0 flex-1">
+            <PreviewFrame
+              srcDoc={compiledPreviewHtml}
+              frameKey={`fullscreen-${previewKey}`}
+              viewport={previewViewport}
+              title="Vista previa a pantalla completa"
+            />
           </div>
         </div>
       )}
