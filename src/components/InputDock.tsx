@@ -240,7 +240,7 @@ export const InputDock: React.FC<InputDockProps> = ({
             <button
               onClick={handleSubmit}
               disabled={!text.trim() && attachments.length === 0}
-              className={`group relative flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl sm:rounded-2xl transition-all duration-300 p-2 overflow-hidden ${
+              className={`group relative flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl sm:rounded-2xl transition-all duration-300 p-1.5 overflow-hidden ${
                 text.trim() || attachments.length > 0
                   ? 'border border-[#00cec9]/80 bg-gradient-to-b from-[#0e2a24]/90 to-[#03130e]/95 hover:border-[#00cec9] hover:from-[#133d34] hover:to-[#061e16] hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(0,206,201,0.55)] cursor-pointer'
                   : 'border border-white/15 bg-white/5 opacity-80 hover:opacity-100 hover:border-white/30 cursor-pointer'

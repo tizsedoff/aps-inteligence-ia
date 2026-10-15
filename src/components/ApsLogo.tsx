@@ -69,7 +69,7 @@ export const ApsLogo: React.FC<ApsLogoProps> = ({
         className={`object-contain select-none transition-all duration-300 ${
           size ? '' : 'h-full w-full max-h-full max-w-full'
         } ${
-          glow ? 'drop-shadow-[0_0_12px_rgba(0,206,201,0.65)]' : 'drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]'
+          glow ? 'drop-shadow-[0_0_12px_rgba(0,190,255,0.65)]' : 'drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]'
         } ${className}`}
         style={size ? { width: size, height: size } : undefined}
         loading="eager"
@@ -86,7 +86,7 @@ export const ApsLogo: React.FC<ApsLogoProps> = ({
         className={`w-auto object-contain transition-all duration-300 ${
           size ? 'max-w-none' : 'h-9 max-w-[200px] sm:h-11 sm:max-w-[260px]'
         } ${
-          glow ? 'drop-shadow-[0_0_18px_rgba(0,206,201,0.55)]' : 'drop-shadow-[0_3px_12px_rgba(0,0,0,0.7)]'
+          glow ? 'drop-shadow-[0_0_18px_rgba(0,190,255,0.5)]' : 'drop-shadow-[0_3px_12px_rgba(0,0,0,0.7)]'
         }`}
         style={size ? { height: size } : undefined}
         loading="eager"
