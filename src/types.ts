@@ -113,6 +113,31 @@ export interface MemoryItem {
   timestamp: number;
 }
 
+export type PlanId = 'basic' | 'advanced' | 'pro' | 'promax';
+export type PlanPeriod = 'day' | 'month';
+
+export interface UserUsage {
+  month: string; // e.g. '2026-10'
+  monthCount?: number;
+  day?: string; // e.g. '2026-10-16'
+  dayCount?: number;
+  count: number;
+}
+
+export interface PlanConfig {
+  id: PlanId;
+  name: string;
+  limit: number;
+  monthlyLimit?: number;
+  period: PlanPeriod;
+  price: number;
+  priceLabel: string;
+  badge: string;
+  description: string;
+  unlocksHardWork: boolean;
+  features: string[];
+}
+
 export interface UserAccount {
   id: string;
   name: string;
@@ -121,6 +146,8 @@ export interface UserAccount {
   token?: string;
   membership: string;
   isAdmin: boolean;
+  plan?: PlanId;
+  usage?: UserUsage;
   customInstructions?: string; // Prompt / personalización directa para la IA
   memories?: MemoryItem[]; // Lista de recuerdos y datos aprendidos
 }

@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
+import { canUserAccessHardWork } from '../constants/plans';
+
 interface HeaderProps {
   currentModel: ApsModelId;
   onSelectModel: (model: ApsModelId) => void;
@@ -29,6 +31,7 @@ interface HeaderProps {
   onOpenTerms: () => void;
   onOpenSidebar: () => void;
   onNewChat: () => void;
+  onOpenPlans?: (notice?: string) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -45,6 +48,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenTerms,
   onOpenSidebar,
   onNewChat,
+  onOpenPlans,
 }) => {
   const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
 
@@ -132,6 +136,15 @@ export const Header: React.FC<HeaderProps> = ({
                       <button
                         key={m.id}
                         onClick={() => {
+                          if (m.id === 'APS HARD WORK' && !canUserAccessHardWork(currentUser)) {
+                            setModelDropdownOpen(false);
+                            if (onOpenPlans) {
+                              onOpenPlans(
+                                'El modelo APS HARD WORK requiere como mínimo el Plan Advanced ($25/mes) para desbloquear la máxima capacidad de razonamiento e ingeniería.'
+                              );
+                            }
+                            return;
+                          }
                           onSelectModel(m.id);
                           setModelDropdownOpen(false);
                         }}
@@ -177,6 +190,14 @@ export const Header: React.FC<HeaderProps> = ({
 
           <button
             onClick={() => {
+              if (!canUserAccessHardWork(currentUser)) {
+                if (onOpenPlans) {
+                  onOpenPlans(
+                    'La consola de desarrollo y el motor APS HARD WORK requieren como mínimo el Plan Advanced ($25/mes).'
+                  );
+                }
+                return;
+              }
               onSelectView('cli');
               onSelectModel('APS HARD WORK');
               if (onSelectInteractionMode) {

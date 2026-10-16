@@ -23,6 +23,13 @@ import { CustomizerModal } from './components/CustomizerModal';
 import { AuthModal } from './components/AuthModal';
 import { AuthGateway } from './components/AuthGateway';
 import { LegalModals } from './components/LegalModals';
+import { PlansModal } from './components/PlansModal';
+import {
+  canUserAccessHardWork,
+  isUserQuotaExceeded,
+  getUserPlan,
+  getCurrentMonthKey,
+} from './constants/plans';
 
 export default function App() {
   const [currentModel, setCurrentModel] = useState<ApsModelId>('APS PRO');
@@ -34,23 +41,46 @@ export default function App() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
 
+  // Modals state
+  const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isTermsOpen, setIsTermsOpen] = useState(false);
+  const [isPlansModalOpen, setIsPlansModalOpen] = useState(false);
+  const [planModalNotice, setPlanModalNotice] = useState<string | undefined>(undefined);
+
+  const handleOpenPlans = (notice?: string) => {
+    setPlanModalNotice(notice);
+    setIsPlansModalOpen(true);
+  };
+
   const handleSelectMode = (mode: InteractionMode) => {
     setInteractionMode(mode);
     localStorage.setItem('aps_mode', mode);
   };
 
+  const handleSelectModel = (model: ApsModelId) => {
+    if (model === 'APS HARD WORK' && !canUserAccessHardWork(currentUser)) {
+      handleOpenPlans(
+        'El modelo APS HARD WORK requiere como mínimo el Plan Advanced ($25/mes) para desbloquear la máxima capacidad de razonamiento e ingeniería.'
+      );
+      return;
+    }
+    setCurrentModel(model);
+  };
+
   const handleSelectView = (view: 'chat' | 'cli') => {
+    if (view === 'cli' && !canUserAccessHardWork(currentUser)) {
+      handleOpenPlans(
+        'La consola de desarrollo y el motor APS HARD WORK requieren como mínimo el Plan Advanced ($25/mes).'
+      );
+      return;
+    }
     setActiveView(view);
     if (view === 'cli') {
       setCurrentModel('APS HARD WORK');
       setInteractionMode('code');
     }
   };
-
-  // Modals state
-  const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [isTermsOpen, setIsTermsOpen] = useState(false);
 
   // CLI Code state
   const [cliInitialCode, setCliInitialCode] = useState<string>('');
@@ -347,9 +377,50 @@ export default function App() {
     }
   };
 
+  const handleIncrementUsage = () => {
+    if (!currentUser) return;
+    const currentMonth = getCurrentMonthKey();
+    const currentCount =
+      currentUser.usage?.month === currentMonth ? (currentUser.usage.count || 0) : 0;
+    const updatedUsage = {
+      month: currentMonth,
+      count: currentCount + 1,
+    };
+    const updatedUser: UserAccount = {
+      ...currentUser,
+      usage: updatedUsage,
+    };
+    setCurrentUser(updatedUser);
+    localStorage.setItem('aps_current_user', JSON.stringify(updatedUser));
+    if (currentUser.id) {
+      try {
+        const userRef = doc(db, 'users', currentUser.id);
+        updateDoc(userRef, { usage: updatedUsage }).catch(() => {});
+      } catch {}
+    }
+  };
+
   // Send message with SSE streaming
   const handleSendMessage = async (text: string, attachments: Attachment[]) => {
     if (isLoading) return;
+
+    if (currentModel === 'APS HARD WORK' && !canUserAccessHardWork(currentUser)) {
+      handleOpenPlans(
+        'El modelo APS HARD WORK requiere como mínimo el Plan Advanced ($25/mes) para desbloquear la máxima capacidad de razonamiento e ingeniería.'
+      );
+      return;
+    }
+
+    if (isUserQuotaExceeded(currentUser)) {
+      const plan = getUserPlan(currentUser);
+      const periodLabel = plan.period === 'day' ? 'por día' : 'por mes';
+      handleOpenPlans(
+        `Has alcanzado el límite de tu plan ${plan.name} (${plan.limit} mensajes ${periodLabel}). Mejora tu plan para continuar generando respuestas.`
+      );
+      return;
+    }
+
+    handleIncrementUsage();
 
     const userMessage: ChatMessage = {
       id: `usr_${Date.now()}`,
@@ -655,7 +726,7 @@ export default function App() {
       {/* Header */}
       <Header
         currentModel={currentModel}
-        onSelectModel={setCurrentModel}
+        onSelectModel={handleSelectModel}
         interactionMode={interactionMode}
         onSelectInteractionMode={handleSelectMode}
         activeView={activeView}
@@ -667,6 +738,7 @@ export default function App() {
         onOpenTerms={() => setIsTermsOpen(true)}
         onOpenSidebar={() => setSidebarOpen(true)}
         onNewChat={handleNewChat}
+        onOpenPlans={handleOpenPlans}
       />
 
       {/* Main Workspace Body */}
@@ -729,6 +801,9 @@ export default function App() {
           <CliConsole
             initialCode={cliInitialCode}
             initialLang={cliInitialLang}
+            currentUser={currentUser}
+            onOpenPlans={handleOpenPlans}
+            onIncrementUsage={handleIncrementUsage}
             onStateUpdate={handleTerminalStateUpdate}
           />
         </div>
@@ -744,11 +819,12 @@ export default function App() {
         onDeleteSession={handleDeleteSession}
         onNewChat={handleNewChat}
         currentModel={currentModel}
-        onSelectModel={setCurrentModel}
+        onSelectModel={handleSelectModel}
         currentUser={currentUser}
         onOpenAuth={() => setIsAuthOpen(true)}
         onOpenCustomizer={() => setIsCustomizerOpen(true)}
         onOpenTerms={() => setIsTermsOpen(true)}
+        onOpenPlans={handleOpenPlans}
       />
 
       {/* Customizer Studio Modal */}
@@ -769,6 +845,18 @@ export default function App() {
         onLogout={handleLogout}
         onUpdateUser={(updated) => setCurrentUser(updated)}
         required={false}
+      />
+
+      {/* Plans & Usage Limit Modal with Simulated Payment */}
+      <PlansModal
+        isOpen={isPlansModalOpen}
+        onClose={() => {
+          setIsPlansModalOpen(false);
+          setPlanModalNotice(undefined);
+        }}
+        currentUser={currentUser}
+        noticeMessage={planModalNotice}
+        onUpdateUser={(updated) => setCurrentUser(updated)}
       />
 
       {/* Legal & Cookie Modals */}

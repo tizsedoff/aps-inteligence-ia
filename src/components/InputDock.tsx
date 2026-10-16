@@ -86,6 +86,30 @@ export const InputDock: React.FC<InputDockProps> = ({
     setAttachments((prev) => prev.filter((a) => a.id !== id));
   };
 
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items || items.length === 0) return;
+
+    const filesToProcess: File[] = [];
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        if (file) {
+          filesToProcess.push(file);
+        }
+      }
+    }
+
+    if (filesToProcess.length > 0) {
+      processFiles(filesToProcess);
+      const textData = e.clipboardData.getData('text');
+      if (!textData) {
+        e.preventDefault();
+      }
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -207,6 +231,7 @@ export const InputDock: React.FC<InputDockProps> = ({
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
               onKeyDown={handleKeyDown}
+              onPaste={handlePaste}
               placeholder="DESCRIBE TU IDEA"
               rows={1}
               className="w-full resize-none bg-transparent text-[15px] sm:text-base font-extrabold uppercase tracking-wide text-white placeholder-white/70 focus:outline-none placeholder:font-extrabold"

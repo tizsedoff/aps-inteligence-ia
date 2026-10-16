@@ -10,7 +10,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+// Dev server must always run on port 3000 in AI Studio; in production use PORT if not 8080 (nginx port)
+const PORT =
+  process.env.NODE_ENV === 'production' && process.env.PORT && process.env.PORT !== '8080'
+    ? parseInt(process.env.PORT, 10)
+    : 3000;
 
 // Middleware for parsing JSON with generous payload limits for images and files
 app.use(express.json({ limit: '50mb' }));
@@ -580,7 +584,7 @@ async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
     const { createServer } = await import('vite');
     const vite = await createServer({
-      server: { middlewareMode: true },
+      server: { middlewareMode: true, hmr: false },
       appType: 'spa',
     });
     app.use(vite.middlewares);

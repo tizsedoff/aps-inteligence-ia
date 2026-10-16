@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { CliFile, CliExecutionResult, Attachment } from '../types';
+import { CliFile, CliExecutionResult, Attachment, UserAccount } from '../types';
+import { canUserAccessHardWork, isUserQuotaExceeded, getUserPlan } from '../constants/plans';
 import {
   Play,
   Download,
@@ -306,6 +307,9 @@ const IconButton: React.FC<{
 interface CliConsoleProps {
   initialCode?: string;
   initialLang?: string;
+  currentUser?: UserAccount | null;
+  onOpenPlans?: (notice?: string) => void;
+  onIncrementUsage?: () => void;
   onStateUpdate?: (state: {
     files: CliFile[];
     terminalLogs: { type: 'input' | 'stdout' | 'stderr' | 'system' | 'thinking'; text: string; time: string }[];
@@ -317,6 +321,9 @@ interface CliConsoleProps {
 export const CliConsole: React.FC<CliConsoleProps> = ({
   initialCode,
   initialLang = 'typescript',
+  currentUser,
+  onOpenPlans,
+  onIncrementUsage,
   onStateUpdate,
 }) => {
   const [command, setCommand] = useState('');
@@ -454,33 +461,61 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
     }
   }, [files, terminalLogs, isProcessing, lastExecutedCmd, onStateUpdate]);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const uploaded = e.target.files;
-    if (!uploaded || uploaded.length === 0) return;
-
-    Array.from(uploaded).forEach((file) => {
+  const processCliFiles = (fileList: File[]) => {
+    fileList.forEach((file) => {
       const reader = new FileReader();
+      const isImg = file.type.startsWith('image/');
       reader.onload = () => {
         const result = reader.result as string;
         const base64 = result.split(',')[1] || '';
         const att: Attachment = {
           id: `${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          name: file.name,
-          type: file.type || 'text/plain',
+          name: file.name || `captura_${Date.now()}.png`,
+          type: file.type || 'image/png',
           size: file.size,
           data: base64,
-          mimeType: file.type || 'text/plain',
-          previewUrl: file.type.startsWith('image/') ? result : undefined,
+          mimeType: file.type || 'image/png',
+          previewUrl: isImg ? result : undefined,
         };
         setCliAttachments((prev) => [...prev, att]);
         addLog(
           'system',
-          `Archivo cargado en sandbox: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`
+          `✔ ${isImg ? 'Imagen' : 'Archivo'} cargado en sandbox: ${file.name || 'captura'} (${(file.size / 1024).toFixed(1)} KB)`
         );
       };
       reader.readAsDataURL(file);
     });
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const uploaded = e.target.files;
+    if (!uploaded || uploaded.length === 0) return;
+    processCliFiles(Array.from(uploaded));
     if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items || items.length === 0) return;
+
+    const filesToProcess: File[] = [];
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        if (file) {
+          filesToProcess.push(file);
+        }
+      }
+    }
+
+    if (filesToProcess.length > 0) {
+      processCliFiles(filesToProcess);
+      const textData = e.clipboardData.getData('text');
+      if (!textData) {
+        e.preventDefault();
+      }
+    }
   };
 
   // Add a new file to the workspace
@@ -689,6 +724,29 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
       return;
     }
 
+    // Plan and quota gating for APS HARD WORK:
+    if (!canUserAccessHardWork(currentUser)) {
+      addLog('stderr', 'El motor de desarrollo APS HARD WORK requiere como mínimo el Plan Advanced ($25/mes).');
+      addLog('system', '⚠ Actualiza tu suscripción para desbloquear la consola y el motor de código.');
+      if (onOpenPlans) {
+        onOpenPlans('El motor de desarrollo APS HARD WORK requiere como mínimo el Plan Advanced ($25/mes) para desbloquear la consola y el motor de código.');
+      }
+      setIsProcessing(false);
+      return;
+    }
+
+    if (isUserQuotaExceeded(currentUser)) {
+      const plan = getUserPlan(currentUser);
+      const periodLabel = plan.period === 'day' ? 'por día' : 'por mes';
+      addLog('stderr', `Has alcanzado el límite de tu plan ${plan.name} (${plan.limit} mensajes ${periodLabel}).`);
+      addLog('system', '⚠ Mejora tu plan para continuar ejecutando órdenes en la terminal.');
+      if (onOpenPlans) {
+        onOpenPlans(`Has alcanzado el límite de tu plan ${plan.name} (${plan.limit} mensajes ${periodLabel}). Mejora tu plan para continuar.`);
+      }
+      setIsProcessing(false);
+      return;
+    }
+
     try {
       addLog(
         'thinking',
@@ -715,6 +773,10 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
       const data = await res.json();
       if (data.success && data.data) {
         const result: CliExecutionResult = data.data;
+
+        if (onIncrementUsage) {
+          onIncrementUsage();
+        }
 
         if (result.extendedReasoning) {
           addLog('thinking', `Razonamiento: ${result.extendedReasoning}`);
@@ -989,6 +1051,7 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
                   value={command}
                   onChange={(e) => setCommand(e.target.value)}
                   onKeyDown={handleKeyDown}
+                  onPaste={handlePaste}
                   placeholder={
                     hasContent ? 'Pide un cambio: "agrega un botón de reiniciar"…' : 'Describe lo que quieres crear…'
                   }

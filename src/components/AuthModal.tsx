@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { UserAccount, MemoryItem } from '../types';
+import { UserAccount, MemoryItem, PlanId } from '../types';
+import { PLANS_LIST, APS_PLANS, getUserPlanId, getCurrentMonthKey } from '../constants/plans';
 import { UserAvatar } from './UserAvatar';
 import { ApsLogo } from './ApsLogo';
 import { auth, db } from '../firebase';
@@ -42,32 +43,7 @@ interface AuthModalProps {
   required?: boolean;
 }
 
-const MEMBERSHIP_PLANS = [
-  {
-    id: 'APS INTELLIGENCE PRO',
-    name: 'APS PRO',
-    price: '$19 / mes',
-    badge: 'ACTIVO ESTÁNDAR',
-    description: 'Acceso completo a modelos APS Flash y Co-work estándar.',
-    features: ['APS Flash & Standard', 'Chats ilimitados', 'Consola CLI básica'],
-  },
-  {
-    id: 'APS ELITE DEVELOPER',
-    name: 'APS ELITE DEV',
-    price: '$39 / mes',
-    badge: 'RECOMENDADO',
-    description: 'Modo código avanzado, CLI extendido, auto-fix y streaming prioritario.',
-    features: ['APS Hard Work / CLI', 'Subida de archivos y terminal', 'Prioridad en cola de cálculo'],
-  },
-  {
-    id: 'APS ULTRA REASONING',
-    name: 'APS ULTRA',
-    price: '$69 / mes',
-    badge: 'MÁXIMA POTENCIA',
-    description: 'Inferencia de máxima profundidad, auto-reflexión y razonamiento de 128k.',
-    features: ['APS Thinking Profundo', 'Modelos Ultra Reasoning', 'Soporte prioritario VIP'],
-  },
-];
+
 
 export const AuthModal: React.FC<AuthModalProps> = ({
   isOpen,
@@ -584,27 +560,34 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  const handlePayMembership = async (planId: string) => {
+  const handlePayMembership = async (planId: PlanId) => {
     setPayingPlan(planId);
-    showStatus(`Procesando suscripción a ${planId}...`);
+    const targetPlan = APS_PLANS[planId];
+    showStatus(`Procesando suscripción simulada a ${targetPlan.name}...`);
 
     setTimeout(async () => {
+      const currentMonth = getCurrentMonthKey();
       const updated: UserAccount = {
         ...currentUser,
-        membership: planId,
+        plan: planId,
+        membership: targetPlan.name,
+        usage: {
+          month: currentMonth,
+          count: currentUser.usage?.month === currentMonth ? currentUser.usage.count : 0,
+        },
       };
       localStorage.setItem('aps_current_user', JSON.stringify(updated));
       if (onUpdateUser) onUpdateUser(updated);
 
       try {
         const userRef = doc(db, 'users', currentUser.id);
-        await updateDoc(userRef, { membership: planId });
+        await updateDoc(userRef, { plan: planId, membership: targetPlan.name });
       } catch (e) {
         console.warn('Firestore membership update note:', e);
       }
 
       setPayingPlan(null);
-      showStatus(`¡Membresía ${planId} activada con éxito!`);
+      showStatus(`¡Plan ${targetPlan.name} activado con éxito!`);
     }, 1200);
   };
 
@@ -1018,8 +1001,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </div>
 
             <div className="space-y-3">
-              {MEMBERSHIP_PLANS.map((plan) => {
-                const isCurrent = currentUser.membership === plan.id;
+              {PLANS_LIST.map((plan) => {
+                const userPlanId = getUserPlanId(currentUser);
+                const isCurrent = userPlanId === plan.id;
                 const isPaying = payingPlan === plan.id;
 
                 return (
@@ -1046,7 +1030,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
                       <div className="text-right shrink-0">
                         <div className="text-sm sm:text-base font-bold text-white">
-                          {plan.price}
+                          {plan.priceLabel}
+                        </div>
+                        <div className="text-[10px] font-mono-code text-[color:var(--accent)] font-semibold">
+                          {plan.limit} mensajes / {plan.period === 'day' ? 'día' : 'mes'}
                         </div>
                       </div>
                     </div>
@@ -1073,7 +1060,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           className="flex items-center gap-1.5 rounded-xl border border-white/20 bg-gradient-to-r from-[color:var(--accent)] to-[color:var(--accent-2)] px-4 py-2 text-xs font-bold text-black shadow-md hover:brightness-110 active:scale-95 transition-all"
                         >
                           <CreditCard className="h-3.5 w-3.5" />
-                          <span>{isPaying ? 'Activando...' : `Activar ${plan.name}`}</span>
+                          <span>{isPaying ? 'Activando...' : plan.price === 0 ? 'Cambiar a Basic' : `Activar ${plan.name} (${plan.priceLabel})`}</span>
                         </button>
                       )}
                     </div>

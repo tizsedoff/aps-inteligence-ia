@@ -17,6 +17,8 @@ import {
   Brain,
 } from 'lucide-react';
 
+import { getUserPlan, getUserMonthlyUsage } from '../constants/plans';
+
 interface SessionItem {
   id: string;
   title: string;
@@ -37,6 +39,7 @@ interface SidebarProps {
   onOpenAuth: () => void;
   onOpenCustomizer: () => void;
   onOpenTerms: () => void;
+  onOpenPlans?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -53,7 +56,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenAuth,
   onOpenCustomizer,
   onOpenTerms,
+  onOpenPlans,
 }) => {
+  const plan = getUserPlan(currentUser);
+  const usage = getUserMonthlyUsage(currentUser);
   if (!isOpen) return null;
 
   return (
@@ -135,6 +141,33 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Quick Tools & Settings Footer */}
         <div className="border-t border-white/10 pt-4 space-y-2">
+          {/* Plans & Monthly Quota Button */}
+          <button
+            onClick={() => {
+              if (onOpenPlans) onOpenPlans();
+              onClose();
+            }}
+            className="flex w-full items-center justify-between rounded-xl border border-[color:var(--accent)]/30 bg-[color:var(--accent)]/10 p-2.5 text-xs text-white hover:bg-[color:var(--accent)]/20 transition-colors"
+            title="Ver planes y límites de uso mensual"
+          >
+            <div className="flex items-center gap-2.5">
+              <Zap className="h-4 w-4 text-[color:var(--accent)] shrink-0" />
+              <div className="text-left">
+                <span className="font-semibold block truncate max-w-[140px]">
+                  {plan.name}
+                </span>
+                <span className="text-[10px] text-[color:var(--text-secondary)] block">
+                  {currentUser?.isAdmin
+                    ? 'Ilimitado (Admin)'
+                    : `${usage} / ${plan.limit} msgs (${plan.period === 'day' ? 'hoy' : 'este mes'})`}
+                </span>
+              </div>
+            </div>
+            <span className="rounded-lg bg-[color:var(--accent)]/20 px-2 py-0.5 text-[10px] font-mono-code font-bold text-[color:var(--accent)]">
+              {plan.id === 'basic' ? 'Mejorar' : 'Planes'}
+            </span>
+          </button>
+
           {/* User profile button */}
           <button
             onClick={() => {

@@ -10,6 +10,8 @@
         "email": { "type": "string", "description": "Email address" },
         "avatar": { "type": "string", "description": "Base64 or image URL" },
         "membership": { "type": "string", "description": "Membership tier" },
+        "plan": { "type": "string", "description": "Active plan id: basic, advanced, pro, promax" },
+        "usage": { "type": "object", "description": "Monthly usage counter { month, count }" },
         "isAdmin": { "type": "boolean", "description": "Admin status" },
         "customInstructions": { "type": "string", "description": "User instructions for AI" },
         "memories": { "type": "array", "description": "AI memory items" },
