@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Brain, ChevronDown, ChevronUp, Sparkles, Clock, CheckCircle2 } from 'lucide-react';
+import { Brain, ChevronDown, ChevronUp, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { LiquidOrb, useElapsedSeconds } from './LoadingStates';
 
 interface ThinkingDrawerProps {
   thinking: string;
@@ -14,6 +15,7 @@ export const ThinkingDrawer: React.FC<ThinkingDrawerProps> = ({
   durationMs,
 }) => {
   const [isOpen, setIsOpen] = useState(isActive);
+  const elapsed = useElapsedSeconds(isActive);
 
   if (!thinking && !isActive) return null;
 
@@ -26,32 +28,34 @@ export const ThinkingDrawer: React.FC<ThinkingDrawerProps> = ({
         <div className="flex items-center gap-2.5">
           <div className="relative flex h-5 w-5 items-center justify-center">
             {isActive ? (
-              <>
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[color:var(--accent)]/40 opacity-75" />
-                <Brain className="relative h-4 w-4 text-[color:var(--accent-hover)] animate-pulse" />
-              </>
+              <LiquidOrb className="aps-orb-sm" />
             ) : (
               <Brain className="h-4 w-4 text-[color:var(--accent)]" />
             )}
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="font-serif-luxury tracking-wider text-[color:var(--accent-soft)] font-semibold text-[11px] sm:text-xs">
-              PENSAMIENTO EXTENDIDO
+            <span className="font-serif-luxury text-[color:var(--accent-soft)] font-semibold text-xs sm:text-[13px]">
+              Pensamiento extendido
             </span>
-            <span className="hidden sm:inline text-[color:var(--text-secondary)] font-mono-code text-[11px]">
-              {isActive ? '· Razonando en profundidad...' : '· Análisis completado'}
+            <span className="hidden sm:inline text-[color:var(--text-secondary)] text-[11px]">
+              {isActive ? 'Razonando en profundidad' : 'Análisis completado'}
             </span>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          {durationMs && (
+          {isActive ? (
             <div className="flex items-center gap-1 text-[11px] font-mono-code text-[color:var(--text-secondary)]">
               <Clock className="h-3 w-3 text-[color:var(--accent)]" />
-              <span>{(durationMs / 1000).toFixed(1)}s</span>
+              <span>{elapsed} s</span>
             </div>
-          )}
+          ) : durationMs ? (
+            <div className="flex items-center gap-1 text-[11px] font-mono-code text-[color:var(--text-secondary)]">
+              <Clock className="h-3 w-3 text-[color:var(--accent)]" />
+              <span>{(durationMs / 1000).toFixed(1)} s</span>
+            </div>
+          ) : null}
           {isOpen ? (
             <ChevronUp className="h-3.5 w-3.5 text-[color:var(--accent)]" />
           ) : (
@@ -71,8 +75,12 @@ export const ThinkingDrawer: React.FC<ThinkingDrawerProps> = ({
           >
             {isActive && (
               <div className="mb-3 flex items-center gap-2 text-[11px] text-[color:var(--accent-hover)]">
-                <Sparkles className="h-3.5 w-3.5 animate-spin" />
-                <span>Explorando hipótesis deductivas y sintetizando soluciones...</span>
+                <span>Explorando posibilidades y armando la respuesta</span>
+                <span className="aps-dots" aria-hidden="true">
+                  <i />
+                  <i />
+                  <i />
+                </span>
               </div>
             )}
             <div className="max-h-64 overflow-y-auto whitespace-pre-wrap rounded-lg bg-[color:var(--surface-1)]/60 p-3 border border-[color:var(--accent)]/10 scrollbar-thin">

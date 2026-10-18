@@ -3,6 +3,7 @@ import { ChatMessage, ApsModelId, InteractionMode, VisualCustomization, UserAcco
 import { ThinkingDrawer } from './ThinkingDrawer';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { ApsLogo } from './ApsLogo';
+import { AssistantPending, RevealImage } from './LoadingStates';
 import {
   Sparkles,
   Copy,
@@ -158,7 +159,24 @@ export const ChatTimeline: React.FC<ChatTimelineProps> = ({
 
         {/* MESSAGES LIST — Styled according to user customization & Mockup i.png */}
         <AnimatePresence initial={false}>
-          {messages.map((msg) => (
+          {messages.map((msg, msgIdx) => {
+            const isLastMessage = msgIdx === messages.length - 1;
+            const isPending =
+              isLoading &&
+              isLastMessage &&
+              !msg.content &&
+              !(msg.images && msg.images.length > 0) &&
+              !msg.error &&
+              !msg.isThinkingActive;
+            const isImageError = Boolean(messages[msgIdx - 1]?.isImageRequest);
+            const errorText = msg.content.replace(/^\[Error:\s*/, '').replace(/\]$/, '');
+            const isDemandError = /503|alta demanda|high demand|UNAVAILABLE/i.test(errorText);
+            const errorTitle = isDemandError
+              ? 'Alta demanda en este momento'
+              : isImageError
+              ? 'No se pudo crear la imagen'
+              : 'No se pudo completar la respuesta';
+            return (
             <motion.div
               key={msg.id}
               initial={{ opacity: 0, y: 14 }}
@@ -273,38 +291,34 @@ export const ChatTimeline: React.FC<ChatTimelineProps> = ({
 
                     {/* Content or Error Alert */}
                     {msg.error ? (
-                      <div className="rounded-2xl border border-red-500/40 bg-black/60 p-4 space-y-3">
-                        <div className="flex items-start gap-3 text-xs">
+                      <div
+                        role="alert"
+                        className="rounded-2xl border border-red-500/35 bg-gradient-to-b from-red-500/10 to-black/50 p-4 space-y-3"
+                      >
+                        <div className="flex items-start gap-3">
                           <AlertTriangle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
-                          <div>
-                            <span className="font-bold block text-red-300 text-sm">
-                              Aviso de Demanda de Cómputo
-                            </span>
-                            <p className="text-white/90 leading-relaxed text-xs mt-1">
-                              {msg.content.replace(/^\[Error:\s*/, '').replace(/\]$/, '')}
+                          <div className="min-w-0">
+                            <span className="font-bold block text-red-300 text-sm">{errorTitle}</span>
+                            <p className="text-white/85 leading-relaxed text-xs mt-1 break-words">
+                              {errorText}
                             </p>
                           </div>
                         </div>
 
                         {onRetry && (
-                          <div className="pt-1">
-                            <button
-                              onClick={() => onRetry(msg.id)}
-                              className="flex items-center gap-2 rounded-xl border border-white/20 bg-gradient-to-r from-[color:var(--accent)] to-[color:var(--accent-2)] px-4 py-2 text-xs font-bold text-black shadow-lg hover:scale-105 active:scale-95 transition-all"
-                            >
-                              <RefreshCw className="h-4 w-4" />
-                              <span>Reintentar Inferencia Ahora</span>
-                            </button>
-                          </div>
+                          <button
+                            onClick={() => onRetry(msg.id)}
+                            className="flex items-center gap-2 rounded-xl border border-white/20 bg-gradient-to-r from-[color:var(--accent)] to-[color:var(--accent-2)] px-4 py-2 text-xs font-bold text-black shadow-lg hover:scale-105 active:scale-95 transition-all"
+                          >
+                            <RefreshCw className="h-4 w-4" />
+                            <span>Reintentar</span>
+                          </button>
                         )}
                       </div>
                     ) : msg.content ? (
                       <MarkdownRenderer content={msg.content} onSendToCli={onSendToCli} />
-                    ) : msg.isThinkingActive ? (
-                      <div className="flex items-center gap-3 py-3 text-xs text-white/90 animate-liquid-shimmer rounded-lg px-3">
-                        <Sparkles className="h-4 w-4 text-[color:var(--accent)] animate-spin" />
-                        <span>APS está procesando tu solicitud con alta fidelidad...</span>
-                      </div>
+                    ) : isPending ? (
+                      <AssistantPending kind={msg.isImageGeneration ? 'image' : 'text'} />
                     ) : null}
 
                     {/* Generated images */}
@@ -316,18 +330,17 @@ export const ChatTimeline: React.FC<ChatTimelineProps> = ({
                           return (
                             <div
                               key={idx}
-                              className="group relative overflow-hidden rounded-2xl border border-white/20 bg-black/60 shadow-xl"
+                              className="group relative overflow-hidden rounded-2xl border border-white/20 shadow-xl"
                             >
-                              <img
+                              <RevealImage
                                 src={src}
                                 alt="Imagen generada por APS"
                                 onClick={() => setSelectedImage(src)}
-                                className="max-h-[420px] max-w-full cursor-pointer object-contain"
                               />
                               <a
                                 href={src}
                                 download={`aps-imagen-${msg.id}-${idx + 1}.${ext}`}
-                                className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-black/70 px-3 py-1.5 text-xs font-bold text-white opacity-90 backdrop-blur hover:bg-black/90 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                                className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-black/70 px-3 py-1.5 text-xs font-bold text-white opacity-90 backdrop-blur hover:bg-black/90 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
                                 title="Descargar imagen"
                               >
                                 <Download className="h-3.5 w-3.5" />
@@ -393,7 +406,8 @@ export const ChatTimeline: React.FC<ChatTimelineProps> = ({
                 </div>
               )}
             </motion.div>
-          ))}
+            );
+          })}
         </AnimatePresence>
 
         <div ref={endRef} />

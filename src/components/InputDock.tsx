@@ -7,7 +7,7 @@ import {
   FileText,
   X,
   Brain,
-  StopCircle,
+  Square,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -215,6 +215,29 @@ export const InputDock: React.FC<InputDockProps> = ({
           )}
         </AnimatePresence>
 
+        {/* Aviso de modo imagen */}
+        <AnimatePresence>
+          {imageMode && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="flex items-center justify-between gap-2 px-3 sm:px-4 py-1.5 border-b border-white/10 mb-1 text-xs text-white/90"
+            >
+              <span className="flex items-center gap-1.5 min-w-0">
+                <ImagePlus className="h-3.5 w-3.5 shrink-0 text-[color:var(--accent)]" />
+                <span className="truncate">Modo imagen: se creará una imagen con tu descripción</span>
+              </span>
+              <button
+                onClick={() => setImageMode(false)}
+                className="shrink-0 rounded-full px-2.5 py-0.5 text-white/75 hover:bg-white/10 hover:text-white transition-colors"
+              >
+                Desactivar
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* The Mockup Pill Bar: Image Button | Divider | Textarea | Send Button */}
         <div className="flex items-center gap-2 sm:gap-3 px-1.5 sm:px-2 py-0.5 sm:py-1">
           {/* Left: Image/File Upload Icon Button (Gray rounded square as in mockup) */}
@@ -253,6 +276,8 @@ export const InputDock: React.FC<InputDockProps> = ({
                 ? 'bg-black/50 text-[color:var(--accent)] border border-[color:var(--accent)]/40 shadow-[0_0_10px_color-mix(in_srgb,var(--accent)_30%,transparent)]'
                 : 'bg-black/25 text-white/70 hover:text-white'
             }`}
+            aria-pressed={imageMode}
+            aria-label="Generar una imagen con IA"
             title={imageMode ? 'Modo imagen activado: tu mensaje generará una imagen' : 'Generar una imagen con IA'}
           >
             <ImagePlus className="h-3.5 w-3.5" />
@@ -277,10 +302,12 @@ export const InputDock: React.FC<InputDockProps> = ({
           {isLoading ? (
             <button
               onClick={onStopGeneration}
-              className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-full bg-red-600/90 text-white shadow-[0_0_15px_rgba(239,68,68,0.5)] hover:scale-105 active:scale-95 transition-all"
+              className="relative flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-full bg-red-600/90 text-white shadow-[0_0_15px_rgba(239,68,68,0.45)] hover:scale-105 active:scale-95 transition-all"
               title="Detener generación"
+              aria-label="Detener generación"
             >
-              <StopCircle className="h-5 w-5 animate-spin" />
+              <span className="aps-ring" />
+              <Square className="relative h-3.5 w-3.5 fill-current" />
             </button>
           ) : (
             <button

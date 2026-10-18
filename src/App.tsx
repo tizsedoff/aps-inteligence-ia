@@ -24,6 +24,7 @@ import { AuthModal } from './components/AuthModal';
 import { AuthGateway } from './components/AuthGateway';
 import { LegalModals } from './components/LegalModals';
 import { PlansModal } from './components/PlansModal';
+import { BootSplash } from './components/LoadingStates';
 import {
   canUserAccessHardWork,
   isUserQuotaExceeded,
@@ -196,6 +197,16 @@ export default function App() {
     return null;
   });
 
+  // Evita el parpadeo de la pantalla de login mientras Firebase confirma la sesión
+  const [authReady, setAuthReady] = useState<boolean>(() =>
+    Boolean(localStorage.getItem('aps_current_user') || sessionStorage.getItem('aps_current_user'))
+  );
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setAuthReady(true), 4000);
+    return () => window.clearTimeout(timeout);
+  }, []);
+
   const handleLogin = (user: UserAccount) => {
     setCurrentUser(user);
     setIsAuthOpen(false);
@@ -262,6 +273,7 @@ export default function App() {
           setCurrentUser(null);
         }
       }
+      setAuthReady(true);
     });
     return () => unsubscribe();
   }, []);
@@ -427,7 +439,8 @@ export default function App() {
       content: '',
       model: currentModel,
       mode: interactionMode,
-      isThinkingActive: true,
+      isImageGeneration: true,
+      isThinkingActive: false,
       timestamp: Date.now(),
     };
 
@@ -785,6 +798,10 @@ export default function App() {
         ? 'none'
         : 'none',
   } as React.CSSProperties;
+
+  if (!currentUser && !authReady) {
+    return <BootSplash />;
+  }
 
   if (!currentUser) {
     return (

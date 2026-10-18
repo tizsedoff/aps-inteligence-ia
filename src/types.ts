@@ -25,6 +25,7 @@ export interface ChatMessage {
   attachments?: Attachment[];
   images?: GeneratedImage[]; // imágenes generadas por la IA (solo en memoria)
   isImageRequest?: boolean; // el mensaje del usuario pidió generar una imagen
+  isImageGeneration?: boolean; // el mensaje del modelo es una imagen en proceso/generada
   thinking?: string;
   isThinkingActive?: boolean;
   timestamp: number;
