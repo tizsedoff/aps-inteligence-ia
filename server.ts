@@ -570,12 +570,201 @@ INSTRUCCIONES:
   }
 });
 
-// Image generation (Gemini "Nano Banana") - free tier friendly, with optional reference images for editing
-const IMAGE_MODEL_CANDIDATES: string[] = [
+// ---------------------------------------------------------------------------
+// Image generation: provider chain (Cloudflare FLUX -> Gemini -> Pollinations)
+// - Cloudflare Workers AI (flux-1-schnell): free daily allowance, needs account + token.
+// - Gemini ("Nano Banana"): best quality + editing with reference images, needs quota/billing.
+// - Pollinations: anonymous last-resort fallback (slow, ~1 image / 40 s).
+// Override the order with IMAGE_PROVIDERS="cloudflare,gemini,pollinations".
+// ---------------------------------------------------------------------------
+type ImageProviderName = 'cloudflare' | 'gemini' | 'pollinations';
+type GeneratedImage = { data: string; mimeType: string };
+type ImageResult = { images: GeneratedImage[]; text?: string; provider: ImageProviderName };
+type ImageErrorKind = 'not_configured' | 'quota' | 'blocked' | 'failed';
+
+class ImageProviderError extends Error {
+  provider: ImageProviderName;
+  kind: ImageErrorKind;
+  constructor(provider: ImageProviderName, message: string, kind: ImageErrorKind = 'failed') {
+    super(message);
+    this.provider = provider;
+    this.kind = kind;
+  }
+}
+
+const GEMINI_IMAGE_MODEL_CANDIDATES: string[] = [
   ...(process.env.GEMINI_IMAGE_MODEL ? [process.env.GEMINI_IMAGE_MODEL] : []),
   'gemini-2.5-flash-image',
 ];
 const ALLOWED_ASPECT_RATIOS = ['1:1', '3:4', '4:3', '9:16', '16:9', '2:3', '3:2'];
+const IMAGE_TOTAL_BUDGET_MS = 70_000;
+
+// Best-effort (per warm instance): skip a provider for a while after it reports no quota.
+const providerCooldownUntil: Partial<Record<ImageProviderName, number>> = {};
+
+function withTimeout<T>(promise: Promise<T>, ms: number, provider: ImageProviderName): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new ImageProviderError(provider, 'El proveedor tardó demasiado en responder.', 'failed')),
+      ms
+    );
+    promise.then(
+      (v) => {
+        clearTimeout(timer);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(timer);
+        reject(e);
+      }
+    );
+  });
+}
+
+async function generateWithCloudflare(prompt: string, timeoutMs: number): Promise<ImageResult> {
+  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+  const token = process.env.CLOUDFLARE_API_TOKEN;
+  if (!accountId || !token) {
+    throw new ImageProviderError('cloudflare', 'Cloudflare no está configurado.', 'not_configured');
+  }
+  const model = process.env.CLOUDFLARE_IMAGE_MODEL || '@cf/black-forest-labs/flux-1-schnell';
+
+  const resp = await fetch(
+    `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${model}`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ prompt: prompt.slice(0, 2048), steps: 4 }),
+      signal: AbortSignal.timeout(timeoutMs),
+    }
+  );
+
+  const body: any = await resp.json().catch(() => null);
+  if (!resp.ok || body?.success === false) {
+    const msg =
+      (Array.isArray(body?.errors) && body.errors.map((e: any) => e?.message).filter(Boolean).join('; ')) ||
+      `HTTP ${resp.status}`;
+    const isQuota = resp.status === 429 || /neuron|daily|limit|quota|allocation/i.test(msg);
+    const isBlocked = /flagged|nsfw|inappropriate|safety|moderat/i.test(msg);
+    throw new ImageProviderError('cloudflare', msg, isQuota ? 'quota' : isBlocked ? 'blocked' : 'failed');
+  }
+
+  const image = body?.result?.image ?? body?.image;
+  if (typeof image !== 'string' || image.length < 100) {
+    throw new ImageProviderError('cloudflare', 'Cloudflare no devolvió ninguna imagen.', 'failed');
+  }
+  return { images: [{ data: image, mimeType: 'image/jpeg' }], provider: 'cloudflare' };
+}
+
+async function generateWithGemini(
+  prompt: string,
+  attachments: any[],
+  aspectRatio: string | undefined,
+  timeoutMs: number
+): Promise<ImageResult> {
+  if (!process.env.GEMINI_API_KEY) {
+    throw new ImageProviderError('gemini', 'Gemini no está configurado.', 'not_configured');
+  }
+  const ai = getGenAI();
+
+  const parts: any[] = [];
+  for (const att of attachments) {
+    if (att?.data && typeof att.mimeType === 'string' && att.mimeType.startsWith('image/')) {
+      parts.push({ inlineData: { data: att.data, mimeType: att.mimeType } });
+    }
+  }
+  parts.push({ text: prompt });
+
+  const config: any = { responseModalities: ['TEXT', 'IMAGE'] };
+  if (aspectRatio && ALLOWED_ASPECT_RATIOS.includes(aspectRatio)) {
+    config.imageConfig = { aspectRatio };
+  }
+
+  let lastError: any = null;
+  for (const modelToTry of GEMINI_IMAGE_MODEL_CANDIDATES) {
+    try {
+      const response: any = await withTimeout(
+        ai.models.generateContent({ model: modelToTry, contents: [{ role: 'user', parts }], config }),
+        timeoutMs,
+        'gemini'
+      );
+
+      const images: GeneratedImage[] = [];
+      let text = '';
+      for (const part of response.candidates?.[0]?.content?.parts || []) {
+        if (part.inlineData?.data) {
+          images.push({ data: part.inlineData.data, mimeType: part.inlineData.mimeType || 'image/png' });
+        } else if (part.text) {
+          text += part.text;
+        }
+      }
+      if (images.length === 0) {
+        const reason = response.promptFeedback?.blockReason || response.candidates?.[0]?.finishReason || 'sin imagen';
+        throw new ImageProviderError('gemini', `Gemini no devolvió imagen (${reason}).`, 'blocked');
+      }
+      return { images, text, provider: 'gemini' };
+    } catch (err: any) {
+      lastError = err;
+      if (err instanceof ImageProviderError) throw err;
+      const raw = String(err?.message || '');
+      if (err?.status === 429 || raw.includes('429') || raw.includes('RESOURCE_EXHAUSTED')) {
+        throw new ImageProviderError('gemini', raw, 'quota');
+      }
+      console.warn(`APS Image: Gemini model ${modelToTry} failed (${err?.status || raw.slice(0, 120)}).`);
+    }
+  }
+  throw new ImageProviderError('gemini', String(lastError?.message || 'Gemini falló.'), 'failed');
+}
+
+async function generateWithPollinations(prompt: string, timeoutMs: number): Promise<ImageResult> {
+  const seed = Math.floor(Math.random() * 1_000_000);
+  const url =
+    `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt.slice(0, 800))}` +
+    `?width=1024&height=1024&nologo=true&seed=${seed}`;
+  const resp = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
+  const type = (resp.headers.get('content-type') || '').split(';')[0];
+  if (!resp.ok || !type.startsWith('image/')) {
+    throw new ImageProviderError(
+      'pollinations',
+      `Pollinations respondió HTTP ${resp.status}.`,
+      resp.status === 402 || resp.status === 429 ? 'quota' : 'failed'
+    );
+  }
+  const buffer = Buffer.from(await resp.arrayBuffer());
+  return { images: [{ data: buffer.toString('base64'), mimeType: type }], provider: 'pollinations' };
+}
+
+function getImageProviderOrder(hasReferenceImages: boolean): ImageProviderName[] {
+  // Editar con imágenes de referencia solo lo soporta Gemini.
+  if (hasReferenceImages) return ['gemini'];
+  const configured = (process.env.IMAGE_PROVIDERS || 'cloudflare,gemini,pollinations')
+    .split(',')
+    .map((p) => p.trim().toLowerCase())
+    .filter((p): p is ImageProviderName => ['cloudflare', 'gemini', 'pollinations'].includes(p));
+  return configured.length > 0 ? configured : ['cloudflare', 'gemini', 'pollinations'];
+}
+
+function friendlyImageError(failures: ImageProviderError[], hasReferenceImages: boolean): string {
+  if (failures.some((f) => f.kind === 'blocked')) {
+    return 'No se pudo crear esa imagen porque la descripción fue rechazada por los filtros de seguridad. Prueba con otra descripción.';
+  }
+  if (hasReferenceImages) {
+    return failures.some((f) => f.kind === 'quota')
+      ? 'Editar una imagen requiere Gemini, que no tiene cuota disponible en este momento. Prueba sin imagen adjunta.'
+      : 'No se pudo editar la imagen adjunta. Prueba de nuevo o crea una imagen sin adjuntar nada.';
+  }
+  const cfMissing = failures.find((f) => f.provider === 'cloudflare' && f.kind === 'not_configured');
+  if (cfMissing && failures.every((f) => f.kind === 'not_configured' || f.kind === 'quota' || f.provider === 'pollinations')) {
+    return 'El generador de imágenes gratuito todavía no está configurado. Faltan las variables CLOUDFLARE_ACCOUNT_ID y CLOUDFLARE_API_TOKEN en el servidor.';
+  }
+  if (failures.some((f) => f.kind === 'quota')) {
+    return 'Se agotó el cupo gratuito de imágenes por ahora. Vuelve a intentarlo más tarde; el cupo diario de Cloudflare se renueva a las 21:00 (hora de Argentina).';
+  }
+  return 'No se pudo crear la imagen en este momento. Intenta de nuevo en unos segundos.';
+}
 
 app.post(['/api/image/generate', '/image/generate'], async (req: Request, res: Response) => {
   try {
@@ -583,76 +772,49 @@ app.post(['/api/image/generate', '/image/generate'], async (req: Request, res: R
     if (typeof prompt !== 'string' || prompt.trim().length < 2) {
       return res.status(400).json({ success: false, error: 'Describe la imagen que quieres generar.' });
     }
+    const cleanPrompt = prompt.trim();
+    const refImages = Array.isArray(attachments)
+      ? attachments.filter((a: any) => a?.data && typeof a.mimeType === 'string' && a.mimeType.startsWith('image/'))
+      : [];
+    const hasReferenceImages = refImages.length > 0;
 
-    const ai = getGenAI();
+    const deadline = Date.now() + IMAGE_TOTAL_BUDGET_MS;
+    const failures: ImageProviderError[] = [];
 
-    const parts: any[] = [];
-    if (Array.isArray(attachments)) {
-      for (const att of attachments) {
-        if (att?.data && typeof att.mimeType === 'string' && att.mimeType.startsWith('image/')) {
-          parts.push({ inlineData: { data: att.data, mimeType: att.mimeType } });
-        }
-      }
-    }
-    parts.push({ text: prompt.trim() });
+    for (const provider of getImageProviderOrder(hasReferenceImages)) {
+      const remaining = deadline - Date.now();
+      if (remaining < 4000) break;
+      if ((providerCooldownUntil[provider] || 0) > Date.now()) continue;
 
-    const config: any = { responseModalities: ['TEXT', 'IMAGE'] };
-    if (typeof aspectRatio === 'string' && ALLOWED_ASPECT_RATIOS.includes(aspectRatio)) {
-      config.imageConfig = { aspectRatio };
-    }
-
-    let response: any = null;
-    let lastError: any = null;
-    for (const modelToTry of IMAGE_MODEL_CANDIDATES) {
       try {
-        response = await ai.models.generateContent({
-          model: modelToTry,
-          contents: [{ role: 'user', parts }],
-          config,
-        });
-        break;
+        let result: ImageResult;
+        if (provider === 'cloudflare') {
+          result = await generateWithCloudflare(cleanPrompt, Math.min(30_000, remaining - 1000));
+        } else if (provider === 'gemini') {
+          result = await generateWithGemini(cleanPrompt, refImages, aspectRatio, Math.min(40_000, remaining - 1000));
+        } else {
+          result = await generateWithPollinations(cleanPrompt, Math.min(30_000, remaining - 1000));
+        }
+        return res.json({ success: true, images: result.images, text: result.text || '', provider: result.provider });
       } catch (err: any) {
-        lastError = err;
-        console.warn(`APS Image: model ${modelToTry} failed (${err?.status || err?.message}).`);
+        const failure =
+          err instanceof ImageProviderError
+            ? err
+            : new ImageProviderError(provider, String(err?.message || err), 'failed');
+        failures.push(failure);
+        console.warn(`APS Image: ${provider} failed [${failure.kind}]: ${failure.message.slice(0, 300)}`);
+        if (failure.kind === 'quota') {
+          providerCooldownUntil[provider] = Date.now() + 10 * 60 * 1000;
+        }
+        if (failure.kind === 'blocked') break; // otro proveedor tampoco lo aceptará
       }
     }
 
-    if (!response) throw lastError || new Error('No se pudo generar la imagen.');
-
-    const images: { data: string; mimeType: string }[] = [];
-    let text = '';
-    for (const part of response.candidates?.[0]?.content?.parts || []) {
-      if (part.inlineData?.data) {
-        images.push({ data: part.inlineData.data, mimeType: part.inlineData.mimeType || 'image/png' });
-      } else if (part.text) {
-        text += part.text;
-      }
-    }
-
-    if (images.length === 0) {
-      const blocked = response.promptFeedback?.blockReason || response.candidates?.[0]?.finishReason;
-      return res.status(422).json({
-        success: false,
-        error: blocked
-          ? `La IA no pudo generar esa imagen (${blocked}). Prueba con otra descripción.`
-          : 'La IA no devolvió ninguna imagen. Prueba con otra descripción.',
-      });
-    }
-
-    return res.json({ success: true, images, text });
+    const status = failures.some((f) => f.kind === 'blocked') ? 422 : failures.every((f) => f.kind === 'quota' || f.kind === 'not_configured') ? 429 : 502;
+    return res.status(status).json({ success: false, error: friendlyImageError(failures, hasReferenceImages) });
   } catch (error: any) {
     console.error('Image generation error:', error);
-    const raw = String(error?.message || '');
-    if (error?.status === 429 || raw.includes('429') || raw.includes('RESOURCE_EXHAUSTED')) {
-      return res.status(429).json({
-        success: false,
-        error: 'Se alcanzó el límite gratuito de generación de imágenes. Espera unos minutos o inténtalo más tarde.',
-      });
-    }
-    return res.status(500).json({
-      success: false,
-      error: raw || 'Error al generar la imagen.',
-    });
+    return res.status(500).json({ success: false, error: 'Error al generar la imagen.' });
   }
 });
 
