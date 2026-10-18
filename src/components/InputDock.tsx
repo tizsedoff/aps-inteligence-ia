@@ -3,6 +3,7 @@ import { ApsModelId, InteractionMode, Attachment, VisualCustomization } from '..
 import { ApsLogo } from './ApsLogo';
 import {
   Image as ImageIcon,
+  ImagePlus,
   FileText,
   X,
   Brain,
@@ -16,7 +17,11 @@ interface InputDockProps {
   customization: VisualCustomization;
   extendedThinking: boolean;
   onToggleExtendedThinking: () => void;
-  onSendMessage: (text: string, attachments: Attachment[]) => void;
+  onSendMessage: (
+    text: string,
+    attachments: Attachment[],
+    options?: { generateImage?: boolean }
+  ) => void;
   isLoading: boolean;
   onStopGeneration?: () => void;
 }
@@ -35,6 +40,7 @@ export const InputDock: React.FC<InputDockProps> = ({
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isFocused, setIsFocused] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [imageMode, setImageMode] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -119,7 +125,8 @@ export const InputDock: React.FC<InputDockProps> = ({
 
   const handleSubmit = () => {
     if ((!text.trim() && attachments.length === 0) || isLoading) return;
-    onSendMessage(text.trim(), attachments);
+    if (imageMode && !text.trim()) return; // para generar imágenes hace falta una descripción
+    onSendMessage(text.trim(), attachments, imageMode ? { generateImage: true } : undefined);
     setText('');
     setAttachments([]);
     if (textareaRef.current) {
@@ -232,11 +239,25 @@ export const InputDock: React.FC<InputDockProps> = ({
               onBlur={() => setIsFocused(false)}
               onKeyDown={handleKeyDown}
               onPaste={handlePaste}
-              placeholder="DESCRIBE TU IDEA"
+              placeholder={imageMode ? "DESCRIBE LA IMAGEN A CREAR" : "DESCRIBE TU IDEA"}
               rows={1}
               className="w-full resize-none bg-transparent text-[15px] sm:text-base font-extrabold uppercase tracking-wide text-white placeholder-white/70 focus:outline-none placeholder:font-extrabold"
             />
           </div>
+
+          {/* Image generation toggle (Gemini) */}
+          <button
+            onClick={() => setImageMode((v) => !v)}
+            className={`flex items-center gap-1 rounded-full px-2.5 sm:px-3 py-1.5 text-xs font-bold uppercase transition-all ${
+              imageMode
+                ? 'bg-black/50 text-[color:var(--accent)] border border-[color:var(--accent)]/40 shadow-[0_0_10px_color-mix(in_srgb,var(--accent)_30%,transparent)]'
+                : 'bg-black/25 text-white/70 hover:text-white'
+            }`}
+            title={imageMode ? 'Modo imagen activado: tu mensaje generará una imagen' : 'Generar una imagen con IA'}
+          >
+            <ImagePlus className="h-3.5 w-3.5" />
+            <span className="hidden md:inline text-[10px]">Imagen</span>
+          </button>
 
           {/* Extended Thinking Quick Indicator Toggle */}
           <button

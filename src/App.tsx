@@ -318,7 +318,17 @@ export default function App() {
   // Save chat to localStorage
   useEffect(() => {
     if (messages.length > 0) {
-      localStorage.setItem(`aps_chat_${currentSessionId}`, JSON.stringify(messages));
+      try {
+        // Las imágenes generadas (base64) pesan mucho: no se guardan en localStorage
+        const persistable = messages.map((m) =>
+          m.images && m.images.length > 0
+            ? { ...m, images: undefined, content: m.content || '🖼️ Imagen generada (no se guarda en el historial)' }
+            : m
+        );
+        localStorage.setItem(`aps_chat_${currentSessionId}`, JSON.stringify(persistable));
+      } catch (e) {
+        console.warn('No se pudo guardar el chat en localStorage:', e);
+      }
       setSessions((prev) => {
         const existing = prev.find((s) => s.id === currentSessionId);
         const titleText = messages[0]?.content.slice(0, 36) || 'Idea APS';
@@ -400,8 +410,94 @@ export default function App() {
     }
   };
 
+  // Generate an image with Gemini (free tier) and show it in the chat
+  const handleGenerateImage = async (prompt: string, attachments: Attachment[]) => {
+    const userMessage: ChatMessage = {
+      id: `usr_${Date.now()}`,
+      role: 'user',
+      content: prompt,
+      attachments,
+      isImageRequest: true,
+      timestamp: Date.now(),
+    };
+    const modelMessageId = `model_${Date.now()}`;
+    const initialModelMessage: ChatMessage = {
+      id: modelMessageId,
+      role: 'model',
+      content: '',
+      model: currentModel,
+      mode: interactionMode,
+      isThinkingActive: true,
+      timestamp: Date.now(),
+    };
+
+    setMessages((prev) => [...prev, userMessage, initialModelMessage]);
+    setIsLoading(true);
+
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+    const startTime = Date.now();
+
+    try {
+      const res = await fetch('/api/image/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: abortController.signal,
+        body: JSON.stringify({
+          prompt,
+          attachments: attachments
+            .filter((a) => a.mimeType.startsWith('image/'))
+            .map((a) => ({ data: a.data, mimeType: a.mimeType })),
+        }),
+      });
+
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.success) {
+        throw new Error(data?.error || `HTTP error ${res.status}`);
+      }
+
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === modelMessageId
+            ? {
+                ...m,
+                content: data.text || '',
+                images: data.images,
+                isThinkingActive: false,
+                durationMs: Date.now() - startTime,
+              }
+            : m
+        )
+      );
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        setMessages((prev) => prev.filter((m) => m.id !== modelMessageId));
+      } else {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === modelMessageId
+              ? {
+                  ...m,
+                  content: err.message || 'Error al generar la imagen.',
+                  isThinkingActive: false,
+                  error: true,
+                }
+              : m
+          )
+        );
+      }
+    } finally {
+      setIsLoading(false);
+      abortControllerRef.current = null;
+    }
+  };
+
   // Send message with SSE streaming
-  const handleSendMessage = async (text: string, attachments: Attachment[]) => {
+  const handleSendMessage = async (
+    text: string,
+    attachments: Attachment[],
+    options?: { generateImage?: boolean }
+  ) => {
     if (isLoading) return;
 
     if (currentModel === 'APS HARD WORK' && !canUserAccessHardWork(currentUser)) {
@@ -421,6 +517,11 @@ export default function App() {
     }
 
     handleIncrementUsage();
+
+    if (options?.generateImage) {
+      await handleGenerateImage(text, attachments);
+      return;
+    }
 
     const userMessage: ChatMessage = {
       id: `usr_${Date.now()}`,
@@ -655,7 +756,9 @@ export default function App() {
       const userMsg = messages[errIdx - 1];
       if (userMsg && userMsg.role === 'user') {
         setMessages((prev) => prev.filter((m) => m.id !== errorMsgId));
-        handleSendMessage(userMsg.content, userMsg.attachments || []);
+        handleSendMessage(userMsg.content, userMsg.attachments || [], {
+          generateImage: userMsg.isImageRequest,
+        });
       }
     }
   };

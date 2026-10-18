@@ -570,6 +570,92 @@ INSTRUCCIONES:
   }
 });
 
+// Image generation (Gemini "Nano Banana") - free tier friendly, with optional reference images for editing
+const IMAGE_MODEL_CANDIDATES: string[] = [
+  ...(process.env.GEMINI_IMAGE_MODEL ? [process.env.GEMINI_IMAGE_MODEL] : []),
+  'gemini-2.5-flash-image',
+];
+const ALLOWED_ASPECT_RATIOS = ['1:1', '3:4', '4:3', '9:16', '16:9', '2:3', '3:2'];
+
+app.post(['/api/image/generate', '/image/generate'], async (req: Request, res: Response) => {
+  try {
+    const { prompt, attachments = [], aspectRatio } = req.body || {};
+    if (typeof prompt !== 'string' || prompt.trim().length < 2) {
+      return res.status(400).json({ success: false, error: 'Describe la imagen que quieres generar.' });
+    }
+
+    const ai = getGenAI();
+
+    const parts: any[] = [];
+    if (Array.isArray(attachments)) {
+      for (const att of attachments) {
+        if (att?.data && typeof att.mimeType === 'string' && att.mimeType.startsWith('image/')) {
+          parts.push({ inlineData: { data: att.data, mimeType: att.mimeType } });
+        }
+      }
+    }
+    parts.push({ text: prompt.trim() });
+
+    const config: any = { responseModalities: ['TEXT', 'IMAGE'] };
+    if (typeof aspectRatio === 'string' && ALLOWED_ASPECT_RATIOS.includes(aspectRatio)) {
+      config.imageConfig = { aspectRatio };
+    }
+
+    let response: any = null;
+    let lastError: any = null;
+    for (const modelToTry of IMAGE_MODEL_CANDIDATES) {
+      try {
+        response = await ai.models.generateContent({
+          model: modelToTry,
+          contents: [{ role: 'user', parts }],
+          config,
+        });
+        break;
+      } catch (err: any) {
+        lastError = err;
+        console.warn(`APS Image: model ${modelToTry} failed (${err?.status || err?.message}).`);
+      }
+    }
+
+    if (!response) throw lastError || new Error('No se pudo generar la imagen.');
+
+    const images: { data: string; mimeType: string }[] = [];
+    let text = '';
+    for (const part of response.candidates?.[0]?.content?.parts || []) {
+      if (part.inlineData?.data) {
+        images.push({ data: part.inlineData.data, mimeType: part.inlineData.mimeType || 'image/png' });
+      } else if (part.text) {
+        text += part.text;
+      }
+    }
+
+    if (images.length === 0) {
+      const blocked = response.promptFeedback?.blockReason || response.candidates?.[0]?.finishReason;
+      return res.status(422).json({
+        success: false,
+        error: blocked
+          ? `La IA no pudo generar esa imagen (${blocked}). Prueba con otra descripción.`
+          : 'La IA no devolvió ninguna imagen. Prueba con otra descripción.',
+      });
+    }
+
+    return res.json({ success: true, images, text });
+  } catch (error: any) {
+    console.error('Image generation error:', error);
+    const raw = String(error?.message || '');
+    if (error?.status === 429 || raw.includes('429') || raw.includes('RESOURCE_EXHAUSTED')) {
+      return res.status(429).json({
+        success: false,
+        error: 'Se alcanzó el límite gratuito de generación de imágenes. Espera unos minutos o inténtalo más tarde.',
+      });
+    }
+    return res.status(500).json({
+      success: false,
+      error: raw || 'Error al generar la imagen.',
+    });
+  }
+});
+
 // Healthcheck endpoint
 app.get(['/api/health', '/health'], (_req: Request, res: Response) => {
   res.json({

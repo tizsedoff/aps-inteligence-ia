@@ -11,6 +11,11 @@ export interface Attachment {
   previewUrl?: string;
 }
 
+export interface GeneratedImage {
+  data: string; // base64 string (sin prefijo data:)
+  mimeType: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'model';
@@ -18,6 +23,8 @@ export interface ChatMessage {
   model?: ApsModelId;
   mode?: InteractionMode;
   attachments?: Attachment[];
+  images?: GeneratedImage[]; // imágenes generadas por la IA (solo en memoria)
+  isImageRequest?: boolean; // el mensaje del usuario pidió generar una imagen
   thinking?: string;
   isThinkingActive?: boolean;
   timestamp: number;

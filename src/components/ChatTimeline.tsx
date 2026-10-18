@@ -11,6 +11,7 @@ import {
   VolumeX,
   FileText,
   Maximize2,
+  Download,
   X,
   Clock,
   Code2,
@@ -305,6 +306,38 @@ export const ChatTimeline: React.FC<ChatTimelineProps> = ({
                         <span>APS está procesando tu solicitud con alta fidelidad...</span>
                       </div>
                     ) : null}
+
+                    {/* Generated images */}
+                    {msg.images && msg.images.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-3">
+                        {msg.images.map((img, idx) => {
+                          const src = `data:${img.mimeType};base64,${img.data}`;
+                          const ext = img.mimeType.split('/')[1] || 'png';
+                          return (
+                            <div
+                              key={idx}
+                              className="group relative overflow-hidden rounded-2xl border border-white/20 bg-black/60 shadow-xl"
+                            >
+                              <img
+                                src={src}
+                                alt="Imagen generada por APS"
+                                onClick={() => setSelectedImage(src)}
+                                className="max-h-[420px] max-w-full cursor-pointer object-contain"
+                              />
+                              <a
+                                href={src}
+                                download={`aps-imagen-${msg.id}-${idx + 1}.${ext}`}
+                                className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-black/70 px-3 py-1.5 text-xs font-bold text-white opacity-90 backdrop-blur hover:bg-black/90 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                                title="Descargar imagen"
+                              >
+                                <Download className="h-3.5 w-3.5" />
+                                <span>Descargar</span>
+                              </a>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
 
                     {/* Actions Toolbar */}
                     {msg.content && (
