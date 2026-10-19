@@ -1,5 +1,5 @@
 import React from 'react';
-import { ApsModelId, UserAccount } from '../types';
+import { ApsModelId, UserAccount, WorkspaceMode } from '../types';
 import { ApsLogo } from './ApsLogo';
 import {
   MessageSquare,
@@ -15,6 +15,7 @@ import {
   X,
   LogOut,
   Brain,
+  Briefcase,
 } from 'lucide-react';
 
 import { getUserPlan, getUserMonthlyUsage } from '../constants/plans';
@@ -40,6 +41,10 @@ interface SidebarProps {
   onOpenCustomizer: () => void;
   onOpenTerms: () => void;
   onOpenPlans?: () => void;
+  workspace: WorkspaceMode;
+  onSelectWorkspace: (w: WorkspaceMode) => void;
+  brandName?: string;
+  onOpenBrand: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -57,6 +62,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenCustomizer,
   onOpenTerms,
   onOpenPlans,
+  workspace,
+  onSelectWorkspace,
+  brandName,
+  onOpenBrand,
 }) => {
   const plan = getUserPlan(currentUser);
   const usage = getUserMonthlyUsage(currentUser);
@@ -85,6 +94,44 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
         </div>
 
+        {/* Workspace switch: PERSONAL / MARCA */}
+        <div className="mt-3 grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-white/5 p-1">
+          {([
+            { id: 'personal', label: 'Personal', icon: User },
+            { id: 'marca', label: 'Marca', icon: Briefcase },
+          ] as const).map((w) => (
+            <button
+              key={w.id}
+              onClick={() => onSelectWorkspace(w.id)}
+              className={`flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition-all ${
+                workspace === w.id
+                  ? 'bg-[color:var(--accent)]/25 text-white shadow-sm'
+                  : 'text-[color:var(--text-secondary)] hover:text-white'
+              }`}
+            >
+              <w.icon className="h-3.5 w-3.5" />
+              {w.label}
+            </button>
+          ))}
+        </div>
+        {workspace === 'marca' && (
+          <button
+            onClick={() => {
+              onOpenBrand();
+              onClose();
+            }}
+            className="mt-2 flex w-full items-center justify-between rounded-xl border border-[color:var(--accent)]/30 bg-[color:var(--accent)]/10 p-2.5 text-xs text-white hover:bg-[color:var(--accent)]/20 transition-colors"
+          >
+            <span className="flex items-center gap-2 truncate">
+              <Briefcase className="h-4 w-4 shrink-0 text-[color:var(--accent)]" />
+              <span className="truncate">{brandName || 'Configurar mi marca'}</span>
+            </span>
+            <span className="text-[10px] font-mono-code text-[color:var(--accent)]">
+              {brandName ? 'Editar' : 'Crear'}
+            </span>
+          </button>
+        )}
+
         {/* New Chat Button */}
         <button
           onClick={() => {
@@ -100,7 +147,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Sessions List */}
         <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
           <span className="text-[10px] font-mono-code uppercase tracking-wider text-[color:var(--accent)] block mb-1">
-            Historial de Ideas
+            {workspace === 'marca' ? 'Historial de Marca' : 'Historial de Ideas'}
           </span>
 
           {sessions.length === 0 ? (

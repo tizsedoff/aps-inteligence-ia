@@ -173,3 +173,21 @@ export interface AppSettings {
   extendedThinking: boolean;
   soundEffects: boolean;
 }
+
+// ── Espacios de trabajo: PERSONAL (uso general) y MARCA (negocio) ──
+export type WorkspaceMode = 'personal' | 'marca';
+
+export interface BrandProfile {
+  name: string;
+  industry: string; // rubro
+  productsServices: string;
+  targetAudience: string;
+  valueProposition: string;
+  differentiators: string;
+  visualIdentity: string; // colores, tipografías, estilo
+  logo?: string; // opcional: URL o data URL
+  contact: string;
+  tone: string; // tono de comunicación
+  goals: string; // objetivos comerciales
+  updatedAt: number;
+}

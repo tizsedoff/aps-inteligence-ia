@@ -12,6 +12,8 @@ import {
   CookiePreferences,
   AppSettings,
   MemoryItem,
+  WorkspaceMode,
+  BrandProfile,
 } from './types';
 import { DEFAULT_CUSTOMIZATION } from './constants/themePresets';
 import { Header } from './components/Header';
@@ -24,6 +26,8 @@ import { AuthModal } from './components/AuthModal';
 import { AuthGateway } from './components/AuthGateway';
 import { LegalModals } from './components/LegalModals';
 import { PlansModal } from './components/PlansModal';
+import { BrandModal } from './components/BrandModal';
+import { loadBrand, loadCachedBrand, saveBrand, isBrandConfigured } from './lib/brand';
 import { BootSplash } from './components/LoadingStates';
 import {
   canUserAccessHardWork,
@@ -48,6 +52,14 @@ export default function App() {
   const [isTermsOpen, setIsTermsOpen] = useState(false);
   const [isPlansModalOpen, setIsPlansModalOpen] = useState(false);
   const [planModalNotice, setPlanModalNotice] = useState<string | undefined>(undefined);
+  const [isBrandOpen, setIsBrandOpen] = useState(false);
+
+  // Espacio de trabajo: PERSONAL (general) o MARCA (negocio). Datos separados.
+  const [workspace, setWorkspace] = useState<WorkspaceMode>(() =>
+    localStorage.getItem('aps_workspace') === 'marca' ? 'marca' : 'personal'
+  );
+  const [brand, setBrand] = useState<BrandProfile | null>(null);
+  const sessionsKey = workspace === 'marca' ? 'aps_sessions_marca' : 'aps_sessions';
 
   const handleOpenPlans = (notice?: string) => {
     setPlanModalNotice(notice);
@@ -303,7 +315,9 @@ export default function App() {
   // 5. Sessions management
   const [sessions, setSessions] = useState<{ id: string; title: string; timestamp: number }[]>(
     () => {
-      const saved = localStorage.getItem('aps_sessions');
+      const key =
+        localStorage.getItem('aps_workspace') === 'marca' ? 'aps_sessions_marca' : 'aps_sessions';
+      const saved = localStorage.getItem(key);
       return saved ? JSON.parse(saved) : [];
     }
   );
@@ -355,12 +369,12 @@ export default function App() {
             timestamp: Date.now(),
           };
           const updated = [newSession, ...prev];
-          localStorage.setItem('aps_sessions', JSON.stringify(updated));
+          localStorage.setItem(sessionsKey, JSON.stringify(updated));
           return updated;
         }
       });
     }
-  }, [messages, currentSessionId]);
+  }, [messages, currentSessionId, sessionsKey]);
 
   // Mouse move handler for specular reflection
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -376,11 +390,56 @@ export default function App() {
     setActiveView('chat');
   };
 
+  // Cambiar de espacio: cada uno tiene su propio historial; se corta cualquier respuesta en curso.
+  const handleSelectWorkspace = (next: WorkspaceMode) => {
+    if (next === workspace) return;
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+      setIsLoading(false);
+    }
+    localStorage.setItem('aps_workspace', next);
+    const nextKey = next === 'marca' ? 'aps_sessions_marca' : 'aps_sessions';
+    try {
+      const saved = localStorage.getItem(nextKey);
+      setSessions(saved ? JSON.parse(saved) : []);
+    } catch {
+      setSessions([]);
+    }
+    setWorkspace(next);
+    setCurrentSessionId(`session_${Date.now()}`);
+    setMessages([]);
+    setActiveView('chat');
+  };
+
+  const handleSaveBrand = async (next: BrandProfile): Promise<boolean> => {
+    if (!currentUser?.id) return false;
+    setBrand(next);
+    return saveBrand(currentUser.id, next);
+  };
+
+  // Cargar la marca del usuario (documento propio, aislado de PERSONAL)
+  useEffect(() => {
+    if (!currentUser?.id) {
+      setBrand(null);
+      return;
+    }
+    const cached = loadCachedBrand(currentUser.id);
+    if (cached) setBrand(cached);
+    let cancelled = false;
+    loadBrand(currentUser.id).then((remote) => {
+      if (!cancelled) setBrand(remote);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser?.id]);
+
   const handleDeleteSession = (id: string) => {
     localStorage.removeItem(`aps_chat_${id}`);
     const filtered = sessions.filter((s) => s.id !== id);
     setSessions(filtered);
-    localStorage.setItem('aps_sessions', JSON.stringify(filtered));
+    localStorage.setItem(sessionsKey, JSON.stringify(filtered));
     if (currentSessionId === id) {
       handleNewChat();
     }
@@ -590,7 +649,10 @@ export default function App() {
           })),
           extendedThinking: extendedThinking || currentModel === 'APS HARD WORK',
           terminalContext,
-          userMemories: currentUser?.memories || [],
+          workspace,
+          // Aislamiento: la marca solo viaja en MARCA; las memorias personales solo en PERSONAL.
+          brand: workspace === 'marca' && isBrandConfigured(brand) ? brand : undefined,
+          userMemories: workspace === 'personal' ? currentUser?.memories || [] : [],
           customInstructions: currentUser?.customInstructions || '',
         }),
       });
@@ -674,7 +736,7 @@ export default function App() {
                 );
 
                 // Auto Memory Learning: If user is logged in, extract new facts from turn and store in memories
-                if (currentUser && text.length > 5) {
+                if (currentUser && workspace === 'personal' && text.length > 5) {
                   try {
                     fetch('/api/memory/extract', {
                       method: 'POST',
@@ -882,6 +944,22 @@ export default function App() {
           </div>
         )}
 
+        {/* Banner de espacio MARCA */}
+        {activeView === 'chat' && workspace === 'marca' && (
+          <div className="flex items-center justify-between border-b border-[color:var(--accent)]/30 bg-[color:var(--surface-1)]/90 px-3 sm:px-4 py-1.5 text-xs text-[color:var(--accent-soft)] backdrop-blur-md z-20">
+            <span>
+              Espacio <strong className="text-[color:var(--accent)]">MARCA</strong>
+              {isBrandConfigured(brand) ? ` · ${brand!.name}` : ' · sin configurar'}
+            </span>
+            <button
+              onClick={() => setIsBrandOpen(true)}
+              className="rounded bg-[color:var(--accent)]/20 px-2 py-0.5 text-[11px] font-semibold text-[color:var(--text-primary)] hover:bg-[color:var(--accent)]/40 transition-colors"
+            >
+              {isBrandConfigured(brand) ? 'Editar marca' : 'Configurar marca →'}
+            </button>
+          </div>
+        )}
+
         {/* View 1: Chat View */}
         <div
           className={`flex flex-1 flex-col overflow-hidden ${
@@ -945,6 +1023,18 @@ export default function App() {
         onOpenCustomizer={() => setIsCustomizerOpen(true)}
         onOpenTerms={() => setIsTermsOpen(true)}
         onOpenPlans={handleOpenPlans}
+        workspace={workspace}
+        onSelectWorkspace={handleSelectWorkspace}
+        brandName={isBrandConfigured(brand) ? brand!.name : undefined}
+        onOpenBrand={() => setIsBrandOpen(true)}
+      />
+
+      {/* Brand (MARCA) Modal */}
+      <BrandModal
+        isOpen={isBrandOpen}
+        onClose={() => setIsBrandOpen(false)}
+        brand={brand}
+        onSave={handleSaveBrand}
       />
 
       {/* Customizer Studio Modal */}
