@@ -867,14 +867,14 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
   const showOrders = activeTab === 'orders';
   const rightIsCode = activeTab === 'code';
 
-  const mobileTabs: { id: 'orders' | 'preview' | 'code'; label: string; icon: React.ReactNode }[] = [
+  const mobileTabs: { id: 'orders' | 'preview' | 'code'; label: string; short?: string; icon: React.ReactNode }[] = [
     { id: 'orders', label: 'Órdenes', icon: <MessageSquare className="h-4 w-4" /> },
-    { id: 'preview', label: 'Vista previa', icon: <Eye className="h-4 w-4" /> },
+    { id: 'preview', label: 'Vista previa', short: 'Vista', icon: <Eye className="h-4 w-4" /> },
     { id: 'code', label: 'Código', icon: <Code2 className="h-4 w-4" /> },
   ];
 
   const tabBtn = (active: boolean) =>
-    `flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] font-semibold transition-colors ${
+    `flex min-w-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-2 min-[360px]:px-3 py-1.5 text-xs min-[360px]:text-[13px] font-semibold transition-colors ${
       active
         ? 'bg-[color:var(--accent)]/25 text-[color:var(--text-primary)]'
         : 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]'
@@ -892,7 +892,10 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
               className={`flex flex-1 items-center justify-center ${tabBtn(activeTab === t.id)}`}
             >
               {t.icon}
-              <span>{t.label}</span>
+              <span className="truncate">
+                <span className="min-[360px]:hidden">{t.short ?? t.label}</span>
+                <span className="hidden min-[360px]:inline">{t.label}</span>
+              </span>
             </button>
           ))}
         </div>

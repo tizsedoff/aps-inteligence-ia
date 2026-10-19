@@ -264,7 +264,7 @@ export const InputDock: React.FC<InputDockProps> = ({
               onPaste={handlePaste}
               placeholder={imageMode ? "DESCRIBE LA IMAGEN A CREAR" : "DESCRIBE TU IDEA"}
               rows={1}
-              className="w-full resize-none bg-transparent text-[15px] sm:text-base font-extrabold uppercase tracking-wide text-white placeholder-white/70 focus:outline-none placeholder:font-extrabold"
+              className="w-full resize-none bg-transparent text-sm min-[360px]:text-[15px] sm:text-base font-extrabold uppercase tracking-wide text-white placeholder-white/70 focus:outline-none placeholder:font-extrabold placeholder:truncate"
             />
           </div>
 

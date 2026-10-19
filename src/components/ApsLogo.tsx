@@ -62,12 +62,15 @@ export const ApsLogo: React.FC<ApsLogoProps> = ({
 
   // COMPACT LOGO: For send arrow, 3-bars hamburger menu, small indicators
   if (isCompact) {
+    // Si el llamador define su propio tamaño (h-12, w-16, size-8...), no forzamos h-full/w-full:
+    // ambas clases competían y ganaba h-full, agrandando el logo hasta ocupar media pantalla.
+    const hasOwnSize = /(^|\s)(h|w|size)-/.test(className);
     return (
       <img
         src={targetSrc}
         alt={alt}
         className={`object-contain select-none transition-all duration-300 ${
-          size ? '' : 'h-full w-full max-h-full max-w-full'
+          size || hasOwnSize ? '' : 'h-full w-full max-h-full max-w-full'
         } ${
           glow ? 'drop-shadow-[0_0_12px_rgba(0,190,255,0.65)]' : 'drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]'
         } ${className}`}
