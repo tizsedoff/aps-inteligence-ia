@@ -403,3 +403,54 @@ body {
     opacity: 0.6;
   }
 }
+
+/* ------------------------------------------------------------------
+   Markdown de las respuestas (.prose)
+   El proyecto usaba clases `prose` sin tener instalado @tailwindcss/typography,
+   por lo que títulos, listas y tablas salían sin estilo. Estos estilos propios
+   cubren lo necesario y son seguros en pantallas chicas (nada se sale del ancho).
+   ------------------------------------------------------------------ */
+.prose {
+  overflow-wrap: anywhere; /* URLs y palabras largas no rompen el layout */
+  word-break: break-word;
+}
+.prose > * + * { margin-top: 0.75em; }
+.prose h1, .prose h2, .prose h3, .prose h4 { font-weight: 800; line-height: 1.25; letter-spacing: 0.01em; }
+.prose h1 { font-size: 1.35em; }
+.prose h2 { font-size: 1.2em; }
+.prose h3 { font-size: 1.08em; }
+.prose h4 { font-size: 1em; }
+.prose ul, .prose ol { padding-left: 1.4em; }
+.prose ul { list-style: disc; }
+.prose ol { list-style: decimal; }
+.prose li { margin: 0.25em 0; padding-left: 0.2em; }
+.prose li::marker { color: var(--accent); }
+.prose a { text-decoration: underline; text-underline-offset: 3px; }
+.prose blockquote {
+  border-left: 3px solid var(--accent);
+  padding-left: 0.9em;
+  opacity: 0.9;
+}
+.prose hr { border: 0; border-top: 1px solid rgba(255, 255, 255, 0.15); margin: 1.2em 0; }
+.prose img { max-width: 100%; height: auto; border-radius: 0.75rem; }
+.prose pre { overflow-x: auto; max-width: 100%; }
+.prose :not(pre) > code { overflow-wrap: anywhere; }
+/* Tablas: scroll horizontal propio en lugar de desbordar o aplastar las celdas */
+.prose table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 0.9em;
+  -webkit-overflow-scrolling: touch;
+}
+.prose th, .prose td {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 0.45em 0.7em;
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: normal; /* en celdas se prefiere el scroll a partir palabras */
+  word-break: normal;
+  min-width: 5.5em;
+}
+.prose th { background: rgba(0, 0, 0, 0.25); font-weight: 700; white-space: nowrap; }

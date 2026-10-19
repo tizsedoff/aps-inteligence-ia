@@ -78,7 +78,7 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Top Row: Hamburger, Model Selector, CODIGO / CHAT switcher, User */}
       <div className="flex w-full items-center justify-between px-2 sm:px-4 py-2 sm:py-2.5 md:px-8 gap-1.5 sm:gap-3">
         {/* LEFT: Hamburger + MODELO APS... Card */}
-        <div className="flex items-center gap-1.5 sm:gap-4 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-4 min-w-0 shrink">
           {/* Hamburger / Menu Button replaced with Compact APS Logo as instructed */}
           <button
             onClick={onOpenSidebar}
@@ -93,20 +93,22 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
 
           {/* Big Rounded 'MODELO APS...' Card */}
-          <div className="relative">
+          <div className="relative min-w-0">
             <button
               onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
-              className="group flex items-center gap-1.5 sm:gap-3 rounded-xl sm:rounded-2xl px-2.5 py-1 sm:px-4 sm:py-2 text-left shadow-2xl transition-all duration-300 hover:brightness-110 active:scale-95 border border-white/20"
+              className="group flex max-w-full items-center gap-1.5 sm:gap-3 rounded-xl sm:rounded-2xl px-2.5 py-1 sm:px-4 sm:py-2 text-left shadow-2xl transition-all duration-300 hover:brightness-110 active:scale-95 border border-white/20"
               style={{
                 background: customization.modelSelectorGradient,
               }}
             >
-              <div className="flex flex-col">
+              <div className="flex min-w-0 flex-col">
                 <span className="font-serif-luxury text-[8px] sm:text-[10px] font-bold tracking-widest text-emerald-200 uppercase">
                   MODELO
                 </span>
-                <span className="font-serif-luxury text-xs sm:text-base font-extrabold tracking-wider text-white drop-shadow-md whitespace-nowrap">
-                  {currentModel}
+                <span className="font-serif-luxury text-xs sm:text-base font-extrabold tracking-wider text-white drop-shadow-md whitespace-nowrap truncate">
+                  {/* En teléfono se omite el prefijo "APS " para ganar espacio */}
+                  <span className="sm:hidden">{currentModel.replace(/^APS /, '')}</span>
+                  <span className="hidden sm:inline">{currentModel}</span>
                 </span>
               </div>
               <ChevronDown
@@ -171,24 +173,28 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* CENTER: Full APS Logo on larger screens + Solo CODIGO o CHAT Selector */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 shrink-0">
           <div className="hidden xl:flex items-center">
             <ApsLogo variant="full" glow size={34} />
           </div>
           <div className="flex items-center rounded-2xl border border-white/20 bg-black/70 p-1 shadow-2xl backdrop-blur-2xl shrink-0">
           <button
             onClick={() => onSelectView('chat')}
+            aria-label="Chat"
+            title="Chat"
             className={`flex items-center gap-1.5 sm:gap-2 rounded-xl px-3 sm:px-5 py-1.5 text-xs sm:text-sm font-serif-luxury font-bold tracking-wider transition-all duration-300 ${
               activeView === 'chat'
                 ? 'bg-gradient-to-r from-[color:var(--accent)] to-[color:var(--accent-2)] text-black shadow-lg shadow-cyan-500/20 scale-105'
                 : 'text-[color:var(--text-secondary)] hover:text-white hover:bg-white/5'
             }`}
           >
-            <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            <span>CHAT</span>
+            <MessageSquare className="h-4 w-4" />
+            <span className="hidden sm:inline">CHAT</span>
           </button>
 
           <button
+            aria-label="Código"
+            title="Código"
             onClick={() => {
               if (!canUserAccessHardWork(currentUser)) {
                 if (onOpenPlans) {
@@ -210,8 +216,8 @@ export const Header: React.FC<HeaderProps> = ({
                 : 'text-[color:var(--text-secondary)] hover:text-white hover:bg-white/5'
             }`}
           >
-            <Code2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            <span>CODIGO</span>
+            <Code2 className="h-4 w-4" />
+            <span className="hidden sm:inline">CODIGO</span>
           </button>
         </div>
       </div>
@@ -231,7 +237,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Visual Customization Studio Button */}
           <button
             onClick={onOpenCustomizer}
-            className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-[color:var(--accent)]/40 bg-[color:var(--accent)]/15 text-[color:var(--accent-soft)] hover:bg-[color:var(--accent)]/30 hover:scale-105 transition-all shadow-md active:scale-95"
+            className="hidden min-[360px]:flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-[color:var(--accent)]/40 bg-[color:var(--accent)]/15 text-[color:var(--accent-soft)] hover:bg-[color:var(--accent)]/30 hover:scale-105 transition-all shadow-md active:scale-95"
             title="Personalizar cualquier aspecto visual"
           >
             <Palette className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-[color:var(--accent)]" />

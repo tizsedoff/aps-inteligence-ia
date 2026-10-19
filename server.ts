@@ -3,6 +3,8 @@ import { GoogleGenAI, ThinkingLevel } from '@google/genai';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createMeetingRouter } from './src/server/agents/meetingRouter.ts';
+import type { LlmGenerate } from './src/server/agents/meeting.ts';
 
 dotenv.config();
 
@@ -51,6 +53,57 @@ function getModelCandidateList(apsModel: string): string[] {
       return ['gemini-3.8-flash', 'gemini-3.1-flash-lite', 'gemini-2.5-flash-lite', 'gemini-flash-latest'];
   }
 }
+
+// Proveedor de IA para reuniones grupales (Gemini). El orquestador solo conoce la interfaz LlmGenerate,
+// por lo que cambiar de proveedor implica reemplazar únicamente esta función.
+const meetingGenerate: LlmGenerate = async (req) => {
+  let ai: GoogleGenAI;
+  try {
+    ai = getGenAI();
+  } catch (err: any) {
+    console.error('APS Meeting:', err?.message);
+    throw new Error('El servicio de IA no está configurado.');
+  }
+  const candidates = getModelCandidateList(req.tier === 'fast' ? 'APS INSTANT' : 'APS PRO');
+  let lastError: any = null;
+
+  for (const modelToTry of candidates) {
+    if (req.signal?.aborted) break;
+    try {
+      const config: any = {
+        systemInstruction: req.system,
+        maxOutputTokens: req.maxOutputTokens,
+        abortSignal: req.signal,
+      };
+      if (req.json) config.responseMimeType = 'application/json';
+      if (modelToTry.startsWith('gemini-3')) {
+        config.thinkingConfig = { thinkingLevel: ThinkingLevel.MINIMAL };
+      }
+      const response = await ai.models.generateContent({
+        model: modelToTry,
+        contents: [{ role: 'user', parts: [{ text: req.prompt }] }],
+        config,
+      });
+      return {
+        text: response.text || '',
+        model: modelToTry,
+        inputTokens: response.usageMetadata?.promptTokenCount,
+        outputTokens:
+          (response.usageMetadata?.candidatesTokenCount || 0) + (response.usageMetadata?.thoughtsTokenCount || 0),
+      };
+    } catch (err: any) {
+      lastError = err;
+      console.warn(`APS Meeting: model ${modelToTry} unavailable (${err?.status || err?.message}). Trying next...`);
+    }
+  }
+
+  // Mensaje genérico hacia el cliente: el detalle técnico queda solo en los logs del servidor.
+  console.error('APS Meeting: all model candidates failed:', lastError?.message);
+  if (lastError?.status === 429) throw new Error('Límite de solicitudes del proveedor alcanzado.');
+  throw new Error('Modelo no disponible temporalmente.');
+};
+
+app.use(createMeetingRouter({ generate: meetingGenerate }));
 
 // System Instruction Builder trained for APS INSTANT, PRO & HARD WORK + 3 Modes + User Memory
 function buildSystemPrompt(

@@ -58,8 +58,8 @@ export const LegalModals: React.FC<LegalModalsProps> = ({
     <>
       {/* 1. COOKIE BANNER (if not accepted yet) */}
       {!cookiePrefs.accepted && (
-        <div className="fixed bottom-4 left-4 right-4 z-40 mx-auto max-w-4xl">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border border-[color:var(--accent)]/40 bg-[color:var(--surface-1)]/90 p-4 shadow-2xl backdrop-blur-2xl">
+        <div className="fixed bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4 z-40 mx-auto max-w-4xl max-h-[70vh] overflow-y-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 rounded-2xl border border-[color:var(--accent)]/40 bg-[color:var(--surface-1)]/90 p-4 shadow-2xl backdrop-blur-2xl">
             <div className="flex items-start gap-3">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[color:var(--accent)]/30 bg-[color:var(--surface-3)] text-[color:var(--accent-soft)]">
                 <Cookie className="h-5 w-5 text-[color:var(--accent)]" />
@@ -82,7 +82,7 @@ export const LegalModals: React.FC<LegalModalsProps> = ({
               </div>
             </div>
 
-            <div className="flex w-full sm:w-auto items-center justify-end gap-2 shrink-0">
+            <div className="flex w-full sm:w-auto flex-wrap items-center justify-end gap-2 shrink-0">
               <button
                 onClick={() => setShowCookieSettings(true)}
                 className="rounded-xl border border-[color:var(--accent)]/30 bg-white/5 px-3 py-1.5 text-xs text-[color:var(--text-secondary)] hover:bg-white/10 hover:text-white transition-colors"
