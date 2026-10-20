@@ -404,15 +404,90 @@ app.post(['/api/chat/stream', '/chat/stream'], async (req: Request, res: Respons
   }
 });
 
+// ── Utilidades del motor CLI: validación y lectura segura de la respuesta del modelo ──
+const CLI_MAX_COMMAND = 4000;
+const CLI_MAX_FILES_IN = 30;
+const CLI_MAX_CONTEXT_CHARS = 150_000;
+const CLI_MAX_FILES_OUT = 12;
+const CLI_MAX_FILE_CHARS = 200_000;
+
+function parseModelJson(text: string): any | null {
+  const raw = (text || '').trim();
+  if (!raw) return null;
+  const unfenced = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+  try {
+    return JSON.parse(unfenced);
+  } catch {
+    const a = unfenced.indexOf('{');
+    const b = unfenced.lastIndexOf('}');
+    if (a !== -1 && b > a) {
+      try {
+        return JSON.parse(unfenced.slice(a, b + 1));
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }
+}
+
+function sanitizeGeneratedFiles(input: unknown) {
+  if (!Array.isArray(input)) return [];
+  const used = new Set<string>();
+  const out: { filename: string; language: string; code: string; description: string }[] = [];
+  for (const f of input.slice(0, CLI_MAX_FILES_OUT)) {
+    if (!f || typeof f.code !== 'string' || f.code.length === 0) continue;
+    const base = String(f.filename || '').split(/[\\/]/).pop() || '';
+    let filename = base.replace(/[^\w.\-]/g, '_').replace(/^\.+/, '').slice(0, 64);
+    if (!filename) filename = `archivo_${out.length + 1}.txt`;
+    while (used.has(filename)) filename = `_${filename}`;
+    used.add(filename);
+    out.push({
+      filename,
+      language: typeof f.language === 'string' && f.language ? f.language.slice(0, 30) : 'text',
+      code: f.code.slice(0, CLI_MAX_FILE_CHARS),
+      description: typeof f.description === 'string' ? f.description.slice(0, 300) : '',
+    });
+  }
+  return out;
+}
+
 // APS Hard Work Exclusive CLI Code Generator & Processor
 app.post(['/api/cli/execute', '/cli/execute'], async (req: Request, res: Response) => {
   try {
-    const { command, files = [], activeFilename = '', attachments = [], language = 'typescript' } = req.body;
+    const { command: rawCommand, files = [], activeFilename = '', attachments = [], language = 'typescript' } = req.body;
+    const command = typeof rawCommand === 'string' ? rawCommand.trim() : '';
+    if (!command) {
+      return res.status(400).json({ success: false, error: 'Escribí una orden para ejecutar.' });
+    }
+    if (command.length > CLI_MAX_COMMAND) {
+      return res.status(400).json({
+        success: false,
+        error: `La orden es demasiado larga (máximo ${CLI_MAX_COMMAND} caracteres).`,
+      });
+    }
     const ai = getGenAI();
 
-    const filesContext = Array.isArray(files) && files.length > 0
-      ? files.map((f: any) => `=== ARCHIVO: ${f.filename} (${f.language || 'código'}) ===\n${f.code}\n=== FIN ARCHIVO ===`).join('\n\n')
-      : 'No hay archivos previos en el proyecto.';
+    // Contexto de archivos con presupuesto, para controlar costo y latencia
+    let budget = CLI_MAX_CONTEXT_CHARS;
+    let omitted = 0;
+    const contextParts: string[] = [];
+    for (const f of Array.isArray(files) ? files.slice(0, CLI_MAX_FILES_IN) : []) {
+      if (!f || typeof f.code !== 'string') continue;
+      if (f.code.length > budget) {
+        omitted++;
+        continue;
+      }
+      budget -= f.code.length;
+      contextParts.push(
+        `=== ARCHIVO: ${String(f.filename || 'sin_nombre')} (${f.language || 'código'}) ===\n${f.code}\n=== FIN ARCHIVO ===`
+      );
+    }
+    const filesContext =
+      contextParts.length > 0
+        ? contextParts.join('\n\n') +
+          (omitted > 0 ? `\n\n(${omitted} archivo(s) omitidos por tamaño del contexto)` : '')
+        : 'No hay archivos previos en el proyecto.';
 
     const cliSystemPrompt = `Eres el motor de consola CLI de desarrollo de APS HARD WORK.
 Tu misión exclusiva es RECIBIR ÓRDENES DEL USUARIO Y ESCRIBIR CÓDIGO COMPLETO, FUNCIONAL Y LISTO PARA EJECUTARSE EN TIEMPO REAL.
@@ -422,8 +497,10 @@ REGLAS CRÍTICAS:
 1. "generatedFiles": Genera SIEMPRE el código 100% completo, sin abreviaciones ni comentarios de marcador de posición como "// tu código aquí" o "// implementar lógica".
 2. Si el usuario solicita un juego, interfaz o aplicación visual web, incluye o genera un "index.html" que contenga todo el CSS y JavaScript necesario (o genera archivos separados index.html, style.css, script.js enlazados adecuadamente) para que la pestaña de Vista Previa funcione al instante.
 3. Si el usuario pide modificar o extender el código actual, toma en cuenta los archivos existentes y añade o actualiza los archivos con la funcionalidad pedida.
-4. "stdout": Debe incluir un log realista de compilación o salida de terminal (e.g. "✔ Compilado con éxito. Archivos creados: [lista]. Listo para ejecutar.").
+4. "stdout": Déjalo SIEMPRE como cadena vacía. No simules compilaciones, pruebas ni salidas de terminal: no se ejecutó nada todavía y no debes afirmar que algo funciona sin haberlo verificado.
 5. "extendedReasoning": Breve resumen técnico de la arquitectura implementada (máximo 2-3 líneas).
+5b. "executionSummary": Di qué archivos creaste o modificaste y qué hacen. No digas que "compiló", "pasó pruebas" ni que "funciona".
+5c. Si la orden es ambigua o no se puede cumplir, devuelve status "error" con una explicación breve en executionSummary y generatedFiles vacío.
 6. PROHIBIDO incluir explicaciones vacías, disculpas, sermones, o aclaraciones innecesarias ("Cabe aclarar que...", "Como IA...").
 7. Devuelve ÚNICAMENTE el JSON en la siguiente estructura estricta:
 {
@@ -492,30 +569,38 @@ Escribe el código completo ahora en JSON estricto:`;
       throw new Error('Servicio CLI temporalmente bajo alta demanda.');
     }
 
-    let resultJson: any;
-    try {
-      resultJson = JSON.parse(response.text || '{}');
-    } catch {
-      resultJson = {
-        command,
-        status: 'success',
-        executionSummary: 'Procesamiento completado con éxito.',
-        generatedFiles: [
-          {
-            filename: 'main.ts',
-            language: 'typescript',
-            code: response.text || '// Sin código',
-            description: 'Salida de ejecución',
-          },
-        ],
-        stdout: 'Task executed in real time.',
-        extendedReasoning: 'Análisis heurístico completado.',
-      };
+    const parsed = parseModelJson(response.text || '');
+    if (!parsed || typeof parsed !== 'object') {
+      return res.status(502).json({
+        success: false,
+        error: 'La IA devolvió una respuesta que no pude leer como código. Reintentá la orden.',
+      });
+    }
+
+    const generatedFiles = sanitizeGeneratedFiles(parsed.generatedFiles);
+    const modelStatus = parsed.status === 'error' ? 'error' : 'success';
+    const summary =
+      typeof parsed.executionSummary === 'string' ? parsed.executionSummary.slice(0, 1000) : '';
+
+    if (modelStatus === 'error' && generatedFiles.length === 0) {
+      return res.status(422).json({
+        success: false,
+        error: summary || 'La IA no pudo completar esta orden.',
+      });
     }
 
     res.json({
       success: true,
-      data: resultJson,
+      data: {
+        command,
+        status: modelStatus,
+        executionSummary: summary,
+        generatedFiles,
+        stdout: '', // el modelo no ejecuta nada: no se muestra salida de terminal inventada
+        extendedReasoning:
+          typeof parsed.extendedReasoning === 'string' ? parsed.extendedReasoning.slice(0, 600) : '',
+        timestamp: Date.now(),
+      },
     });
   } catch (error: any) {
     console.error('CLI error:', error);

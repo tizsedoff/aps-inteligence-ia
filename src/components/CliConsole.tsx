@@ -1,4 +1,12 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import {
+  PREVIEW_SANDBOX,
+  PREVIEW_STORAGE_MESSAGE,
+  injectStorageShim,
+  loadPreviewStorage,
+  runInSandbox,
+  savePreviewStorage,
+} from '../lib/sandbox';
 import { CliFile, CliExecutionResult, Attachment, UserAccount } from '../types';
 import { canUserAccessHardWork, isUserQuotaExceeded, getUserPlan } from '../constants/plans';
 import {
@@ -282,7 +290,7 @@ const PreviewFrame: React.FC<{
         title={title}
         srcDoc={srcDoc}
         className="h-full w-full border-none bg-white"
-        sandbox="allow-scripts allow-modals allow-same-origin allow-forms"
+        sandbox={PREVIEW_SANDBOX}
       />
     </div>
   </div>
@@ -602,7 +610,7 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
   };
 
   // Run the current active file in simulated / real JS sandbox
-  const executeActiveCode = () => {
+  const executeActiveCode = async () => {
     const currentFile = files[activeFileIndex];
     if (!currentFile) return;
 
@@ -623,47 +631,33 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
 
     setActiveTab('orders');
     addLog('input', `run ${currentFile.filename}`);
-    addLog('system', `Compilando y ejecutando '${currentFile.filename}' en sandbox virtual...`);
+    addLog('system', `Ejecutando '${currentFile.filename}' en un entorno aislado...`);
 
-    const startTime = performance.now();
+    const executable = currentFile.code
+      .replace(/export\s+default\s+/g, '')
+      .replace(/export\s+(const|let|var|function|class|async)\s+/g, '$1 ')
+      .replace(/export\s*\{[\s\S]*?\};?/g, '')
+      .replace(/import\s+[\s\S]*?from\s+['"][^'"]+['"];?/g, '')
+      .replace(/import\s+['"][^'"]+['"];?/g, '')
+      .replace(/interface\s+\w+[\s\S]*?\{[\s\S]*?\}/g, '')
+      .replace(/type\s+\w+\s*=[\s\S]*?;/g, '')
+      .replace(/:\s*[A-Za-z0-9_<>[\]|& ]+(?=[,=);{])/g, '')
+      .replace(/\bas\s+[A-Za-z0-9_<>[\]]+/g, '');
 
-    try {
-      const capturedLogs: string[] = [];
-      const fakeConsole = {
-        log: (...args: any[]) =>
-          capturedLogs.push(
-            args.map((a) => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' ')
-          ),
-        error: (...args: any[]) => capturedLogs.push('[ERROR] ' + args.map(String).join(' ')),
-        warn: (...args: any[]) => capturedLogs.push('[WARN] ' + args.map(String).join(' ')),
-        info: (...args: any[]) => capturedLogs.push('[INFO] ' + args.map(String).join(' ')),
-      };
-
-      const executable = currentFile.code
-        .replace(/export\s+default\s+/g, '')
-        .replace(/export\s+(const|let|var|function|class|async)\s+/g, '$1 ')
-        .replace(/export\s*\{[\s\S]*?\};?/g, '')
-        .replace(/import\s+[\s\S]*?from\s+['"][^'"]+['"];?/g, '')
-        .replace(/import\s+['"][^'"]+['"];?/g, '')
-        .replace(/interface\s+\w+[\s\S]*?\{[\s\S]*?\}/g, '')
-        .replace(/type\s+\w+\s*=[\s\S]*?;/g, '')
-        .replace(/:\s*[A-Za-z0-9_<>[\]|& ]+(?=[,=);{])/g, '')
-        .replace(/\bas\s+[A-Za-z0-9_<>[\]]+/g, '');
-
-      const runFn = new Function('console', executable);
-      runFn(fakeConsole);
-
-      const elapsed = (performance.now() - startTime).toFixed(2);
-      if (capturedLogs.length > 0) {
-        addLog('stdout', capturedLogs.join('\n'));
-      } else {
+    // Se ejecuta en un iframe aislado (origen opaco), nunca en el origen de la app.
+    const result = await runInSandbox(executable);
+    const elapsed = result.ms.toFixed(2);
+    if (result.logs.length > 0) {
+      addLog('stdout', result.logs.join('\n'));
+    }
+    if (result.error) {
+      addLog('stderr', `Error de ejecución: ${result.error}`);
+      addLog('system', `✖ Proceso abortado tras ${elapsed}ms.`);
+    } else {
+      if (result.logs.length === 0) {
         addLog('stdout', `[APS ENGINE] Proceso finalizado sin errores.`);
       }
       addLog('system', `✔ Ejecución finalizada en ${elapsed}ms con código de salida 0.`);
-    } catch (err: any) {
-      const elapsed = (performance.now() - startTime).toFixed(2);
-      addLog('stderr', `Error de ejecución: ${err.message}`);
-      addLog('system', `✖ Proceso abortado tras ${elapsed}ms.`);
     }
   };
 
@@ -685,8 +679,11 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
       return;
     }
     if (rawCmd === 'run') {
-      executeActiveCode();
-      setIsProcessing(false);
+      try {
+        await executeActiveCode();
+      } finally {
+        setIsProcessing(false);
+      }
       return;
     }
     if (rawCmd === 'preview') {
@@ -852,8 +849,20 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
 
   // Memoized compiled preview HTML
   const compiledPreviewHtml = useMemo(() => {
-    return buildCombinedPreviewHtml(files, currentFile);
-  }, [files, currentFile]);
+    // El reemplazo de localStorage se inyecta aquí; la vista previa corre en origen opaco.
+    return injectStorageShim(buildCombinedPreviewHtml(files, currentFile), loadPreviewStorage());
+  }, [files, currentFile, previewKey]);
+
+  // Persistencia de localStorage de la vista previa (clave propia, separada de la sesión)
+  useEffect(() => {
+    const onMessage = (e: MessageEvent) => {
+      if (e.origin !== 'null') return; // solo iframes aislados
+      if (!e.data || e.data.type !== PREVIEW_STORAGE_MESSAGE) return;
+      savePreviewStorage(e.data.data);
+    };
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, []);
 
   // Code line count for active file
   const activeLineCount = currentFile?.code.split('\n').length || 1;
