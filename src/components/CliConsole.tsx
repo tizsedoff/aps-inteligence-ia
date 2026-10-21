@@ -787,6 +787,24 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
           addLog('system', `✔ ${result.executionSummary}`);
         }
 
+        // Resultado de la revisión cruzada (lectura del código por un modelo independiente)
+        if (result.review) {
+          const r = result.review;
+          if (r.status === 'ok') {
+            addLog('system', '✔ Revisor independiente: no encontró problemas al leer el código (no se ejecutó).');
+          } else if (r.status === 'issues') {
+            const lines = r.issues
+              .map((i) => `  • [${i.severity}]${i.file ? ` ${i.file}:` : ''} ${i.problem}`)
+              .join('\n');
+            addLog(
+              r.fixed ? 'system' : 'stderr',
+              `${r.fixed ? '⚠ El revisor halló problemas graves y se aplicó una corrección (no verificada de nuevo)' : '⚠ El revisor halló problemas'}:\n${lines}`
+            );
+          } else if (r.status === 'failed') {
+            addLog('system', `⚠ La revisión independiente falló y se omitió: ${r.reason || 'error desconocido'}`);
+          }
+        }
+
         // Stream generated files line-by-line so progress is visible dynamically
         if (result.generatedFiles && result.generatedFiles.length > 0) {
           await streamCodeLineByLine(result.generatedFiles);

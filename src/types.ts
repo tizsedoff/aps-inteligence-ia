@@ -67,6 +67,12 @@ export interface CliExecutionResult {
   generatedFiles: CliFile[];
   stdout: string;
   extendedReasoning?: string;
+  review?: {
+    status: 'ok' | 'issues' | 'skipped' | 'failed';
+    reason?: string;
+    fixed: boolean;
+    issues: { severity: 'high' | 'medium' | 'low'; file: string; problem: string }[];
+  };
   timestamp: number;
 }
 

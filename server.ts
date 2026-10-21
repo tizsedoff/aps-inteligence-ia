@@ -3,6 +3,8 @@ import { GoogleGenAI, ThinkingLevel } from '@google/genai';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { parseModelJson } from './llm/providers.ts';
+import { reviewGeneratedCode, ReviewOutcome } from './llm/review.ts';
 
 dotenv.config();
 
@@ -411,26 +413,6 @@ const CLI_MAX_CONTEXT_CHARS = 150_000;
 const CLI_MAX_FILES_OUT = 12;
 const CLI_MAX_FILE_CHARS = 200_000;
 
-function parseModelJson(text: string): any | null {
-  const raw = (text || '').trim();
-  if (!raw) return null;
-  const unfenced = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
-  try {
-    return JSON.parse(unfenced);
-  } catch {
-    const a = unfenced.indexOf('{');
-    const b = unfenced.lastIndexOf('}');
-    if (a !== -1 && b > a) {
-      try {
-        return JSON.parse(unfenced.slice(a, b + 1));
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  }
-}
-
 function sanitizeGeneratedFiles(input: unknown) {
   if (!Array.isArray(input)) return [];
   const used = new Set<string>();
@@ -535,35 +517,34 @@ Archivos adjuntos/imágenes: ${JSON.stringify(
 
 Escribe el código completo ahora en JSON estricto:`;
 
-    for (const m of cliCandidates) {
-      try {
-        const isGemini3 = m.startsWith('gemini-3');
-        const cliConfig: any = {
-          systemInstruction: cliSystemPrompt,
-          responseMimeType: 'application/json',
-        };
-        if (isGemini3) {
-          cliConfig.thinkingConfig = {
-            thinkingLevel: ThinkingLevel.HIGH,
+    // Gemini con respaldo automático entre modelos ante picos de demanda
+    const generateCli = async (userText: string) => {
+      for (const m of cliCandidates) {
+        try {
+          const isGemini3 = m.startsWith('gemini-3');
+          const cliConfig: any = {
+            systemInstruction: cliSystemPrompt,
+            responseMimeType: 'application/json',
           };
+          if (isGemini3) {
+            cliConfig.thinkingConfig = {
+              thinkingLevel: ThinkingLevel.HIGH,
+            };
+          }
+          return await ai.models.generateContent({
+            model: m,
+            contents: [{ role: 'user', parts: [{ text: userText }] }],
+            config: cliConfig,
+          });
+        } catch (err: any) {
+          console.warn(`CLI Model ${m} unavailable (${err?.status || err?.message}). Trying next candidate...`);
+          await new Promise((r) => setTimeout(r, 400));
         }
-
-        response = await ai.models.generateContent({
-          model: m,
-          contents: [
-            {
-              role: 'user',
-              parts: [{ text: userPromptContent }],
-            },
-          ],
-          config: cliConfig,
-        });
-        break;
-      } catch (err: any) {
-        console.warn(`CLI Model ${m} unavailable (${err?.status || err?.message}). Trying next candidate...`);
-        await new Promise((r) => setTimeout(r, 400));
       }
-    }
+      return null;
+    };
+
+    response = await generateCli(userPromptContent);
 
     if (!response) {
       throw new Error('Servicio CLI temporalmente bajo alta demanda.');
@@ -589,13 +570,59 @@ Escribe el código completo ahora en JSON estricto:`;
       });
     }
 
+    // Revisión cruzada por un modelo de otro proveedor (Groq / NVIDIA), si hay uno configurado.
+    // Es una lectura del código, no una ejecución: no prueba que funcione.
+    let review: ReviewOutcome = { status: 'skipped', issues: [], reason: 'Sin archivos generados.' };
+    let reviewFixed = false;
+    let finalFiles = generatedFiles;
+    if (modelStatus === 'success' && generatedFiles.length > 0) {
+      review = await reviewGeneratedCode(command, generatedFiles);
+      if (review.provider) {
+        console.log(
+          `[review] ${review.provider}/${review.model} ${review.status} issues=${review.issues.length} ` +
+            `in=${review.inputTokens ?? '?'} out=${review.outputTokens ?? '?'} ${review.ms}ms`
+        );
+      } else if (review.status === 'failed') {
+        console.warn('[review] falló:', review.reason);
+      }
+
+      // Una sola pasada de corrección, y solo para problemas graves (tope de costo y reintentos)
+      const blocking = review.issues.filter((i) => i.severity === 'high');
+      if (review.status === 'issues' && blocking.length > 0) {
+        try {
+          const fixPrompt = `ORDEN ORIGINAL:\n"${command}"\n\nARCHIVOS ACTUALES:\n${generatedFiles
+            .map((f) => `=== ARCHIVO: ${f.filename} (${f.language}) ===\n${f.code}\n=== FIN ARCHIVO ===`)
+            .join('\n\n')}\n\nUN REVISOR INDEPENDIENTE ENCONTRÓ ESTOS PROBLEMAS GRAVES:\n${blocking
+            .map((i, n) => `${n + 1}. [${i.file || 'general'}] ${i.problem}`)
+            .join('\n')}\n\nCorrige solo esos problemas. Devuelve en "generatedFiles" únicamente los archivos que cambias, completos, en el mismo JSON estricto.`;
+          const fixResponse = await generateCli(fixPrompt);
+          const fixParsed = fixResponse ? parseModelJson(fixResponse.text || '') : null;
+          const fixedFiles = sanitizeGeneratedFiles(fixParsed?.generatedFiles);
+          if (fixedFiles.length > 0) {
+            const byName = new Map(generatedFiles.map((f) => [f.filename, f]));
+            for (const f of fixedFiles) byName.set(f.filename, f);
+            finalFiles = Array.from(byName.values());
+            reviewFixed = true;
+          }
+        } catch (e: any) {
+          console.warn('[review] corrección fallida:', e?.message);
+        }
+      }
+    }
+
     res.json({
       success: true,
       data: {
         command,
         status: modelStatus,
         executionSummary: summary,
-        generatedFiles,
+        generatedFiles: finalFiles,
+        review: {
+          status: review.status,
+          reason: review.reason,
+          fixed: reviewFixed,
+          issues: review.issues,
+        },
         stdout: '', // el modelo no ejecuta nada: no se muestra salida de terminal inventada
         extendedReasoning:
           typeof parsed.extendedReasoning === 'string' ? parsed.extendedReasoning.slice(0, 600) : '',
