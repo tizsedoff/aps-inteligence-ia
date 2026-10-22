@@ -31,6 +31,7 @@ interface ChatTimelineProps {
   currentUser: UserAccount | null;
   onSelectPrompt: (prompt: string) => void;
   onSendToCli: (code: string, language: string) => void;
+  onOpenCode?: () => void;
   onRetry?: (messageId: string) => void;
   isLoading: boolean;
 }
@@ -43,6 +44,7 @@ export const ChatTimeline: React.FC<ChatTimelineProps> = ({
   currentUser,
   onSelectPrompt,
   onSendToCli,
+  onOpenCode,
   onRetry,
   isLoading,
 }) => {
@@ -320,6 +322,30 @@ export const ChatTimeline: React.FC<ChatTimelineProps> = ({
                     ) : isPending ? (
                       <AssistantPending kind={msg.isImageGeneration ? 'image' : 'text'} />
                     ) : null}
+
+                    {/* Cambios que el chat aplicó en el espacio CÓDIGO */}
+                    {!msg.error && msg.codeChanges && msg.codeChanges.length > 0 && (
+                      <div className="mt-2 rounded-xl border border-[color:var(--accent)]/30 bg-[color:var(--accent)]/10 p-3 text-xs">
+                        <div className="mb-1.5 font-semibold text-white">
+                          Cambios aplicados en CÓDIGO
+                        </div>
+                        <ul className="space-y-0.5 text-[color:var(--text-secondary)]">
+                          {msg.codeChanges.map((c) => (
+                            <li key={c.filename} className="font-mono-code">
+                              {c.action === 'created' ? '＋ creado' : '✎ modificado'} · {c.filename}
+                            </li>
+                          ))}
+                        </ul>
+                        {onOpenCode && (
+                          <button
+                            onClick={onOpenCode}
+                            className="mt-2 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 font-semibold text-white transition-colors hover:bg-white/10"
+                          >
+                            Ver en CÓDIGO
+                          </button>
+                        )}
+                      </div>
+                    )}
 
                     {/* Generated images */}
                     {msg.images && msg.images.length > 0 && (

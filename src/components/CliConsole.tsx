@@ -7,7 +7,7 @@ import {
   runInSandbox,
   savePreviewStorage,
 } from '../lib/sandbox';
-import { CliFile, CliExecutionResult, Attachment, UserAccount } from '../types';
+import { CliFile, CliExecutionResult, Attachment, UserAccount, ChatCodeChange } from '../types';
 import { canUserAccessHardWork, isUserQuotaExceeded, getUserPlan } from '../constants/plans';
 import {
   Play,
@@ -318,6 +318,7 @@ interface CliConsoleProps {
   currentUser?: UserAccount | null;
   onOpenPlans?: (notice?: string) => void;
   onIncrementUsage?: () => void;
+  chatChanges?: ChatCodeChange[];
   onStateUpdate?: (state: {
     files: CliFile[];
     terminalLogs: { type: 'input' | 'stdout' | 'stderr' | 'system' | 'thinking'; text: string; time: string }[];
@@ -332,6 +333,7 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
   currentUser,
   onOpenPlans,
   onIncrementUsage,
+  chatChanges,
   onStateUpdate,
 }) => {
   const [command, setCommand] = useState('');
@@ -447,6 +449,20 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
 
   const [lastExecutedCmd, setLastExecutedCmd] = useState<string>('');
 
+  // Cambios hechos por la IA del chat: se aplican aquí y se guarda una instantánea para deshacer.
+  // La instantánea es de ANTES del primer cambio de cada mensaje del chat.
+  const [chatUndo, setChatUndo] = useState<{
+    turnId: string;
+    before: CliFile[];
+    beforeActive: string;
+    names: string[];
+  } | null>(null);
+  const appliedChatChangeId = useRef(0);
+  const filesRef = useRef<CliFile[]>(files);
+  filesRef.current = files;
+  const activeIdxRef = useRef(activeFileIndex);
+  activeIdxRef.current = activeFileIndex;
+
   const addLog = (
     type: 'input' | 'stdout' | 'stderr' | 'system' | 'thinking',
     text: string
@@ -455,6 +471,59 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
       ...prev,
       { type, text, time: new Date().toLocaleTimeString() },
     ]);
+  };
+
+  // Aplica los cambios que la IA del chat hizo en los archivos (en orden, sin repetir ninguno)
+  useEffect(() => {
+    if (!chatChanges || chatChanges.length === 0) return;
+    const pending = chatChanges
+      .filter((c) => c.id > appliedChatChangeId.current)
+      .sort((a, b) => a.id - b.id);
+    if (pending.length === 0) return;
+
+    let working = [...filesRef.current];
+    let firstTouched = '';
+    for (const change of pending) {
+      appliedChatChangeId.current = change.id;
+      const names = change.files.map((f) => f.filename);
+      const snapshot = working;
+      setChatUndo((prev) =>
+        prev && prev.turnId === change.turnId
+          ? { ...prev, names: Array.from(new Set([...prev.names, ...names])) }
+          : {
+              turnId: change.turnId,
+              before: snapshot,
+              beforeActive: snapshot[activeIdxRef.current]?.filename || '',
+              names,
+            }
+      );
+      const next = [...working];
+      for (const f of change.files) {
+        const idx = next.findIndex((x) => x.filename === f.filename);
+        if (idx !== -1) next[idx] = { ...next[idx], ...f };
+        else next.push(f);
+      }
+      working = next;
+      if (!firstTouched) firstTouched = names[0];
+      addLog('system', `✏️ La IA del chat modificó: ${names.join(', ')}`);
+    }
+    filesRef.current = working;
+    setFiles(working);
+    const focus = working.findIndex((x) => x.filename === firstTouched);
+    if (focus !== -1) setActiveFileIndex(focus);
+    setHasContent(true);
+    setPreviewKey((k) => k + 1);
+  }, [chatChanges]);
+
+  const handleUndoChatChange = () => {
+    if (!chatUndo) return;
+    setFiles(chatUndo.before);
+    filesRef.current = chatUndo.before;
+    const idx = chatUndo.before.findIndex((x) => x.filename === chatUndo.beforeActive);
+    setActiveFileIndex(idx !== -1 ? idx : 0);
+    setPreviewKey((k) => k + 1);
+    addLog('system', `↩ Se deshicieron los cambios del chat (${chatUndo.names.join(', ')}).`);
+    setChatUndo(null);
   };
 
   // Sync state upward to parent so CHAT assistant has live terminal awareness
@@ -555,6 +624,7 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
 
   // Progressive line-by-line stream implementation for generated code
   const streamCodeLineByLine = async (incomingFiles: CliFile[]) => {
+    setChatUndo(null); // la consola escribe encima: ya no se puede deshacer de forma segura
     setHasContent(true);
     for (const newFile of incomingFiles) {
       const lines = newFile.code.split('\n');
@@ -1111,6 +1181,21 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
               showOrders ? 'hidden lg:flex' : 'flex'
             } relative min-h-0 min-w-0 flex-1 flex-col bg-[color:var(--surface-0)]`}
           >
+            {/* Aviso de cambios del chat, con opción de deshacer */}
+            {chatUndo && (
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--accent)]/30 bg-[color:var(--accent)]/10 px-3 py-1.5 text-xs text-[color:var(--text-primary)]">
+                <span className="min-w-0 truncate">
+                  El chat modificó: <strong>{chatUndo.names.join(', ')}</strong>
+                </span>
+                <button
+                  onClick={handleUndoChatChange}
+                  className="shrink-0 rounded-lg border border-white/20 bg-white/10 px-2.5 py-1 font-semibold transition-colors hover:bg-white/20"
+                >
+                  Deshacer
+                </button>
+              </div>
+            )}
+
             {/* Barra de progreso fina mientras se escribe el código */}
             {lineProgress && (
               <div className="absolute inset-x-0 top-0 z-10 h-0.5 bg-white/5">
@@ -1233,6 +1318,7 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
                     value={currentFile?.code || ''}
                     onChange={(e) => {
                       const newCode = e.target.value;
+                      setChatUndo(null); // editaste a mano: ya no se puede deshacer de forma segura
                       setHasContent(true);
                       setFiles((prev) => {
                         const updated = [...prev];

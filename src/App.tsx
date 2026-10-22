@@ -14,6 +14,7 @@ import {
   MemoryItem,
   WorkspaceMode,
   BrandProfile,
+  ChatCodeChange,
 } from './types';
 import { DEFAULT_CUSTOMIZATION } from './constants/themePresets';
 import { Header } from './components/Header';
@@ -53,6 +54,8 @@ export default function App() {
   const [isPlansModalOpen, setIsPlansModalOpen] = useState(false);
   const [planModalNotice, setPlanModalNotice] = useState<string | undefined>(undefined);
   const [isBrandOpen, setIsBrandOpen] = useState(false);
+  const [chatCodeChanges, setChatCodeChanges] = useState<ChatCodeChange[]>([]); // cola de cambios del chat hacia CÓDIGO
+  const codeChangeSeq = useRef(0);
 
   // Espacio de trabajo: PERSONAL (general) o MARCA (negocio). Datos separados.
   const [workspace, setWorkspace] = useState<WorkspaceMode>(() =>
@@ -650,6 +653,7 @@ export default function App() {
           extendedThinking: extendedThinking || currentModel === 'APS HARD WORK',
           terminalContext,
           workspace,
+          allowCodeEdits: true, // el chat puede modificar los archivos de CÓDIGO
           // Aislamiento: la marca solo viaja en MARCA; las memorias personales solo en PERSONAL.
           brand: workspace === 'marca' && isBrandConfigured(brand) ? brand : undefined,
           userMemories: workspace === 'personal' ? currentUser?.memories || [] : [],
@@ -721,6 +725,30 @@ export default function App() {
                       : m
                   )
                 );
+              } else if (eventType === 'code_changes') {
+                // La IA del chat modificó archivos de CÓDIGO: se aplican allí y se anota en el mensaje
+                if (Array.isArray(parsed.files) && parsed.files.length > 0) {
+                  codeChangeSeq.current += 1;
+                  const change: ChatCodeChange = {
+                    id: codeChangeSeq.current,
+                    turnId: modelMessageId,
+                    files: parsed.files,
+                  };
+                  setChatCodeChanges((prev) => [...prev.slice(-19), change]);
+                  setMessages((prev) =>
+                    prev.map((m) => {
+                      if (m.id !== modelMessageId) return m;
+                      const known = new Map((m.codeChanges || []).map((c) => [c.filename, c.action]));
+                      for (const c of parsed.changes || []) {
+                        if (!known.has(c.filename)) known.set(c.filename, c.action);
+                      }
+                      return {
+                        ...m,
+                        codeChanges: [...known.entries()].map(([filename, action]) => ({ filename, action })),
+                      };
+                    })
+                  );
+                }
               } else if (eventType === 'complete') {
                 const duration = Date.now() - startTime;
                 setMessages((prev) =>
@@ -974,6 +1002,7 @@ export default function App() {
             currentUser={currentUser}
             onSelectPrompt={(prompt) => handleSendMessage(prompt, [])}
             onSendToCli={handleSendToCli}
+            onOpenCode={() => handleSelectView('cli')}
             onRetry={handleRetry}
             isLoading={isLoading}
           />
@@ -1003,6 +1032,7 @@ export default function App() {
             onOpenPlans={handleOpenPlans}
             onIncrementUsage={handleIncrementUsage}
             onStateUpdate={handleTerminalStateUpdate}
+            chatChanges={chatCodeChanges}
           />
         </div>
       </main>

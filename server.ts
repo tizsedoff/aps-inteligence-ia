@@ -1,10 +1,12 @@
 import express, { Request, Response } from 'express';
-import { GoogleGenAI, ThinkingLevel } from '@google/genai';
+import { GoogleGenAI, ThinkingLevel, Type } from '@google/genai';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { parseModelJson } from './llm/providers.ts';
 import { reviewGeneratedCode, ReviewOutcome } from './llm/review.ts';
+import { buildFilesContext, sanitizeFilename, WorkFile } from './llm/codeTools.ts';
+import { runChatWithTools } from './llm/chatStream.ts';
 
 dotenv.config();
 
@@ -167,9 +169,9 @@ REGLAS DE MARCA:
   // Terminal context integration: assistant has full live awareness of the terminal and files!
   let terminalSection = '';
   if (terminalContext) {
-    const fileSummaries = (terminalContext.files || [])
-      .map((f) => `--- ARCHIVO: ${f.filename} (${f.language}) ---\n${f.code.slice(0, 3000)}`)
-      .join('\n\n');
+    const fileSummaries = buildFilesContext(
+      (terminalContext.files || []) as WorkFile[]
+    ).text;
 
     const logSummaries = (terminalContext.recentLogs || [])
       .slice(-12)
@@ -187,7 +189,14 @@ ${logSummaries || '(Sin logs recientes aún)'}
 ${fileSummaries || '(Workspace vacío, listo para crear archivos)'}
 
 INSTRUCCIÓN ESPECIAL SOBRE LA TERMINAL:
-Entiendes a la perfección lo que el usuario está programando o ejecutando en su terminal. Si el usuario te pregunta sobre su código, errores en consola, qué está pasando, cómo mejorarlo o cómo continuar, responde teniendo pleno conocimiento de sus archivos y registros de la terminal. Eres un asistente integrado bidireccionalmente.`;
+Entiendes a la perfección lo que el usuario está programando o ejecutando en su terminal. Si el usuario te pregunta sobre su código, errores en consola, qué está pasando, cómo mejorarlo o cómo continuar, responde teniendo pleno conocimiento de sus archivos y registros de la terminal.
+
+PUEDES MODIFICAR EL ESPACIO CÓDIGO con las herramientas write_file (crear o reemplazar un archivo completo) y edit_file (cambiar un fragmento exacto):
+- Cuando el usuario te pida crear, cambiar, arreglar o agregar algo en su código, USA las herramientas en vez de pegar el código en el chat.
+- Para cambios puntuales usa edit_file; para archivos nuevos o reescrituras grandes usa write_file con el contenido completo.
+- Si una herramienta devuelve un error, corrige la llamada (por ejemplo copiando old_text exactamente) y reintenta.
+- Si solo te hacen una pregunta o piden una explicación, responde sin modificar nada.
+- Al terminar, resume en pocas líneas qué cambiaste. No digas que probaste o ejecutaste el código: solo lo escribiste y no lo verificaste. El usuario puede deshacer tus cambios desde CÓDIGO.`;
   }
 
   return `Eres APS INTELLIGENCE.
@@ -234,6 +243,7 @@ app.post(['/api/chat/stream', '/chat/stream'], async (req: Request, res: Respons
       customInstructions = '',
       workspace = 'personal',
       brand = null,
+      allowCodeEdits = false,
     } = req.body;
 
     const ai = getGenAI();
@@ -310,81 +320,52 @@ app.post(['/api/chat/stream', '/chat/stream'], async (req: Request, res: Respons
 
     const isHardWork = model === 'APS HARD WORK' || model === 'hardwork' || extendedThinking;
 
-    let responseStream: any = null;
-    let activeModelUsed = candidateModels[0];
-    let lastError: any = null;
-
-    // Multi-model resilience loop: if upstream returns 503 or is unavailable, seamlessly cascade!
-    for (const modelToTry of candidateModels) {
-      try {
-        const isGemini3 = modelToTry.startsWith('gemini-3');
-        const modelConfig: any = {
-          systemInstruction,
-        };
-
-        if (isGemini3) {
-          if (isHardWork) {
-            modelConfig.thinkingConfig = {
-              thinkingLevel: ThinkingLevel.HIGH,
-            };
-          } else if (model === 'APS INSTANT' || model === 'instant') {
-            modelConfig.thinkingConfig = {
-              thinkingLevel: ThinkingLevel.MINIMAL,
-            };
-          }
+    const makeConfig = (modelToTry: string) => {
+      const modelConfig: any = { systemInstruction };
+      if (modelToTry.startsWith('gemini-3')) {
+        if (isHardWork) {
+          modelConfig.thinkingConfig = { thinkingLevel: ThinkingLevel.HIGH };
+        } else if (model === 'APS INSTANT' || model === 'instant') {
+          modelConfig.thinkingConfig = { thinkingLevel: ThinkingLevel.MINIMAL };
         }
-
-        responseStream = await ai.models.generateContentStream({
-          model: modelToTry,
-          contents,
-          config: modelConfig,
-        });
-
-        activeModelUsed = modelToTry;
-        break; // Stream started successfully!
-      } catch (err: any) {
-        lastError = err;
-        console.warn(`APS Engine: Model ${modelToTry} unavailable (${err?.status || err?.message}). Cascading to next candidate...`);
-        // Brief delay before attempting next candidate
-        await new Promise((resolve) => setTimeout(resolve, 400));
       }
-    }
+      return modelConfig;
+    };
 
-    if (!responseStream) {
-      throw lastError || new Error('Los modelos están experimentando una alta demanda temporal en Google. Por favor, reintenta tu solicitud.');
-    }
-
-    sendEvent('start', { model, resolvedModel: activeModelUsed, isHardWork });
+    // El chat puede modificar el espacio CÓDIGO solo si el cliente envió ese espacio de trabajo
+    const workspaceFiles: WorkFile[] | null =
+      allowCodeEdits && terminalContext && Array.isArray(terminalContext.files)
+        ? terminalContext.files
+            .filter((f: any) => f && typeof f.code === 'string')
+            .map((f: any) => ({
+              filename: sanitizeFilename(f.filename) || 'archivo.txt',
+              language: typeof f.language === 'string' ? f.language : 'text',
+              code: f.code as string,
+            }))
+        : null;
+    const truncatedFiles = workspaceFiles ? buildFilesContext(workspaceFiles).truncated : new Set<string>();
 
     const startTime = Date.now();
-    let totalText = '';
-    let totalThoughts = '';
-
-    for await (const chunk of responseStream) {
-      const candidate = chunk.candidates?.[0];
-      if (candidate?.content?.parts) {
-        for (const part of candidate.content.parts) {
-          // Check for thought/reasoning part
-          const isThoughtPart = (part as any).thought === true;
-          if (isThoughtPart && part.text) {
-            totalThoughts += part.text;
-            sendEvent('thinking', { chunk: part.text });
-          } else if (part.text) {
-            totalText += part.text;
-            sendEvent('token', { chunk: part.text });
-          }
-        }
-      } else if (chunk.text) {
-        totalText += chunk.text;
-        sendEvent('token', { chunk: chunk.text });
-      }
-    }
+    const run = await runChatWithTools({
+      ai,
+      Type: Type as any,
+      candidates: candidateModels,
+      makeConfig,
+      contents,
+      files: workspaceFiles,
+      truncated: truncatedFiles,
+      send: sendEvent,
+      meta: { model, isHardWork },
+    });
+    const totalText = run.totalText;
+    const totalThoughts = run.totalThoughts;
 
     const durationMs = Date.now() - startTime;
     sendEvent('complete', {
       durationMs,
       hasThoughts: totalThoughts.length > 0,
       textLength: totalText.length,
+      codeChanges: run.changes,
     });
     res.end();
   } catch (error: any) {
@@ -419,8 +400,7 @@ function sanitizeGeneratedFiles(input: unknown) {
   const out: { filename: string; language: string; code: string; description: string }[] = [];
   for (const f of input.slice(0, CLI_MAX_FILES_OUT)) {
     if (!f || typeof f.code !== 'string' || f.code.length === 0) continue;
-    const base = String(f.filename || '').split(/[\\/]/).pop() || '';
-    let filename = base.replace(/[^\w.\-]/g, '_').replace(/^\.+/, '').slice(0, 64);
+    let filename = sanitizeFilename(f.filename);
     if (!filename) filename = `archivo_${out.length + 1}.txt`;
     while (used.has(filename)) filename = `_${filename}`;
     used.add(filename);

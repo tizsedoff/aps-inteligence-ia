@@ -31,6 +31,14 @@ export interface ChatMessage {
   timestamp: number;
   durationMs?: number;
   error?: boolean;
+  codeChanges?: { filename: string; action: 'created' | 'modified' }[]; // cambios que el chat hizo en CÓDIGO
+}
+
+// Cambio que la IA del chat aplica sobre los archivos del espacio CÓDIGO
+export interface ChatCodeChange {
+  id: number; // incrementa en cada evento (evita aplicar dos veces)
+  turnId: string; // mensaje del chat que lo originó (agrupa el "deshacer")
+  files: CliFile[];
 }
 
 export interface CliFile {
