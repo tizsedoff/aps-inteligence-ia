@@ -5,7 +5,7 @@ import {
   getReviewModel,
   getReviewProviders,
   parseModelJson,
-} from './providers';
+} from './providers.ts';
 
 export interface ReviewIssue {
   severity: 'high' | 'medium' | 'low';
