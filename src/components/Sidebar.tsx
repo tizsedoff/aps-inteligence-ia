@@ -1,6 +1,7 @@
 import React from 'react';
 import { ApsModelId, UserAccount, WorkspaceMode } from '../types';
 import { ApsLogo } from './ApsLogo';
+import { UserAvatar } from './UserAvatar';
 import {
   MessageSquare,
   Trash2,
@@ -229,10 +230,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
             className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/5 p-2.5 text-xs text-white hover:bg-white/10 transition-colors"
           >
             <div className="flex items-center gap-2.5">
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-sm">
-                {currentUser?.avatar || <User className="h-3.5 w-3.5" />}
-              </div>
-              <div className="text-left">
+              {currentUser ? (
+                <UserAvatar avatar={currentUser.avatar} name={currentUser.name} size="sm" />
+              ) : (
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10">
+                  <User className="h-3.5 w-3.5" />
+                </div>
+              )}
+              <div className="min-w-0 text-left">
                 <span className="font-semibold block truncate max-w-[130px]">
                   {currentUser?.name || 'Iniciar Sesión'}
                 </span>
