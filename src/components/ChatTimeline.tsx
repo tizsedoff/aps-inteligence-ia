@@ -22,6 +22,8 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { reportScroll, prefersReducedMotion } from '../lib/sceneBus';
+import { Tilt3D } from './Tilt3D';
 
 interface ChatTimelineProps {
   messages: ChatMessage[];
@@ -49,6 +51,8 @@ export const ChatTimeline: React.FC<ChatTimelineProps> = ({
   isLoading,
 }) => {
   const endRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const reduceMotion = prefersReducedMotion();
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [speakingId, setSpeakingId] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -114,8 +118,12 @@ export const ChatTimeline: React.FC<ChatTimelineProps> = ({
   const sampleIdeas = getSampleIdeas();
 
   return (
-    <div className="flex-1 overflow-y-auto px-2.5 sm:px-4 py-4 sm:py-6 md:px-8">
-      <div className="mx-auto max-w-4xl space-y-4 sm:space-y-6">
+    <div
+      ref={scrollRef}
+      onScroll={(e) => reportScroll(e.currentTarget)}
+      className="flex-1 overflow-y-auto px-2.5 sm:px-4 py-4 sm:py-6 md:px-8"
+    >
+      <div className="mx-auto max-w-4xl space-y-4 sm:space-y-6" style={{ perspective: '1400px' }}>
         {/* EMPTY STATE — Exactly as shown in Reference Mockup J.png */}
         {messages.length === 0 && (
           <motion.div
@@ -146,14 +154,15 @@ export const ChatTimeline: React.FC<ChatTimelineProps> = ({
             {/* Quick Idea Starters */}
             <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2 pt-4 sm:pt-6 max-w-2xl">
               {sampleIdeas.map((idea) => (
-                <button
-                  key={idea.title}
-                  onClick={() => onSelectPrompt(idea.prompt)}
-                  className="rounded-full border border-white/15 bg-white/5 px-3 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-xs font-medium text-[color:var(--text-primary)] hover:border-[color:var(--accent)]/60 hover:bg-[color:var(--accent)]/15 hover:scale-105 active:scale-95 transition-all shadow-md backdrop-blur-md"
-                >
-                  <span className="text-[color:var(--accent)] font-bold mr-1">✦</span>
-                  {idea.title}
-                </button>
+                <Tilt3D key={idea.title} max={10}>
+                  <button
+                    onClick={() => onSelectPrompt(idea.prompt)}
+                    className="rounded-full border border-white/15 bg-white/5 px-3 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-xs font-medium text-[color:var(--text-primary)] hover:border-[color:var(--accent)]/60 hover:bg-[color:var(--accent)]/15 active:scale-95 transition-colors shadow-md backdrop-blur-md"
+                  >
+                    <span className="text-[color:var(--accent)] font-bold mr-1">✦</span>
+                    {idea.title}
+                  </button>
+                </Tilt3D>
               ))}
             </div>
           </motion.div>
@@ -181,9 +190,13 @@ export const ChatTimeline: React.FC<ChatTimelineProps> = ({
             return (
             <motion.div
               key={msg.id}
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, ease: 'easeOut' }}
+              // Revelado 3D ligado al scroll: al entrar a la vista el mensaje se endereza y sube;
+              // al salir por arriba o abajo se inclina y se atenúa un poco.
+              initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 26, rotateX: msg.role === 'user' ? 10 : 14, scale: 0.97 }}
+              whileInView={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0, rotateX: 0, scale: 1 }}
+              viewport={{ root: scrollRef, amount: 'some', once: false }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              style={{ transformOrigin: msg.role === 'user' ? '100% 100%' : '0% 100%' }}
               className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
             >
               {/* USER MESSAGE BUBBLE */}

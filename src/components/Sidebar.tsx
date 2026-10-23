@@ -16,6 +16,7 @@ import {
   LogOut,
   Brain,
   Briefcase,
+  Box,
 } from 'lucide-react';
 
 import { getUserPlan, getUserMonthlyUsage } from '../constants/plans';
@@ -45,6 +46,8 @@ interface SidebarProps {
   onSelectWorkspace: (w: WorkspaceMode) => void;
   brandName?: string;
   onOpenBrand: () => void;
+  scene3d: boolean;
+  onToggleScene3d: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -66,6 +69,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSelectWorkspace,
   brandName,
   onOpenBrand,
+  scene3d,
+  onToggleScene3d,
 }) => {
   const plan = getUserPlan(currentUser);
   const usage = getUserMonthlyUsage(currentUser);
@@ -249,6 +254,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
           >
             <Palette className="h-4 w-4 text-[color:var(--accent)]" />
             <span>Personalizar Estilo Visual</span>
+          </button>
+
+          {/* Fondo 3D on/off */}
+          <button
+            onClick={onToggleScene3d}
+            role="switch"
+            aria-checked={scene3d}
+            className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/5 p-2.5 text-xs text-white hover:bg-white/10 transition-colors"
+          >
+            <span className="flex items-center gap-2.5">
+              <Box className="h-4 w-4 text-[color:var(--accent)]" />
+              <span>Fondo 3D animado</span>
+            </span>
+            <span
+              className={`rounded-lg px-2 py-0.5 text-[10px] font-mono-code font-bold ${
+                scene3d
+                  ? 'bg-[color:var(--accent)]/20 text-[color:var(--accent)]'
+                  : 'bg-white/10 text-[color:var(--text-muted)]'
+              }`}
+            >
+              {scene3d ? 'Activado' : 'Apagado'}
+            </span>
           </button>
 
           {/* Terms & Cookies */}

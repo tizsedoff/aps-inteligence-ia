@@ -28,6 +28,7 @@ import { AuthGateway } from './components/AuthGateway';
 import { LegalModals } from './components/LegalModals';
 import { PlansModal } from './components/PlansModal';
 import { BrandModal } from './components/BrandModal';
+import { Scene3D } from './components/Scene3D';
 import { loadBrand, loadCachedBrand, saveBrand, isBrandConfigured } from './lib/brand';
 import { BootSplash } from './components/LoadingStates';
 import {
@@ -54,6 +55,23 @@ export default function App() {
   const [isPlansModalOpen, setIsPlansModalOpen] = useState(false);
   const [planModalNotice, setPlanModalNotice] = useState<string | undefined>(undefined);
   const [isBrandOpen, setIsBrandOpen] = useState(false);
+  // Fondo 3D: activado por defecto; el usuario puede apagarlo (se recuerda en este dispositivo)
+  const [scene3d, setScene3d] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('aps_3d') !== 'off';
+    } catch {
+      return true;
+    }
+  });
+  const handleToggleScene3d = () => {
+    setScene3d((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('aps_3d', next ? 'on' : 'off');
+      } catch {}
+      return next;
+    });
+  };
   const [chatCodeChanges, setChatCodeChanges] = useState<ChatCodeChange[]>([]); // cola de cambios del chat hacia CÓDIGO
   const codeChangeSeq = useRef(0);
 
@@ -914,7 +932,7 @@ export default function App() {
     <div
       onMouseMove={handleMouseMove}
       style={rootBgStyle}
-      className="relative flex h-screen w-screen flex-col overflow-hidden text-[color:var(--text-primary)] transition-colors duration-300 font-sans"
+      className="relative isolate flex h-screen w-screen flex-col overflow-hidden text-[color:var(--text-primary)] transition-colors duration-300 font-sans"
     >
       {/* Background Image Layer if selected */}
       {customization.bgType === 'image' && customization.bgImage && (
@@ -927,6 +945,13 @@ export default function App() {
           }}
         />
       )}
+
+      {/* Fondo 3D (Three.js): se carga bajo demanda y reacciona al scroll y al puntero */}
+      <Scene3D
+        enabled={scene3d}
+        accent={customization.accentColor}
+        accent2={customization.accentColor2 || customization.accentColor}
+      />
 
       {/* Dynamic Specular Fluid Ambient Light */}
       {customization.glassSpecularGlow && (
@@ -1057,6 +1082,8 @@ export default function App() {
         onSelectWorkspace={handleSelectWorkspace}
         brandName={isBrandConfigured(brand) ? brand!.name : undefined}
         onOpenBrand={() => setIsBrandOpen(true)}
+        scene3d={scene3d}
+        onToggleScene3d={handleToggleScene3d}
       />
 
       {/* Brand (MARCA) Modal */}

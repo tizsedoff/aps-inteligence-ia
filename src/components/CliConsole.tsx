@@ -7,6 +7,8 @@ import {
   runInSandbox,
   savePreviewStorage,
 } from '../lib/sandbox';
+import { reportScroll } from '../lib/sceneBus';
+import { Tilt3D } from './Tilt3D';
 import { CliFile, CliExecutionResult, Attachment, UserAccount, ChatCodeChange } from '../types';
 import { canUserAccessHardWork, isUserQuotaExceeded, getUserPlan } from '../constants/plans';
 import {
@@ -978,8 +980,8 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
     }`;
 
   return (
-    <div className="flex h-full w-full flex-1 flex-col overflow-hidden bg-[color:var(--surface-0)] p-0 sm:p-2">
-      <div className="flex h-full w-full flex-1 flex-col overflow-hidden rounded-none border-0 border-white/10 bg-[color:var(--surface-1)] shadow-2xl sm:rounded-2xl sm:border">
+    <div className="flex h-full w-full flex-1 flex-col overflow-hidden bg-transparent p-0 sm:p-2">
+      <div className="flex h-full w-full flex-1 flex-col overflow-hidden rounded-none border-0 border-white/10 bg-[color:var(--surface-1)]/30 shadow-2xl sm:rounded-2xl sm:border">
         {/* Selector de vista (solo celular): Órdenes / Vista previa / Código */}
         <div className="flex items-center gap-1 border-b border-white/10 bg-[color:var(--surface-2)] p-1.5 lg:hidden">
           {mobileTabs.map((t) => (
@@ -1014,7 +1016,10 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
             </div>
 
             {/* Historial */}
-            <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4 sm:px-4">
+            <div
+              onScroll={(e) => reportScroll(e.currentTarget)}
+              className="min-h-0 flex-1 overflow-y-auto px-3 py-4 sm:px-4"
+            >
               {!hasLogs && !isProcessing ? (
                 <div className="flex min-h-full flex-col justify-center">
                   <div className="mb-5 text-center">
@@ -1031,16 +1036,17 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
                   </div>
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
                     {EXAMPLE_PROMPTS.map((p) => (
-                      <button
-                        key={p.title}
-                        onClick={() => handleExecuteCommand(p.cmd)}
-                        className="rounded-xl border border-white/10 bg-[color:var(--surface-2)] px-3.5 py-3 text-left transition-all hover:border-[color:var(--accent)]/50 hover:bg-[color:var(--surface-3)]"
-                      >
-                        <div className="text-[13px] font-semibold text-[color:var(--text-primary)]">
-                          {p.title}
-                        </div>
-                        <div className="mt-0.5 text-xs text-[color:var(--text-secondary)]">{p.desc}</div>
-                      </button>
+                      <Tilt3D key={p.title} max={6}>
+                        <button
+                          onClick={() => handleExecuteCommand(p.cmd)}
+                          className="h-full w-full rounded-xl border border-white/10 bg-[color:var(--surface-2)] px-3.5 py-3 text-left transition-colors hover:border-[color:var(--accent)]/50 hover:bg-[color:var(--surface-3)]"
+                        >
+                          <div className="text-[13px] font-semibold text-[color:var(--text-primary)]">
+                            {p.title}
+                          </div>
+                          <div className="mt-0.5 text-xs text-[color:var(--text-secondary)]">{p.desc}</div>
+                        </button>
+                      </Tilt3D>
                     ))}
                   </div>
                 </div>
@@ -1179,7 +1185,7 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
           <section
             className={`${
               showOrders ? 'hidden lg:flex' : 'flex'
-            } relative min-h-0 min-w-0 flex-1 flex-col bg-[color:var(--surface-0)]`}
+            } relative min-h-0 min-w-0 flex-1 flex-col bg-[color:var(--surface-0)]/25`}
           >
             {/* Aviso de cambios del chat, con opción de deshacer */}
             {chatUndo && (
@@ -1328,7 +1334,10 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
                         return updated;
                       });
                     }}
-                    onScroll={(e) => setCodeScrollTop(e.currentTarget.scrollTop)}
+                    onScroll={(e) => {
+                      setCodeScrollTop(e.currentTarget.scrollTop);
+                      reportScroll(e.currentTarget);
+                    }}
                     wrap="off"
                     spellCheck={false}
                     placeholder="// Escribe aquí tu código o pídele a la IA que lo cree"
@@ -1337,14 +1346,17 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
                 </div>
               ) : (
                 <>
-                  <PreviewFrame
-                    srcDoc={compiledPreviewHtml}
-                    frameKey={`preview-${previewKey}`}
-                    viewport={previewViewport}
-                    title="Vista previa"
-                  />
+                  {/* Sin contenido no se monta la vista previa: así el fondo 3D se ve en el estado vacío */}
+                  {hasContent && (
+                    <PreviewFrame
+                      srcDoc={compiledPreviewHtml}
+                      frameKey={`preview-${previewKey}`}
+                      viewport={previewViewport}
+                      title="Vista previa"
+                    />
+                  )}
                   {!hasContent && (
-                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-[color:var(--surface-0)] px-6 text-center">
+                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-transparent px-6 text-center">
                       <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-[color:var(--surface-2)]">
                         <Eye className="h-6 w-6 text-[color:var(--text-muted)]" />
                       </div>
