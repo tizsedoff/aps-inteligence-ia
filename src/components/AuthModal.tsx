@@ -623,7 +623,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('profile')}
-            className={`flex-1 min-w-[90px] rounded-xl py-2 px-2 text-xs font-serif-luxury font-bold tracking-wider transition-all whitespace-nowrap ${
+            className={`flex-1 min-w-0 rounded-xl py-2 px-1 sm:px-2 text-[10px] sm:text-xs font-serif-luxury font-bold tracking-normal sm:tracking-wider transition-all whitespace-nowrap ${
               activeTab === 'profile'
                 ? 'bg-gradient-to-r from-[color:var(--accent)] to-[color:var(--accent-hover)] text-[color:var(--on-accent)] shadow-md'
                 : 'text-[color:var(--text-secondary)] hover:text-white'
@@ -634,13 +634,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('memory')}
-            className={`flex-1 min-w-[120px] rounded-xl py-2 px-2 text-xs font-serif-luxury font-bold tracking-wider transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${
+            className={`flex-1 min-w-0 rounded-xl py-2 px-1 sm:px-2 text-[10px] sm:text-xs font-serif-luxury font-bold tracking-normal sm:tracking-wider transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${
               activeTab === 'memory'
                 ? 'bg-gradient-to-r from-[color:var(--accent)] to-[color:var(--accent-2)] text-black shadow-md font-extrabold'
                 : 'text-[color:var(--text-secondary)] hover:text-white'
             }`}
           >
-            <Brain className="h-3.5 w-3.5" />
+            <Brain className="hidden h-3.5 w-3.5 sm:block" />
             <span>MEMORIA IA</span>
             {memoriesList.length > 0 && (
               <span className="rounded-full bg-white/20 px-1.5 text-[10px] font-mono-code">
@@ -651,13 +651,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('membership')}
-            className={`flex-1 min-w-[110px] rounded-xl py-2 px-2 text-xs font-serif-luxury font-bold tracking-wider transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${
+            className={`flex-1 min-w-0 rounded-xl py-2 px-1 sm:px-2 text-[10px] sm:text-xs font-serif-luxury font-bold tracking-normal sm:tracking-wider transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${
               activeTab === 'membership'
                 ? 'bg-gradient-to-r from-[color:var(--accent)] to-[color:var(--accent-hover)] text-[color:var(--on-accent)] shadow-md'
                 : 'text-[color:var(--text-secondary)] hover:text-white'
             }`}
           >
-            <CreditCard className="h-3.5 w-3.5" />
+            <CreditCard className="hidden h-3.5 w-3.5 sm:block" />
             <span>MEMBRESÍA</span>
           </button>
         </div>

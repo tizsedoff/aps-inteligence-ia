@@ -76,9 +76,9 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="relative z-30 flex flex-col w-full border-b border-white/10 backdrop-blur-xl bg-black/40">
       {/* Top Row: Hamburger, Model Selector, CODIGO / CHAT switcher, User */}
-      <div className="flex w-full items-center justify-between px-2 sm:px-4 py-2 sm:py-2.5 md:px-8 gap-1.5 sm:gap-3">
+      <div className="flex w-full flex-wrap items-center justify-between px-2 sm:px-4 py-2 sm:py-2.5 md:px-8 gap-x-1.5 gap-y-2 sm:gap-3 sm:flex-nowrap">
         {/* LEFT: Hamburger + MODELO APS... Card */}
-        <div className="flex items-center gap-1.5 sm:gap-4 shrink-0">
+        <div className="order-1 flex min-w-0 items-center gap-1.5 sm:gap-4 sm:shrink-0">
           {/* Hamburger / Menu Button replaced with Compact APS Logo as instructed */}
           <button
             onClick={onOpenSidebar}
@@ -171,14 +171,14 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* CENTER: Full APS Logo on larger screens + Solo CODIGO o CHAT Selector */}
-        <div className="flex items-center gap-4">
+        <div className="order-3 flex w-full items-center gap-4 sm:order-2 sm:w-auto">
           <div className="hidden xl:flex items-center">
             <ApsLogo variant="full" glow size={34} />
           </div>
-          <div className="flex items-center rounded-2xl border border-white/20 bg-black/70 p-1 shadow-2xl backdrop-blur-2xl shrink-0">
+          <div className="flex w-full items-center rounded-2xl border border-white/20 bg-black/70 p-1 shadow-2xl backdrop-blur-2xl sm:w-auto sm:shrink-0">
           <button
             onClick={() => onSelectView('chat')}
-            className={`flex items-center gap-1.5 sm:gap-2 rounded-xl px-3 sm:px-5 py-1.5 text-xs sm:text-sm font-serif-luxury font-bold tracking-wider transition-all duration-300 ${
+            className={`flex flex-1 items-center justify-center gap-1.5 sm:flex-none sm:gap-2 rounded-xl px-3 sm:px-5 py-1.5 text-xs sm:text-sm font-serif-luxury font-bold tracking-wider transition-all duration-300 ${
               activeView === 'chat'
                 ? 'bg-gradient-to-r from-[color:var(--accent)] to-[color:var(--accent-2)] text-black shadow-lg shadow-cyan-500/20 scale-105'
                 : 'text-[color:var(--text-secondary)] hover:text-white hover:bg-white/5'
@@ -204,7 +204,7 @@ export const Header: React.FC<HeaderProps> = ({
                 onSelectInteractionMode('code');
               }
             }}
-            className={`flex items-center gap-1.5 sm:gap-2 rounded-xl px-3 sm:px-5 py-1.5 text-xs sm:text-sm font-serif-luxury font-bold tracking-wider transition-all duration-300 ${
+            className={`flex flex-1 items-center justify-center gap-1.5 sm:flex-none sm:gap-2 rounded-xl px-3 sm:px-5 py-1.5 text-xs sm:text-sm font-serif-luxury font-bold tracking-wider transition-all duration-300 ${
               activeView === 'cli'
                 ? 'bg-gradient-to-r from-[color:var(--accent)] to-[color:var(--accent-2)] text-black shadow-lg shadow-cyan-500/20 scale-105'
                 : 'text-[color:var(--text-secondary)] hover:text-white hover:bg-white/5'
@@ -217,7 +217,7 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
         {/* RIGHT: Actions, Studio Customizer, Terms & User Avatar */}
-        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+        <div className="order-2 flex items-center gap-1.5 sm:order-3 sm:gap-3 shrink-0">
           {/* New Session Button */}
           <button
             onClick={onNewChat}
