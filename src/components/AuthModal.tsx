@@ -104,23 +104,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     try {
       let firebaseUid = '';
 
+      // El correo del administrador solo entra con Google (el correo lo verifica Google).
       if (isAdmin) {
-        if (authPassword !== 'inteligence') {
-          setAuthError('Contraseña incorrecta para esta cuenta.');
-          setAuthLoading(false);
-          return;
-        }
-        try {
-          const cred = await signInWithEmailAndPassword(auth, cleanEmail, authPassword);
-          firebaseUid = cred.user.uid;
-        } catch {
-          try {
-            const cred = await createUserWithEmailAndPassword(auth, cleanEmail, authPassword);
-            firebaseUid = cred.user.uid;
-          } catch {
-            firebaseUid = 'admin_tizsedoff';
-          }
-        }
+        setAuthError('Esta cuenta se administra con Google. Usá "Continuar con Google" en la pantalla de inicio.');
+        setAuthLoading(false);
+        return;
       } else if (authMode === 'login') {
         try {
           const cred = await signInWithEmailAndPassword(auth, cleanEmail, authPassword);

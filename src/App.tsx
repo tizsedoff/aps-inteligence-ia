@@ -217,10 +217,8 @@ export default function App() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (parsed.email === 'tizsedoff@gmail.com') {
-          parsed.isAdmin = true;
-          parsed.membership = 'ADMINISTRADOR SUPREMO';
-        }
+        // Es solo un caché para evitar parpadeos: la sesión real la confirma Firebase
+        // (onAuthStateChanged) y el rol de administrador se recalcula ahí.
         return parsed;
       } catch {
         // ignore
@@ -259,7 +257,8 @@ export default function App() {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         const email = firebaseUser.email?.toLowerCase() || '';
-        const isAdmin = email === 'tizsedoff@gmail.com';
+        // Administrador: solo con correo verificado por el proveedor (Google), nunca por texto.
+        const isAdmin = email === 'tizsedoff@gmail.com' && firebaseUser.emailVerified === true;
         try {
           const userDocRef = doc(db, 'users', firebaseUser.uid);
           const userDocSnap = await getDoc(userDocRef);
@@ -301,10 +300,10 @@ export default function App() {
         }
         setIsAuthOpen(false);
       } else {
-        const saved = localStorage.getItem('aps_current_user') || sessionStorage.getItem('aps_current_user');
-        if (!saved) {
-          setCurrentUser(null);
-        }
+        // Sin sesión de Firebase no hay usuario: el caché local no autentica a nadie.
+        localStorage.removeItem('aps_current_user');
+        sessionStorage.removeItem('aps_current_user');
+        setCurrentUser(null);
       }
       setAuthReady(true);
     });

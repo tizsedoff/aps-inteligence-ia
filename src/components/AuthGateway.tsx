@@ -6,7 +6,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithPopup,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { ApsLogo } from './ApsLogo';
 import {
   Lock,
@@ -113,7 +113,7 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
       const result = await signInWithPopup(auth, googleProvider);
       const gUser = result.user;
       const cleanEmail = (gUser.email || '').toLowerCase();
-      const isAdmin = cleanEmail === 'tizsedoff@gmail.com';
+      const isAdmin = cleanEmail === 'tizsedoff@gmail.com' && gUser.emailVerified === true;
       let displayName = gUser.displayName || cleanEmail.split('@')[0] || 'Usuario';
       let userAvatar = gUser.photoURL || '';
       const initialMembership = isAdmin ? 'ADMINISTRADOR SUPREMO' : 'APS PRO';
@@ -213,27 +213,13 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
       let userAvatar = avatarImage || '';
       let firebaseUid = '';
 
-      // 1. MASTER ADMIN SPECIAL HANDLER (Secret Credentials: tizsedoff@gmail.com / inteligence)
+      // El correo del administrador solo entra con Google (el correo lo verifica Google).
+      // No existe ninguna contraseña maestra: nada de esto debe vivir en el código del cliente.
       if (isAdmin) {
-        if (password !== 'inteligence') {
-          setError('Contraseña incorrecta. Por favor verifica tu clave de acceso.');
-          setErrorActionType('WRONG_PASSWORD');
-          setLoading(false);
-          return;
-        }
-
-        // Master credentials verified! Try Firebase Auth, fallback to persistent master UID
-        try {
-          const cred = await signInWithEmailAndPassword(auth, cleanEmail, password);
-          firebaseUid = cred.user.uid;
-        } catch {
-          try {
-            const createCred = await createUserWithEmailAndPassword(auth, cleanEmail, password);
-            firebaseUid = createCred.user.uid;
-          } catch {
-            firebaseUid = 'admin_tizsedoff';
-          }
-        }
+        setError('Esta cuenta se administra con Google. Usá el botón "Continuar con Google".');
+        setErrorActionType('NONE');
+        setLoading(false);
+        return;
       } else if (mode === 'login') {
         // 2. STANDARD USER LOGIN
         try {
@@ -256,37 +242,10 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
             setLoading(false);
             return;
           } else if (err?.code === 'auth/operation-not-allowed') {
-            // Check Firestore database records for registered account
-            try {
-              const usersCol = collection(db, 'users');
-              const q = query(usersCol, where('email', '==', cleanEmail));
-              const querySnap = await getDocs(q);
-
-              if (querySnap.empty) {
-                setError('No existe ninguna cuenta registrada con este correo electrónico. Por favor regístrate en CREAR CUENTA.');
-                setErrorActionType('SWITCH_TO_REGISTER');
-                setLoading(false);
-                return;
-              }
-
-              const existingDoc = querySnap.docs[0];
-              const userData = existingDoc.data();
-              if (userData.password && userData.password !== password) {
-                setError('Contraseña incorrecta. Por favor verifica tu clave de acceso.');
-                setErrorActionType('WRONG_PASSWORD');
-                setLoading(false);
-                return;
-              }
-
-              firebaseUid = existingDoc.id;
-              if (userData.name) displayName = userData.name;
-              if (userData.avatar) userAvatar = userData.avatar;
-            } catch (fsErr) {
-              setError('No se pudo verificar la cuenta. Por favor regístrate o reintenta.');
-              setErrorActionType('SWITCH_TO_REGISTER');
-              setLoading(false);
-              return;
-            }
+            setError('El ingreso con correo y contraseña no está habilitado. Usá "Continuar con Google".');
+            setErrorActionType('NONE');
+            setLoading(false);
+            return;
           } else {
             setError(translateFirebaseError(err?.code || '', err?.message || 'Error al iniciar sesión'));
             setErrorActionType('NONE');
@@ -296,22 +255,6 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
         }
       } else {
         // 3. STANDARD USER REGISTRATION
-        // First check Firestore if email already exists
-        try {
-          const usersCol = collection(db, 'users');
-          const q = query(usersCol, where('email', '==', cleanEmail));
-          const querySnap = await getDocs(q);
-
-          if (!querySnap.empty) {
-            setError('Este correo electrónico ya está registrado en el sistema. Puedes iniciar sesión con tu contraseña o crear una cuenta con un correo diferente.');
-            setErrorActionType('EMAIL_ALREADY_REGISTERED');
-            setLoading(false);
-            return;
-          }
-        } catch (fsCheckErr) {
-          console.warn('Firestore duplicate check note:', fsCheckErr);
-        }
-
         try {
           const cred = await createUserWithEmailAndPassword(auth, cleanEmail, password);
           firebaseUid = cred.user.uid;
@@ -332,8 +275,10 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
             setLoading(false);
             return;
           } else if (err?.code === 'auth/operation-not-allowed') {
-            // Create directly in Firestore
-            firebaseUid = 'usr_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 8);
+            setError('El registro con correo y contraseña no está habilitado. Usá "Continuar con Google".');
+            setErrorActionType('NONE');
+            setLoading(false);
+            return;
           } else {
             setError(translateFirebaseError(err?.code || '', err?.message || 'Error al registrar la cuenta'));
             setErrorActionType('NONE');
@@ -365,7 +310,6 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
               id: firebaseUid,
               name: displayName,
               email: cleanEmail,
-              password: password,
               avatar: userAvatar,
               membership: initialMembership,
               isAdmin,
