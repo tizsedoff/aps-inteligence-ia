@@ -9,8 +9,6 @@ import {
   getCurrentMonthKey,
   getCurrentDayKey,
 } from '../constants/plans';
-import { db } from '../firebase';
-import { doc, updateDoc } from 'firebase/firestore';
 import {
   Sparkles,
   Check,
@@ -45,6 +43,7 @@ export const PlansModal: React.FC<PlansModalProps> = ({
   const [selectedPlanId, setSelectedPlanId] = useState<PlanId | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState<string | null>(null);
+  const [paymentsNotice, setPaymentsNotice] = useState('');
   const [cardNumber, setCardNumber] = useState('4242 •••• •••• 4242');
   const [cardHolder, setCardHolder] = useState(currentUser?.name || 'Cliente APS');
 
@@ -54,71 +53,17 @@ export const PlansModal: React.FC<PlansModalProps> = ({
   const currentPlan = getUserPlan(currentUser);
   const currentUsage = getUserCurrentUsage(currentUser);
 
+  // El plan lo asigna solo el servidor tras confirmar un pago real. Mientras los pagos no estén
+  // habilitados, el cliente no puede cambiarlo (antes el plan se activaba con un pago simulado).
   const handleStartCheckout = (planId: PlanId) => {
     if (planId === currentPlanId) return;
-
-    if (planId === 'basic') {
-      // Instant switch to basic
-      applyPlanUpgrade('basic');
-      return;
-    }
-
-    setSelectedPlanId(planId);
-    setPaymentSuccess(null);
-  };
-
-  const applyPlanUpgrade = async (planId: PlanId) => {
-    const targetPlan = APS_PLANS[planId];
-    if (!currentUser) return;
-
-    const currentMonth = getCurrentMonthKey();
-    const today = getCurrentDayKey();
-    const updatedUser: UserAccount = {
-      ...currentUser,
-      plan: planId,
-      membership: targetPlan.name,
-      usage: {
-        month: currentMonth,
-        monthCount: currentUser.usage?.month === currentMonth ? (currentUser.usage.monthCount ?? currentUser.usage.count ?? 0) : 0,
-        day: today,
-        dayCount: currentUser.usage?.day === today ? (currentUser.usage.dayCount ?? 0) : 0,
-        count: currentUser.usage?.month === currentMonth ? currentUser.usage.count : 0,
-      },
-    };
-
-    localStorage.setItem('aps_current_user', JSON.stringify(updatedUser));
-    onUpdateUser(updatedUser);
-
-    if (currentUser.id) {
-      try {
-        const userRef = doc(db, 'users', currentUser.id);
-        await updateDoc(userRef, {
-          plan: planId,
-          membership: targetPlan.name,
-        });
-      } catch (err) {
-        console.warn('Firestore plan sync warning:', err);
-      }
-    }
+    setPaymentsNotice('Los pagos todavía no están habilitados. Cuando lo estén, tu plan se activará automáticamente al confirmar el pago.');
   };
 
   const handleConfirmSimulatedPayment = async () => {
-    if (!selectedPlanId) return;
-    setIsProcessingPayment(true);
-
-    // Simulate payment gateway delay (1.2s)
-    setTimeout(async () => {
-      await applyPlanUpgrade(selectedPlanId);
-      setIsProcessingPayment(false);
-      setPaymentSuccess(APS_PLANS[selectedPlanId].name);
-
-      // Auto close after success
-      setTimeout(() => {
-        setSelectedPlanId(null);
-        setPaymentSuccess(null);
-        onClose();
-      }, 1500);
-    }, 1200);
+    setSelectedPlanId(null);
+    setIsProcessingPayment(false);
+    setPaymentSuccess(null);
   };
 
   return (
@@ -171,6 +116,13 @@ export const PlansModal: React.FC<PlansModalProps> = ({
             </div>
           </div>
         </div>
+
+        {paymentsNotice && (
+          <div className="mb-6 flex items-start gap-3 rounded-2xl border border-amber-400/40 bg-amber-400/10 p-3.5 text-xs text-[color:var(--text-primary)]">
+            <AlertCircle className="h-5 w-5 shrink-0 text-amber-300 mt-0.5" />
+            <p className="text-[color:var(--text-secondary)] leading-relaxed">{paymentsNotice}</p>
+          </div>
+        )}
 
         {/* Alert / Notice if triggered by Hard Work or Quota limit */}
         {noticeMessage && (

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { auth, db } from './firebase';
-import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { supabase } from './lib/supabase';
+import { fetchAccount, syncMemories } from './lib/accounts';
 import {
   ApsModelId,
   InteractionMode,
@@ -244,9 +243,7 @@ export default function App() {
   };
 
   const handleLogout = () => {
-    try {
-      auth.signOut();
-    } catch {}
+    supabase.auth.signOut().catch(() => {});
     localStorage.removeItem('aps_current_user');
     sessionStorage.removeItem('aps_current_user');
     setCurrentUser(null);
@@ -254,60 +251,36 @@ export default function App() {
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const email = firebaseUser.email?.toLowerCase() || '';
-        // Administrador: solo con correo verificado por el proveedor (Google), nunca por texto.
-        const isAdmin = email === 'tizsedoff@gmail.com' && firebaseUser.emailVerified === true;
-        try {
-          const userDocRef = doc(db, 'users', firebaseUser.uid);
-          const userDocSnap = await getDoc(userDocRef);
-
-          if (userDocSnap.exists()) {
-            const data = userDocSnap.data() as UserAccount;
-            const updated: UserAccount = {
-              ...data,
-              isAdmin,
-              membership: isAdmin ? 'ADMINISTRADOR SUPREMO' : data.membership || 'APS INTELLIGENCE PRO',
-            };
-            setCurrentUser(updated);
-            localStorage.setItem('aps_current_user', JSON.stringify(updated));
-          } else {
-            const inferredName = email.split('@')[0] || 'Usuario';
-            const newUser: UserAccount = {
-              id: firebaseUser.uid,
-              name: inferredName.charAt(0).toUpperCase() + inferredName.slice(1),
-              email,
-              avatar: '',
-              membership: isAdmin ? 'ADMINISTRADOR SUPREMO' : 'APS INTELLIGENCE PRO',
-              isAdmin,
-            };
-            setCurrentUser(newUser);
-            localStorage.setItem('aps_current_user', JSON.stringify(newUser));
-          }
-        } catch (e) {
-          console.error('Error fetching user profile:', e);
-          const newUser: UserAccount = {
-            id: firebaseUser.uid,
-            name: email.split('@')[0] || 'Usuario',
-            email,
-            avatar: '',
-            membership: isAdmin ? 'ADMINISTRADOR SUPREMO' : 'APS INTELLIGENCE PRO',
-            isAdmin,
-          };
-          setCurrentUser(newUser);
-          localStorage.setItem('aps_current_user', JSON.stringify(newUser));
-        }
-        setIsAuthOpen(false);
-      } else {
-        // Sin sesión de Firebase no hay usuario: el caché local no autentica a nadie.
+    // La sesión válida es solo la que confirma Supabase; el caché local no autentica a nadie.
+    let cancelled = false;
+    const apply = async (session: { user: Parameters<typeof fetchAccount>[0] } | null) => {
+      if (!session) {
         localStorage.removeItem('aps_current_user');
         sessionStorage.removeItem('aps_current_user');
-        setCurrentUser(null);
+        if (!cancelled) setCurrentUser(null);
+        if (!cancelled) setAuthReady(true);
+        return;
       }
-      setAuthReady(true);
+      try {
+        const account = await fetchAccount(session.user);
+        if (cancelled) return;
+        setCurrentUser(account);
+        localStorage.setItem('aps_current_user', JSON.stringify(account));
+        setIsAuthOpen(false);
+      } catch (e) {
+        console.error('Error cargando el perfil:', e);
+      }
+      if (!cancelled) setAuthReady(true);
+    };
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      // INITIAL_SESSION, SIGNED_IN, TOKEN_REFRESHED, SIGNED_OUT...; el trabajo async va fuera del callback.
+      if (event === 'TOKEN_REFRESHED') return;
+      setTimeout(() => void apply(session), 0);
     });
-    return () => unsubscribe();
+    return () => {
+      cancelled = true;
+      data.subscription.unsubscribe();
+    };
   }, []);
 
   // 3. Cookie Preferences State
@@ -493,12 +466,7 @@ export default function App() {
     };
     setCurrentUser(updatedUser);
     localStorage.setItem('aps_current_user', JSON.stringify(updatedUser));
-    if (currentUser.id) {
-      try {
-        const userRef = doc(db, 'users', currentUser.id);
-        updateDoc(userRef, { usage: updatedUsage }).catch(() => {});
-      } catch {}
-    }
+    // El uso se cuenta en el navegador por ahora; el conteo real del lado del servidor es un próximo paso.
   };
 
   // Generate an image with Gemini (free tier) and show it in the chat
@@ -809,12 +777,7 @@ export default function App() {
                             };
                             setCurrentUser(updatedUser);
                             localStorage.setItem('aps_current_user', JSON.stringify(updatedUser));
-                            try {
-                              const userRef = doc(db, 'users', currentUser.id);
-                              await updateDoc(userRef, { memories: updatedMemories });
-                            } catch (e) {
-                              console.warn('Firestore auto-memory update note:', e);
-                            }
+                            await syncMemories(currentUser.id, updatedMemories);
                           }
                         }
                       })

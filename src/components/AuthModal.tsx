@@ -3,9 +3,8 @@ import { UserAccount, MemoryItem, PlanId } from '../types';
 import { PLANS_LIST, APS_PLANS, getUserPlanId, getCurrentMonthKey } from '../constants/plans';
 import { UserAvatar } from './UserAvatar';
 import { ApsLogo } from './ApsLogo';
-import { auth, db } from '../firebase';
-import { doc, updateDoc, setDoc, getDoc } from 'firebase/firestore';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { supabase, supabaseConfigured, SUPABASE_CONFIG_ERROR } from '../lib/supabase';
+import { fetchAccount, translateAuthError, updateProfileFields, syncMemories } from '../lib/accounts';
 import {
   ShieldCheck,
   LogOut,
@@ -94,109 +93,49 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const handleModalAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError('');
+    if (!supabaseConfigured) {
+      setAuthError(SUPABASE_CONFIG_ERROR);
+      return;
+    }
     setAuthLoading(true);
 
     const cleanEmail = authEmail.trim().toLowerCase();
-    const isAdmin = cleanEmail === 'tizsedoff@gmail.com';
-    let displayName = authName.trim() || cleanEmail.split('@')[0];
-    displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
-
     try {
-      let firebaseUid = '';
-
-      // El correo del administrador solo entra con Google (el correo lo verifica Google).
-      if (isAdmin) {
-        setAuthError('Esta cuenta se administra con Google. Usá "Continuar con Google" en la pantalla de inicio.');
-        setAuthLoading(false);
-        return;
-      } else if (authMode === 'login') {
-        try {
-          const cred = await signInWithEmailAndPassword(auth, cleanEmail, authPassword);
-          firebaseUid = cred.user.uid;
-        } catch (err: any) {
-          if (err?.code === 'auth/user-not-found') {
-            setAuthError('No existe una cuenta registrada con este correo. Por favor cambia a la pestaña CREAR CUENTA para registrarte.');
-            setAuthLoading(false);
-            return;
-          } else if (err?.code === 'auth/wrong-password') {
-            setAuthError('Contraseña incorrecta. Por favor verifica tus credenciales.');
-            setAuthLoading(false);
-            return;
-          } else if (err?.code === 'auth/invalid-credential') {
-            setAuthError('Credenciales no válidas. Si aún no te has registrado, crea una cuenta nueva; o verifica tu clave.');
-            setAuthLoading(false);
-            return;
-          } else {
-            setAuthError(err?.message || 'Error al iniciar sesión.');
-            setAuthLoading(false);
-            return;
-          }
+      let authUser = null as Awaited<ReturnType<typeof supabase.auth.signInWithPassword>>['data']['user'];
+      if (authMode === 'login') {
+        const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password: authPassword });
+        if (error) {
+          setAuthError(translateAuthError(error));
+          return;
         }
+        authUser = data.user;
       } else {
-        try {
-          const cred = await createUserWithEmailAndPassword(auth, cleanEmail, authPassword);
-          firebaseUid = cred.user.uid;
-        } catch (err: any) {
-          if (err?.code === 'auth/email-already-in-use') {
-            setAuthError('Este correo electrónico ya está registrado. Selecciona INICIAR SESIÓN con tu clave o usa otro correo.');
-            setAuthLoading(false);
-            return;
-          } else if (err?.code === 'auth/weak-password') {
-            setAuthError('La contraseña debe tener al menos 6 caracteres.');
-            setAuthLoading(false);
-            return;
-          } else {
-            setAuthError(err?.message || 'Error al registrar la cuenta.');
-            setAuthLoading(false);
-            return;
-          }
+        const display = authName.trim() || cleanEmail.split('@')[0];
+        const { data, error } = await supabase.auth.signUp({
+          email: cleanEmail,
+          password: authPassword,
+          options: { data: { name: display.charAt(0).toUpperCase() + display.slice(1) } },
+        });
+        if (error) {
+          setAuthError(translateAuthError(error));
+          return;
         }
+        if (!data.session) {
+          setAuthError('Te enviamos un correo para confirmar tu cuenta. Confirmalo y después iniciá sesión.');
+          return;
+        }
+        authUser = data.user;
       }
-
-      if (!firebaseUid) {
+      if (!authUser) {
         setAuthError('No se pudo verificar la sesión.');
-        setAuthLoading(false);
         return;
       }
-
-      const initialMembership = isAdmin ? 'ADMINISTRADOR SUPREMO' : 'APS PRO';
-      let userAvatar = '';
-
-      try {
-        const userRef = doc(db, 'users', firebaseUid);
-        const userSnap = await getDoc(userRef);
-        if (userSnap.exists()) {
-          const data = userSnap.data() as Partial<UserAccount>;
-          if (data.name) displayName = data.name;
-          if (data.avatar) userAvatar = data.avatar;
-        } else {
-          await setDoc(userRef, {
-            id: firebaseUid,
-            name: displayName,
-            email: cleanEmail,
-            membership: initialMembership,
-            isAdmin,
-            createdAt: Date.now(),
-          }, { merge: true });
-        }
-      } catch (e) {
-        console.warn('Firestore doc check:', e);
-      }
-
-      const account: UserAccount = {
-        id: firebaseUid,
-        name: displayName,
-        email: cleanEmail,
-        avatar: userAvatar,
-        membership: initialMembership,
-        isAdmin,
-      };
-
+      const account = await fetchAccount(authUser);
       localStorage.setItem('aps_current_user', JSON.stringify(account));
       onLogin(account);
       onClose();
     } catch (err: any) {
-      setAuthError(err?.message || 'Error al procesar autenticación.');
+      setAuthError(translateAuthError(err));
     } finally {
       setAuthLoading(false);
     }
@@ -422,12 +361,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       localStorage.setItem('aps_current_user', JSON.stringify(updated));
       if (onUpdateUser) onUpdateUser(updated);
 
-      try {
-        const userRef = doc(db, 'users', currentUser.id);
-        await updateDoc(userRef, { avatar: imgUrl });
-      } catch (e) {
-        console.warn('Firestore avatar sync note:', e);
-      }
+      if (currentUser) await updateProfileFields(currentUser.id, { avatar: imgUrl });
 
       showStatus('¡Foto de perfil actualizada con éxito!');
     } catch (err) {
@@ -447,12 +381,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       localStorage.setItem('aps_current_user', JSON.stringify(updated));
       if (onUpdateUser) onUpdateUser(updated);
 
-      try {
-        const userRef = doc(db, 'users', currentUser.id);
-        await updateDoc(userRef, { name: trimmed });
-      } catch (e) {
-        console.warn('Firestore name sync note:', e);
-      }
+      if (currentUser) await updateProfileFields(currentUser.id, { name: trimmed });
 
       setIsEditingName(false);
       showStatus('¡Nombre actualizado correctamente!');
@@ -471,12 +400,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       localStorage.setItem('aps_current_user', JSON.stringify(updated));
       if (onUpdateUser) onUpdateUser(updated);
 
-      try {
-        const userRef = doc(db, 'users', currentUser.id);
-        await updateDoc(userRef, { customInstructions: customInstructions.trim() });
-      } catch (e) {
-        console.warn('Firestore instructions sync note:', e);
-      }
+      if (currentUser) await updateProfileFields(currentUser.id, { customInstructions: customInstructions.trim() });
 
       showStatus('¡Instrucciones de memoria guardadas para la IA!');
     } catch (e) {
@@ -510,12 +434,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       localStorage.setItem('aps_current_user', JSON.stringify(updated));
       if (onUpdateUser) onUpdateUser(updated);
 
-      try {
-        const userRef = doc(db, 'users', currentUser.id);
-        await updateDoc(userRef, { memories: updatedList });
-      } catch (e) {
-        console.warn('Firestore memory add sync note:', e);
-      }
+      if (currentUser) await syncMemories(currentUser.id, updatedList);
 
       showStatus('¡Nuevo recuerdo añadido a la memoria de la IA!');
     } catch (e) {
@@ -535,12 +454,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       localStorage.setItem('aps_current_user', JSON.stringify(updated));
       if (onUpdateUser) onUpdateUser(updated);
 
-      try {
-        const userRef = doc(db, 'users', currentUser.id);
-        await updateDoc(userRef, { memories: updatedList });
-      } catch (e) {
-        console.warn('Firestore memory delete sync note:', e);
-      }
+      if (currentUser) await syncMemories(currentUser.id, updatedList);
 
       showStatus('Recuerdo eliminado de la memoria.');
     } catch (e) {
@@ -548,35 +462,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  const handlePayMembership = async (planId: PlanId) => {
-    setPayingPlan(planId);
-    const targetPlan = APS_PLANS[planId];
-    showStatus(`Procesando suscripción simulada a ${targetPlan.name}...`);
-
-    setTimeout(async () => {
-      const currentMonth = getCurrentMonthKey();
-      const updated: UserAccount = {
-        ...currentUser,
-        plan: planId,
-        membership: targetPlan.name,
-        usage: {
-          month: currentMonth,
-          count: currentUser.usage?.month === currentMonth ? currentUser.usage.count : 0,
-        },
-      };
-      localStorage.setItem('aps_current_user', JSON.stringify(updated));
-      if (onUpdateUser) onUpdateUser(updated);
-
-      try {
-        const userRef = doc(db, 'users', currentUser.id);
-        await updateDoc(userRef, { plan: planId, membership: targetPlan.name });
-      } catch (e) {
-        console.warn('Firestore membership update note:', e);
-      }
-
-      setPayingPlan(null);
-      showStatus(`¡Plan ${targetPlan.name} activado con éxito!`);
-    }, 1200);
+  const handlePayMembership = async (_planId: PlanId) => {
+    // El plan lo asigna solo el servidor tras confirmar un pago real. Los pagos aún no están habilitados.
+    showStatus('Los pagos todavía no están habilitados. Cuando lo estén, tu plan se activa automáticamente.');
   };
 
   return (

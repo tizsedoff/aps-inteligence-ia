@@ -1,5 +1,4 @@
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { supabase } from './supabase';
 import { BrandProfile } from '../types';
 
 export const EMPTY_BRAND: BrandProfile = {
@@ -62,26 +61,30 @@ export function loadCachedBrand(userId: string): BrandProfile | null {
 export async function loadBrand(userId: string): Promise<BrandProfile | null> {
   const cached = loadCachedBrand(userId);
   try {
-    const snap = await getDoc(doc(db, 'brands', userId));
-    if (snap.exists()) {
-      const remote = { ...EMPTY_BRAND, ...(snap.data() as Partial<BrandProfile>) };
+    const { data, error } = await supabase.from('aps_brands').select('data').eq('user_id', userId).maybeSingle();
+    if (error) throw error;
+    if (data?.data) {
+      const remote = { ...EMPTY_BRAND, ...(data.data as Partial<BrandProfile>) };
       localStorage.setItem(cacheKey(userId), JSON.stringify(remote));
       return remote;
     }
   } catch (e) {
-    console.warn('No se pudo leer la marca desde Firestore:', e);
+    console.warn('No se pudo leer la marca desde la base:', e);
   }
   return cached;
 }
 
-// Guarda local siempre; devuelve false si no se pudo sincronizar con Firestore.
+// Guarda local siempre; devuelve false si no se pudo sincronizar con la base.
 export async function saveBrand(userId: string, brand: BrandProfile): Promise<boolean> {
   localStorage.setItem(cacheKey(userId), JSON.stringify(brand));
   try {
-    await setDoc(doc(db, 'brands', userId), brand);
+    const { error } = await supabase
+      .from('aps_brands')
+      .upsert({ user_id: userId, data: brand, updated_at: new Date().toISOString() });
+    if (error) throw error;
     return true;
   } catch (e) {
-    console.warn('No se pudo guardar la marca en Firestore:', e);
+    console.warn('No se pudo guardar la marca en la base:', e);
     return false;
   }
 }
