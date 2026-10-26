@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 import { Check, Copy, Terminal, ExternalLink } from 'lucide-react';
 
 interface MarkdownRendererProps {
@@ -27,7 +28,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, onS
           <div
             key={`text-${lastIndex}`}
             className="prose prose-invert max-w-none min-w-0 break-words space-y-3 leading-relaxed [&_a]:break-all [&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto [&_th]:px-3 [&_td]:px-3 [&_th]:whitespace-nowrap [&_img]:max-w-full text-[color:var(--text-primary)] prose-headings:font-serif-luxury prose-headings:text-[color:var(--accent-soft)] prose-a:text-[color:var(--accent)] prose-strong:text-[color:var(--accent-soft)] prose-code:font-mono-code prose-code:text-[color:var(--accent-hover)] prose-code:bg-[color:var(--accent)]/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded"
-            dangerouslySetInnerHTML={{ __html: rawHtml }}
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(rawHtml) }}
           />
         );
       }
@@ -102,7 +103,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, onS
         <div
           key={`text-${lastIndex}`}
           className="prose prose-invert max-w-none min-w-0 break-words space-y-3 leading-relaxed [&_a]:break-all [&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto [&_th]:px-3 [&_td]:px-3 [&_th]:whitespace-nowrap [&_img]:max-w-full text-[color:var(--text-primary)] prose-headings:font-serif-luxury prose-headings:text-[color:var(--accent-soft)] prose-a:text-[color:var(--accent)] prose-strong:text-[color:var(--accent-soft)] prose-code:font-mono-code prose-code:text-[color:var(--accent-hover)] prose-code:bg-[color:var(--accent)]/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded"
-          dangerouslySetInnerHTML={{ __html: rawHtml }}
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(rawHtml) }}
         />
       );
     }

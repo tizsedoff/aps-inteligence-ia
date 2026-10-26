@@ -7,6 +7,7 @@ import { parseModelJson } from './llm/providers.ts';
 import { reviewGeneratedCode, ReviewOutcome } from './llm/review.ts';
 import { buildFilesContext, sanitizeFilename, WorkFile } from './llm/codeTools.ts';
 import { runChatWithTools } from './llm/chatStream.ts';
+import { requireUser } from './llm/auth.ts';
 
 dotenv.config();
 
@@ -21,8 +22,9 @@ const PORT =
     : 3000;
 
 // Middleware for parsing JSON with generous payload limits for images and files
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+// Vercel limita el cuerpo a ~4.5 MB; se acota igual en local.
+app.use(express.json({ limit: '6mb' }));
+app.use(express.urlencoded({ extended: true, limit: '6mb' }));
 
 // Helper to instantiate Gemini client
 function getGenAI() {
@@ -217,7 +219,7 @@ REGLAS OBLIGATORIAS:
 }
 
 // SSE Streaming Chat Endpoint (supports direct and rewrite routes on Vercel & local)
-app.post(['/api/chat/stream', '/chat/stream'], async (req: Request, res: Response) => {
+app.post(['/api/chat/stream', '/chat/stream'], requireUser({ cost: 1, hardWork: 'model' }), async (req: Request, res: Response) => {
   // Set SSE headers
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
   res.setHeader('Cache-Control', 'no-cache, no-transform');
@@ -415,7 +417,7 @@ function sanitizeGeneratedFiles(input: unknown) {
 }
 
 // APS Hard Work Exclusive CLI Code Generator & Processor
-app.post(['/api/cli/execute', '/cli/execute'], async (req: Request, res: Response) => {
+app.post(['/api/cli/execute', '/cli/execute'], requireUser({ cost: 1, hardWork: 'always' }), async (req: Request, res: Response) => {
   try {
     const { command: rawCommand, files = [], activeFilename = '', attachments = [], language = 'typescript' } = req.body;
     const command = typeof rawCommand === 'string' ? rawCommand.trim() : '';
@@ -619,7 +621,7 @@ Escribe el código completo ahora en JSON estricto:`;
 });
 
 // APS Memory Extraction Endpoint: Analyzes user conversation turns and extracts facts/preferences into memories
-app.post(['/api/memory/extract', '/memory/extract'], async (req: Request, res: Response) => {
+app.post(['/api/memory/extract', '/memory/extract'], requireUser({ cost: 0 }), async (req: Request, res: Response) => {
   try {
     const { userText, modelReply, existingMemories = [] } = req.body;
     if (!userText || typeof userText !== 'string' || userText.trim().length < 5) {
@@ -701,7 +703,7 @@ const IMAGE_MODEL_CANDIDATES: string[] = [
 ];
 const ALLOWED_ASPECT_RATIOS = ['1:1', '3:4', '4:3', '9:16', '16:9', '2:3', '3:2'];
 
-app.post(['/api/image/generate', '/image/generate'], async (req: Request, res: Response) => {
+app.post(['/api/image/generate', '/image/generate'], requireUser({ cost: 3 }), async (req: Request, res: Response) => {
   try {
     const { prompt, attachments = [], aspectRatio } = req.body || {};
     if (typeof prompt !== 'string' || prompt.trim().length < 2) {

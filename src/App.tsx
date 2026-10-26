@@ -36,6 +36,7 @@ import {
   getUserPlan,
   getCurrentMonthKey,
 } from './constants/plans';
+import { apiFetch, apiErrorMessage } from './lib/api';
 
 export default function App() {
   const [currentModel, setCurrentModel] = useState<ApsModelId>('APS PRO');
@@ -499,7 +500,7 @@ export default function App() {
     const startTime = Date.now();
 
     try {
-      const res = await fetch('/api/image/generate', {
+      const res = await apiFetch('/api/image/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         signal: abortController.signal,
@@ -621,7 +622,7 @@ export default function App() {
         })),
       }));
 
-      const res = await fetch('/api/chat/stream', {
+      const res = await apiFetch('/api/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         signal: abortController.signal,
@@ -647,7 +648,7 @@ export default function App() {
       });
 
       if (!res.ok) {
-        throw new Error(`HTTP error ${res.status}`);
+        throw new Error(await apiErrorMessage(res));
       }
 
       const reader = res.body?.getReader();
@@ -751,7 +752,7 @@ export default function App() {
                 // Auto Memory Learning: If user is logged in, extract new facts from turn and store in memories
                 if (currentUser && workspace === 'personal' && text.length > 5) {
                   try {
-                    fetch('/api/memory/extract', {
+                    apiFetch('/api/memory/extract', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({

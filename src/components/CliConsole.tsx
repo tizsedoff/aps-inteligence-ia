@@ -38,6 +38,7 @@ import {
   Zap,
   Info,
 } from 'lucide-react';
+import { apiFetch } from '../lib/api';
 
 // Helper to construct fully bundled and self-contained preview HTML for multi-file projects
 function buildCombinedPreviewHtml(allFiles: CliFile[], activeFile?: CliFile): string {
@@ -823,7 +824,7 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
       );
 
       const currentFile = files[activeFileIndex];
-      const res = await fetch('/api/cli/execute', {
+      const res = await apiFetch('/api/cli/execute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
