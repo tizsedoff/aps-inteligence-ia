@@ -99,7 +99,6 @@ export function getCurrentMonthKey(): string {
 
 export function getUserPlanId(user?: UserAccount | null): PlanId {
   if (!user) return 'basic';
-  if (user.isAdmin) return 'promax';
   if (user.plan && APS_PLANS[user.plan]) return user.plan;
 
   // Backward compatibility with previous membership strings

@@ -24,6 +24,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { supabase } from '../lib/supabase';
 
 interface PlansModalProps {
   isOpen: boolean;
@@ -53,17 +54,39 @@ export const PlansModal: React.FC<PlansModalProps> = ({
   const currentPlan = getUserPlan(currentUser);
   const currentUsage = getUserCurrentUsage(currentUser);
 
-  // El plan lo asigna solo el servidor tras confirmar un pago real. Mientras los pagos no estén
-  // habilitados, el cliente no puede cambiarlo (antes el plan se activaba con un pago simulado).
+  // El plan lo asigna solo el servidor. Mientras no haya pagos reales, solo un administrador puede
+  // "comprar" en modo simulado (rpc aps_simulate_purchase, que rechaza a cualquier otro usuario).
   const handleStartCheckout = (planId: PlanId) => {
     if (planId === currentPlanId) return;
-    setPaymentsNotice('Los pagos todavía no están habilitados. Cuando lo estén, tu plan se activará automáticamente al confirmar el pago.');
+    if (!currentUser?.isAdmin) {
+      setPaymentsNotice('Los pagos todavía no están habilitados. Cuando lo estén, tu plan se activará automáticamente al confirmar el pago.');
+      return;
+    }
+    setPaymentsNotice('');
+    setPaymentSuccess(null);
+    setSelectedPlanId(planId);
   };
 
   const handleConfirmSimulatedPayment = async () => {
-    setSelectedPlanId(null);
-    setIsProcessingPayment(false);
-    setPaymentSuccess(null);
+    if (!selectedPlanId || !currentUser) return;
+    setIsProcessingPayment(true);
+    setPaymentsNotice('');
+    try {
+      const { error } = await supabase.rpc('aps_simulate_purchase', { p_plan: selectedPlanId });
+      if (error) throw error;
+      const planId = selectedPlanId;
+      onUpdateUser({ ...currentUser, plan: planId });
+      setPaymentSuccess(APS_PLANS[planId].name);
+      window.setTimeout(() => {
+        setSelectedPlanId(null);
+        setPaymentSuccess(null);
+      }, 2500);
+    } catch {
+      setPaymentsNotice('No se pudo completar la compra simulada. Probá de nuevo.');
+      setSelectedPlanId(null);
+    } finally {
+      setIsProcessingPayment(false);
+    }
   };
 
   return (
@@ -372,7 +395,9 @@ export const PlansModal: React.FC<PlansModalProps> = ({
         {/* Footer Note */}
         <div className="mt-6 pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-3 text-[11px] text-[color:var(--text-muted)] font-mono-code">
           <span>APS Basic renueva 200 mensajes cada día. Los planes avanzados renuevan mensualmente.</span>
-          <span className="text-[color:var(--accent)]">Pagos de demostración simulados · APS INTELLIGENCE</span>
+          <span className="text-[color:var(--accent)]">
+            {currentUser?.isAdmin ? 'Modo simulado (solo administradores) · sin cobro real' : 'Pagos próximamente · APS INTELLIGENCE'}
+          </span>
         </div>
       </motion.div>
     </div>
