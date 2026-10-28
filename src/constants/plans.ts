@@ -160,7 +160,6 @@ export function canUserAccessHardWork(user?: UserAccount | null): boolean {
 
 export function isUserQuotaExceeded(user?: UserAccount | null): boolean {
   if (!user) return false;
-  if (user.isAdmin) return false; // Admins have no message limits
   const plan = getUserPlan(user);
   const currentUsage = getUserCurrentUsage(user);
   return currentUsage >= plan.limit;

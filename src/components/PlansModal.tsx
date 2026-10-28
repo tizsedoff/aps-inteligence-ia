@@ -133,8 +133,8 @@ export const PlansModal: React.FC<PlansModalProps> = ({
               <span className="text-[color:var(--text-muted)]">
                 {currentPlan.period === 'day' ? 'Consumo hoy: ' : 'Consumo este mes: '}
               </span>
-              <strong className={currentUsage >= currentPlan.limit && !currentUser?.isAdmin ? 'text-amber-400' : 'text-emerald-400'}>
-                {currentUser?.isAdmin ? 'Ilimitado (Admin)' : `${currentUsage} / ${currentPlan.limit} mensajes`}
+              <strong className={currentUsage >= currentPlan.limit ? 'text-amber-400' : 'text-emerald-400'}>
+                {`${currentUsage} / ${currentPlan.limit} mensajes`}
               </strong>
             </div>
           </div>
