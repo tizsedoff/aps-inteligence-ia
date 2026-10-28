@@ -1,7 +1,7 @@
 import type { User } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import { APS_PLANS } from '../constants/plans';
-import type { MemoryItem, PlanId, UserAccount } from '../types';
+import type { MemoryItem, PlanId, UserAccount, UserUsage } from '../types';
 
 interface ProfileRow {
   id: string;
@@ -29,14 +29,15 @@ const toMemory = (r: MemoryRow): MemoryItem => ({
   timestamp: new Date(r.created_at).getTime(),
 });
 
-function cachedUsage(userId: string) {
-  try {
-    const raw = localStorage.getItem('aps_current_user') || sessionStorage.getItem('aps_current_user');
-    const parsed = raw ? JSON.parse(raw) : null;
-    return parsed && parsed.id === userId ? parsed.usage : undefined;
-  } catch {
-    return undefined;
+/** Uso real del usuario según el servidor (aps_get_usage). undefined si no se pudo leer. */
+export async function fetchUsage(): Promise<UserUsage | undefined> {
+  const { data, error } = await supabase.rpc('aps_get_usage');
+  if (error || !data) return undefined;
+  const used = Number(data.used) || 0;
+  if (data.period === 'day') {
+    return { day: data.day, dayCount: used, month: data.month, monthCount: 0, count: 0 };
   }
+  return { day: data.day, dayCount: 0, month: data.month, monthCount: used, count: used };
 }
 
 async function readProfile(userId: string): Promise<ProfileRow | null> {
@@ -71,7 +72,7 @@ export async function fetchAccount(authUser: User): Promise<UserAccount> {
     membership: profile.is_admin ? 'ADMINISTRADOR SUPREMO' : APS_PLANS[planId].name,
     customInstructions: profile.custom_instructions || '',
     memories: ((mems as MemoryRow[]) || []).map(toMemory),
-    usage: cachedUsage(profile.id),
+    usage: await fetchUsage(),
   };
 }
 

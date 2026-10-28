@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from './lib/supabase';
-import { fetchAccount, syncMemories } from './lib/accounts';
+import { fetchAccount, fetchUsage, syncMemories } from './lib/accounts';
 import {
   ApsModelId,
   InteractionMode,
@@ -452,22 +452,21 @@ export default function App() {
     }
   };
 
-  const handleIncrementUsage = () => {
-    if (!currentUser) return;
-    const currentMonth = getCurrentMonthKey();
-    const currentCount =
-      currentUser.usage?.month === currentMonth ? (currentUser.usage.count || 0) : 0;
-    const updatedUsage = {
-      month: currentMonth,
-      count: currentCount + 1,
-    };
-    const updatedUser: UserAccount = {
-      ...currentUser,
-      usage: updatedUsage,
-    };
-    setCurrentUser(updatedUser);
-    localStorage.setItem('aps_current_user', JSON.stringify(updatedUser));
-    // El uso se cuenta en el navegador por ahora; el conteo real del lado del servidor es un próximo paso.
+  // El contador es el del servidor (aps_consume_usage descuenta; aquí solo se lee y se muestra).
+  const handleIncrementUsage = async () => {
+    const usage = await fetchUsage();
+    if (!usage) return;
+    setCurrentUser((prev) => {
+      if (!prev) return prev;
+      const updated = { ...prev, usage };
+      try {
+        const store = localStorage.getItem('aps_current_user') ? localStorage : sessionStorage;
+        store.setItem('aps_current_user', JSON.stringify(updated));
+      } catch {
+        /* sin almacenamiento */
+      }
+      return updated;
+    });
   };
 
   // Generate an image with Gemini (free tier) and show it in the chat
@@ -550,6 +549,7 @@ export default function App() {
     } finally {
       setIsLoading(false);
       abortControllerRef.current = null;
+      void handleIncrementUsage();
     }
   };
 
@@ -576,8 +576,6 @@ export default function App() {
       );
       return;
     }
-
-    handleIncrementUsage();
 
     if (options?.generateImage) {
       await handleGenerateImage(text, attachments);
@@ -831,6 +829,7 @@ export default function App() {
     } finally {
       setIsLoading(false);
       abortControllerRef.current = null;
+      void handleIncrementUsage();
     }
   };
 
