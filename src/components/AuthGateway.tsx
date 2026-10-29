@@ -124,7 +124,7 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
         const { data, error: err } = await supabase.auth.signUp({
           email: cleanEmail,
           password,
-          options: { data: { name: displayName } },
+          options: { data: { name: displayName }, emailRedirectTo: window.location.origin },
         });
         if (err) {
           setError(translateAuthError(err));
