@@ -394,7 +394,7 @@ export const PlansModal: React.FC<PlansModalProps> = ({
 
         {/* Footer Note */}
         <div className="mt-6 pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-3 text-[11px] text-[color:var(--text-muted)] font-mono-code">
-          <span>APS Basic renueva 200 mensajes cada día. Los planes avanzados renuevan mensualmente.</span>
+          <span>APS Basic renueva 50 mensajes cada día. Los planes avanzados renuevan mensualmente.</span>
           <span className="text-[color:var(--accent)]">
             {currentUser?.isAdmin ? 'Modo simulado (solo administradores) · sin cobro real' : 'Pagos próximamente · APS INTELLIGENCE'}
           </span>
