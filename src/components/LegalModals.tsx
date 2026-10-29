@@ -265,11 +265,29 @@ export const LegalModals: React.FC<LegalModalsProps> = ({
                   Las configuraciones visuales (fondos, física de liquid glass, colores de globos de texto) se guardan localmente en el dispositivo del usuario para garantizar su soberanía sobre la experiencia visual.
                 </p>
               </div>
+
+              <div className="rounded-xl border border-[color:var(--accent)]/20 bg-[color:var(--surface-2)]/60 p-4">
+                <h4 className="font-serif-luxury font-bold text-[color:var(--accent-soft)] mb-1">
+                  6. Cuenta, Datos y Proveedores de IA
+                </h4>
+                <p>
+                  Para usar APS creás una cuenta con tu correo electrónico, que debés confirmar. Guardamos los datos de tu cuenta, tu perfil, tus recuerdos y tu contador de uso en nuestra base de datos. Los mensajes y archivos que enviás se transmiten a proveedores externos de modelos de IA (por ejemplo Google, Groq o NVIDIA) únicamente para generar la respuesta. No ingreses contraseñas, datos bancarios ni información sensible que no quieras compartir con esos proveedores.
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-[color:var(--accent)]/20 bg-[color:var(--surface-2)]/60 p-4">
+                <h4 className="font-serif-luxury font-bold text-[color:var(--accent-soft)] mb-1">
+                  7. Versión Beta, Límites y Pagos
+                </h4>
+                <p>
+                  APS se ofrece en versión beta, tal cual está y sin garantía de disponibilidad. Cada plan tiene un límite de mensajes (APS Basic: 50 por día) que puede modificarse. Los pagos aún no están habilitados; los planes pagos figuran como próximamente. Podemos suspender cuentas que abusen del servicio. Las respuestas de la IA pueden contener errores: verificá la información importante antes de usarla.
+                </p>
+              </div>
             </div>
 
             {/* Footer */}
             <div className="flex items-center justify-between border-t border-[color:var(--accent)]/20 bg-[color:var(--surface-2)]/90 px-6 py-4">
-              <span className="text-[11px] text-[color:var(--text-secondary)]">Última actualización: 2026 · Versión 3.8</span>
+              <span className="text-[11px] text-[color:var(--text-secondary)]">Última actualización: octubre 2026 · Versión 3.9</span>
               <button
                 onClick={onCloseTerms}
                 className="rounded-xl border border-[color:var(--accent)]/50 bg-gradient-to-r from-[color:var(--accent)] to-[color:var(--accent-hover)] px-5 py-2 text-xs font-serif-luxury font-bold text-[color:var(--on-accent)] shadow"

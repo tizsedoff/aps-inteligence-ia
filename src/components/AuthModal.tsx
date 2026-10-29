@@ -697,7 +697,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 <span>Base de Datos:</span>
                 <span className="text-emerald-400 font-mono-code flex items-center gap-1">
                   <CheckCircle2 className="h-3 w-3" />
-                  <span>Sincronizado con Firebase</span>
+                  <span>Sincronizado con tu cuenta</span>
                 </span>
               </div>
             </div>
