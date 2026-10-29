@@ -109,7 +109,7 @@ export const PlansModal: React.FC<PlansModalProps> = ({
         </button>
 
         {/* Modal Header */}
-        <div className="text-center space-y-2 mb-6">
+        <div className="text-center space-y-2 mb-6 pt-8 sm:pt-0">
           <div className="inline-flex items-center gap-2 rounded-full border border-[color:var(--accent)]/30 bg-[color:var(--accent)]/10 px-3 py-1 text-xs font-mono-code text-[color:var(--accent)]">
             <Sparkles className="h-3.5 w-3.5" />
             <span>SUSCRIPCIÓN Y LÍMITES MENSUALES</span>

@@ -194,8 +194,8 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
       </header>
 
       {/* Main Container */}
-      <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 py-6 sm:py-10">
-        <div className="w-full max-w-md sm:max-w-lg space-y-6">
+      <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 py-3 sm:py-10">
+        <div className="w-full max-w-md sm:max-w-lg space-y-3 sm:space-y-6">
           {/* Headline Title */}
           <motion.div
             initial={{ opacity: 0, y: -16 }}
@@ -203,15 +203,15 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
             transition={{ duration: 0.5 }}
             className="text-center space-y-2"
           >
-            <div className="flex justify-center mb-1">
-              <ApsLogo variant="compact" glow className="h-12 w-12" />
+            <div className="flex justify-center mb-1 [@media(max-height:760px)]:hidden">
+              <ApsLogo variant="compact" glow size={48} />
             </div>
 
             <h1 className="text-3xl sm:text-5xl font-extrabold tracking-wider bg-gradient-to-r from-[color:var(--accent)] via-[color:var(--accent-2)] to-[color:var(--accent-2-soft)] bg-clip-text text-transparent drop-shadow-[0_0_25px_color-mix(in_srgb,var(--accent)_35%,transparent)]">
               APS INTELLIGENCE
             </h1>
 
-            <h2 className="text-base sm:text-2xl font-extrabold italic tracking-wide text-white drop-shadow-[0_0_12px_rgba(255,255,255,0.2)]">
+            <h2 className="text-sm sm:text-2xl [@media(max-height:680px)]:hidden font-extrabold italic tracking-wide text-white drop-shadow-[0_0_12px_rgba(255,255,255,0.2)]">
               DIME TU <span className="text-[color:var(--accent)]">IDEA</span> Y LA HACEMOS REALIDAD
             </h2>
           </motion.div>
@@ -354,7 +354,7 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
                   </div>
 
                   {/* Profile Picture Upload */}
-                  <div>
+                  <div className="hidden sm:block">
                     <label className="block text-[11px] font-mono-code font-medium text-[color:var(--text-secondary)] mb-1.5 uppercase tracking-wider">
                       Foto de Perfil (Opcional)
                     </label>
@@ -524,7 +524,7 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
       </main>
 
       {/* Footer */}
-      <footer className="relative z-20 py-4 text-center text-[10px] text-[color:var(--text-secondary)] border-t border-white/5 bg-black/40 backdrop-blur-md">
+      <footer className="relative z-20 py-2 sm:py-4 [@media(max-height:760px)]:hidden text-center text-[10px] text-[color:var(--text-secondary)] border-t border-white/5 bg-black/40 backdrop-blur-md">
         <span>© {new Date().getFullYear()} APS INTELLIGENCE · Todos los derechos reservados.</span>
       </footer>
     </div>
