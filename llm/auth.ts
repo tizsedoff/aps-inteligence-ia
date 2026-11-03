@@ -13,6 +13,8 @@ export interface ApsAuth {
   period: 'day' | 'month' | null;
 }
 
+export const HARD_WORK_COST = 5;
+
 export interface RequireUserOptions {
   /** Cuánto descuenta del límite este pedido (0 = solo exige sesión). */
   cost: number;
@@ -72,8 +74,10 @@ export function requireUser(opts: RequireUserOptions) {
       let used = 0;
       let limit: number | null = null;
       let period: ApsAuth['period'] = null;
-      if (opts.cost > 0) {
-        const { data, error } = await client.rpc('aps_consume_usage', { cost: opts.cost });
+      // Hard Work usa un modelo y varios pasos: cuesta más del límite que un mensaje normal.
+      const effectiveCost = needsHardWork && opts.cost > 0 ? Math.max(opts.cost, HARD_WORK_COST) : opts.cost;
+      if (effectiveCost > 0) {
+        const { data, error } = await client.rpc('aps_consume_usage', { cost: effectiveCost });
         if (error || !data) {
           return res.status(503).json({ error: 'No se pudo verificar tu uso. Reintentá en un momento.' });
         }

@@ -796,10 +796,10 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
 
     // Plan and quota gating for APS HARD WORK:
     if (!canUserAccessHardWork(currentUser)) {
-      addLog('stderr', 'El motor de desarrollo APS HARD WORK requiere como mínimo el Plan Advanced ($25/mes).');
+      addLog('stderr', 'El motor de desarrollo APS HARD WORK requiere como mínimo el Plan Plus (US$9/mes).');
       addLog('system', '⚠ Actualiza tu suscripción para desbloquear la consola y el motor de código.');
       if (onOpenPlans) {
-        onOpenPlans('El motor de desarrollo APS HARD WORK requiere como mínimo el Plan Advanced ($25/mes) para desbloquear la consola y el motor de código.');
+        onOpenPlans('El motor de desarrollo APS HARD WORK requiere como mínimo el Plan Plus (US$9/mes) para desbloquear la consola y el motor de código.');
       }
       setIsProcessing(false);
       return;

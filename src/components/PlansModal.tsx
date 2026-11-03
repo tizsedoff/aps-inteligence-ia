@@ -200,7 +200,7 @@ export const PlansModal: React.FC<PlansModalProps> = ({
                         {APS_PLANS[selectedPlanId].period === 'day' ? 'Límite de uso:' : 'Suscripción mensual:'}
                       </span>
                       <strong className="text-white text-sm sm:text-base font-serif-luxury">
-                        {APS_PLANS[selectedPlanId].name} · {APS_PLANS[selectedPlanId].limit} mensajes / {APS_PLANS[selectedPlanId].period === 'day' ? 'día' : 'mes'}
+                        {APS_PLANS[selectedPlanId].name} · {APS_PLANS[selectedPlanId].limit} usos / {APS_PLANS[selectedPlanId].period === 'day' ? 'día' : 'mes'}
                       </strong>
                     </div>
                     <div className="text-right">
@@ -320,7 +320,7 @@ export const PlansModal: React.FC<PlansModalProps> = ({
                       )}
                     </div>
                     <div className="text-[11px] font-mono-code text-[color:var(--accent)] font-semibold mt-0.5">
-                      {plan.limit} mensajes / {plan.period === 'day' ? 'día' : 'mes'}
+                      {plan.limit} usos / {plan.period === 'day' ? 'día' : 'mes'}
                     </div>
                   </div>
 
@@ -394,7 +394,7 @@ export const PlansModal: React.FC<PlansModalProps> = ({
 
         {/* Footer Note */}
         <div className="mt-6 pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-3 text-[11px] text-[color:var(--text-muted)] font-mono-code">
-          <span>APS Basic renueva 50 mensajes cada día. Los planes avanzados renuevan mensualmente.</span>
+          <span>APS Basic renueva 15 usos cada día. Los planes pagos renuevan mensualmente. APS Hard Work consume 5 usos y cada imagen 3.</span>
           <span className="text-[color:var(--accent)]">
             {currentUser?.isAdmin ? 'Modo simulado (solo administradores) · sin cobro real' : 'Pagos próximamente · APS INTELLIGENCE'}
           </span>

@@ -210,7 +210,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   {plan.name}
                 </span>
                 <span className="text-[10px] text-[color:var(--text-secondary)] block">
-                  {`${usage} / ${plan.limit} msgs (${plan.period === 'day' ? 'hoy' : 'este mes'})`}
+                  {`${usage} / ${plan.limit} usos (${plan.period === 'day' ? 'hoy' : 'este mes'})`}
                 </span>
               </div>
             </div>

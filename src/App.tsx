@@ -95,7 +95,7 @@ export default function App() {
   const handleSelectModel = (model: ApsModelId) => {
     if (model === 'APS HARD WORK' && !canUserAccessHardWork(currentUser)) {
       handleOpenPlans(
-        'El modelo APS HARD WORK requiere como mínimo el Plan Advanced ($25/mes) para desbloquear la máxima capacidad de razonamiento e ingeniería.'
+        'El modelo APS HARD WORK requiere como mínimo el Plan Plus (US$9/mes) para desbloquear la máxima capacidad de razonamiento e ingeniería.'
       );
       return;
     }
@@ -105,7 +105,7 @@ export default function App() {
   const handleSelectView = (view: 'chat' | 'cli') => {
     if (view === 'cli' && !canUserAccessHardWork(currentUser)) {
       handleOpenPlans(
-        'La consola de desarrollo y el motor APS HARD WORK requieren como mínimo el Plan Advanced ($25/mes).'
+        'La consola de desarrollo y el motor APS HARD WORK requieren como mínimo el Plan Plus (US$9/mes).'
       );
       return;
     }
@@ -563,7 +563,7 @@ export default function App() {
 
     if (currentModel === 'APS HARD WORK' && !canUserAccessHardWork(currentUser)) {
       handleOpenPlans(
-        'El modelo APS HARD WORK requiere como mínimo el Plan Advanced ($25/mes) para desbloquear la máxima capacidad de razonamiento e ingeniería.'
+        'El modelo APS HARD WORK requiere como mínimo el Plan Plus (US$9/mes) para desbloquear la máxima capacidad de razonamiento e ingeniería.'
       );
       return;
     }

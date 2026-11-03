@@ -280,7 +280,7 @@ export const LegalModals: React.FC<LegalModalsProps> = ({
                   7. Versión Beta, Límites y Pagos
                 </h4>
                 <p>
-                  APS se ofrece en versión beta, tal cual está y sin garantía de disponibilidad. Cada plan tiene un límite de mensajes (APS Basic: 50 por día) que puede modificarse. Los pagos aún no están habilitados; los planes pagos figuran como próximamente. Podemos suspender cuentas que abusen del servicio. Las respuestas de la IA pueden contener errores: verificá la información importante antes de usarla.
+                  APS se ofrece en versión beta, tal cual está y sin garantía de disponibilidad. Cada plan tiene un límite de usos (APS Basic: 15 por día) que puede modificarse. Los pagos aún no están habilitados; los planes pagos figuran como próximamente. Podemos suspender cuentas que abusen del servicio. Las respuestas de la IA pueden contener errores: verificá la información importante antes de usarla.
                 </p>
               </div>
             </div>

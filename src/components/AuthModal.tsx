@@ -909,7 +909,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           {plan.priceLabel}
                         </div>
                         <div className="text-[10px] font-mono-code text-[color:var(--accent)] font-semibold">
-                          {plan.limit} mensajes / {plan.period === 'day' ? 'día' : 'mes'}
+                          {plan.limit} usos / {plan.period === 'day' ? 'día' : 'mes'}
                         </div>
                       </div>
                     </div>
