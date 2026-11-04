@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../lib/supabase';
+import { HoldToConfirmButton } from './HoldToConfirmButton';
 
 interface PlansModalProps {
   isOpen: boolean;
@@ -248,23 +249,12 @@ export const PlansModal: React.FC<PlansModalProps> = ({
                     >
                       Cancelar
                     </button>
-                    <button
-                      onClick={handleConfirmSimulatedPayment}
-                      disabled={isProcessingPayment}
-                      className="flex items-center gap-2 rounded-xl border border-white/20 bg-gradient-to-r from-[color:var(--accent)] via-[color:var(--accent-2)] to-[color:var(--accent)] px-5 py-2.5 text-xs font-bold text-black shadow-lg hover:brightness-110 active:scale-95 transition-all"
-                    >
-                      {isProcessingPayment ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          <span>Procesando pago simulado...</span>
-                        </>
-                      ) : (
-                        <>
-                          <CreditCard className="h-4 w-4" />
-                          <span>Confirmar Pago Simulado ({APS_PLANS[selectedPlanId].priceLabel})</span>
-                        </>
-                      )}
-                    </button>
+                    <HoldToConfirmButton
+                      label={`Mantené para confirmar (${APS_PLANS[selectedPlanId].priceLabel})`}
+                      busyLabel="Procesando pago simulado..."
+                      busy={isProcessingPayment}
+                      onConfirm={handleConfirmSimulatedPayment}
+                    />
                   </div>
                 </div>
               )}
