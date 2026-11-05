@@ -140,7 +140,7 @@ export const Header: React.FC<HeaderProps> = ({
                             setModelDropdownOpen(false);
                             if (onOpenPlans) {
                               onOpenPlans(
-                                'El modelo APS HARD WORK requiere como mínimo el Plan Plus (US$9/mes) para desbloquear la máxima capacidad de razonamiento e ingeniería.'
+                                'El modelo APS HARD WORK requiere como mínimo el Plan Plus (US$15/mes) para desbloquear la máxima capacidad de razonamiento e ingeniería.'
                               );
                             }
                             return;
@@ -193,7 +193,7 @@ export const Header: React.FC<HeaderProps> = ({
               if (!canUserAccessHardWork(currentUser)) {
                 if (onOpenPlans) {
                   onOpenPlans(
-                    'La consola de desarrollo y el motor APS HARD WORK requieren como mínimo el Plan Plus (US$9/mes).'
+                    'La consola de desarrollo y el motor APS HARD WORK requieren como mínimo el Plan Plus (US$15/mes).'
                   );
                 }
                 return;
