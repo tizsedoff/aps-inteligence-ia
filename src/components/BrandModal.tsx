@@ -13,8 +13,8 @@ interface BrandModalProps {
 type TextKey = Exclude<keyof BrandProfile, 'logo' | 'updatedAt'>;
 
 const FIELDS: { key: TextKey; label: string; hint: string; multiline?: boolean }[] = [
-  { key: 'name', label: 'Nombre de la marca', hint: 'Ej: Felichità Helados' },
-  { key: 'industry', label: 'Rubro', hint: 'Ej: Heladería artesanal' },
+  { key: 'name', label: 'Nombre de la marca', hint: 'Ej: Mi Marca' },
+  { key: 'industry', label: 'Rubro', hint: 'Ej: Indumentaria, gastronomía, servicios' },
   {
     key: 'productsServices',
     label: 'Productos y servicios',
