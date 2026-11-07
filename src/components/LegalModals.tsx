@@ -280,7 +280,7 @@ export const LegalModals: React.FC<LegalModalsProps> = ({
                   7. Versión Beta, Límites y Pagos
                 </h4>
                 <p>
-                  APS se ofrece en versión beta, tal cual está y sin garantía de disponibilidad. Cada plan tiene un límite de usos (APS Basic: 15 por día) que puede modificarse. Los pagos aún no están habilitados; los planes pagos figuran como próximamente. Podemos suspender cuentas que abusen del servicio. Las respuestas de la IA pueden contener errores: verificá la información importante antes de usarla.
+                  APS se ofrece en versión beta, tal cual está y sin garantía de disponibilidad. Cada plan tiene un límite de usos (APS Basic: 15 por día) que puede modificarse. Los planes pagos son suscripciones mensuales que se renuevan solas hasta que las canceles desde la pantalla de planes; el cobro lo procesa Mercado Pago y no guardamos los datos de tu tarjeta. Mientras los pagos no estén habilitados, los planes pagos figuran como próximamente. Podemos suspender cuentas que abusen del servicio. Las respuestas de la IA pueden contener errores: verificá la información importante antes de usarla.
                 </p>
               </div>
             </div>

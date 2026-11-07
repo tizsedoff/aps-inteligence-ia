@@ -7,6 +7,7 @@ import { parseModelJson } from './llm/providers.ts';
 import { reviewGeneratedCode, ReviewOutcome } from './llm/review.ts';
 import { buildFilesContext, sanitizeFilename, WorkFile } from './llm/codeTools.ts';
 import { runChatWithTools } from './llm/chatStream.ts';
+import { registerBilling } from './llm/billing.ts';
 import { requireUser } from './llm/auth.ts';
 
 dotenv.config();
@@ -781,6 +782,8 @@ app.post(['/api/image/generate', '/image/generate'], requireUser({ cost: 3 }), a
     });
   }
 });
+
+registerBilling(app);
 
 // Healthcheck endpoint
 app.get(['/api/health', '/health'], (_req: Request, res: Response) => {

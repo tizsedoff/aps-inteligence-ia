@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { UserAccount, PlanId } from '../types';
 import {
   APS_PLANS,
@@ -26,6 +26,12 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../lib/supabase';
 import { HoldToConfirmButton } from './HoldToConfirmButton';
+import { apiFetch, apiErrorMessage } from '../lib/api';
+
+interface BillingState {
+  enabled: boolean;
+  subscription: { plan: PlanId; status: string; current_period_end: string | null } | null;
+}
 
 interface PlansModalProps {
   isOpen: boolean;
@@ -48,6 +54,29 @@ export const PlansModal: React.FC<PlansModalProps> = ({
   const [paymentsNotice, setPaymentsNotice] = useState('');
   const [cardNumber, setCardNumber] = useState('4242 •••• •••• 4242');
   const [cardHolder, setCardHolder] = useState(currentUser?.name || 'Cliente APS');
+  const [billing, setBilling] = useState<BillingState>({ enabled: false, subscription: null });
+  const [redirectingPlan, setRedirectingPlan] = useState<PlanId | null>(null);
+  const [confirmCancel, setConfirmCancel] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+
+  // Estado real de pagos y de la suscripción del usuario (lo informa el servidor).
+  useEffect(() => {
+    if (!isOpen || !currentUser) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await apiFetch('/api/billing/status');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled) setBilling({ enabled: data.enabled === true, subscription: data.subscription ?? null });
+      } catch {
+        /* sin estado: se muestra "pagos próximamente" */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, currentUser?.id]);
 
   if (!isOpen) return null;
 
@@ -57,10 +86,54 @@ export const PlansModal: React.FC<PlansModalProps> = ({
 
   // El plan lo asigna solo el servidor. Mientras no haya pagos reales, solo un administrador puede
   // "comprar" en modo simulado (rpc aps_simulate_purchase, que rechaza a cualquier otro usuario).
+  const handleRealCheckout = async (planId: PlanId) => {
+    setPaymentsNotice('');
+    setRedirectingPlan(planId);
+    try {
+      const res = await apiFetch('/api/billing/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: planId }),
+      });
+      if (!res.ok) throw new Error(await apiErrorMessage(res));
+      const { url } = await res.json();
+      if (typeof url !== 'string' || !url.startsWith('https://')) throw new Error('No se pudo iniciar el pago.');
+      window.location.href = url;
+    } catch (e) {
+      setPaymentsNotice(e instanceof Error ? e.message : 'No se pudo iniciar el pago.');
+      setRedirectingPlan(null);
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    setIsCancelling(true);
+    setPaymentsNotice('');
+    try {
+      const res = await apiFetch('/api/billing/cancel', { method: 'POST' });
+      if (!res.ok) throw new Error(await apiErrorMessage(res));
+      setBilling((b) => ({ ...b, subscription: null }));
+      if (currentUser) onUpdateUser({ ...currentUser, plan: 'basic' });
+      setPaymentsNotice('Suscripción cancelada. Tu cuenta volvió al plan APS Basic.');
+    } catch (e) {
+      setPaymentsNotice(e instanceof Error ? e.message : 'No se pudo cancelar. Reintentá en un momento.');
+    } finally {
+      setIsCancelling(false);
+      setConfirmCancel(false);
+    }
+  };
+
   const handleStartCheckout = (planId: PlanId) => {
     if (planId === currentPlanId) return;
     if (!currentUser?.isAdmin) {
-      setPaymentsNotice('Los pagos todavía no están habilitados. Cuando lo estén, tu plan se activará automáticamente al confirmar el pago.');
+      if (!billing.enabled) {
+        setPaymentsNotice('Los pagos todavía no están habilitados. Cuando lo estén, tu plan se activará automáticamente al confirmar el pago.');
+        return;
+      }
+      if (planId === 'basic') {
+        if (billing.subscription?.status === 'authorized') setConfirmCancel(true);
+        return;
+      }
+      void handleRealCheckout(planId);
       return;
     }
     setPaymentsNotice('');
@@ -119,9 +192,9 @@ export const PlansModal: React.FC<PlansModalProps> = ({
             PLANES DE ACCESO APS
           </h2>
           <p className="text-xs sm:text-sm text-[color:var(--text-secondary)] max-w-xl mx-auto">
-            Elige el plan acorde a tu volumen de mensajes mensual. Para desbloquear el modelo{' '}
+            Elegí el plan según cuánto vas a usar APS. Para desbloquear el modelo{' '}
             <strong className="text-[color:var(--accent)]">APS HARD WORK</strong> y la consola de desarrollo,
-            se requiere como mínimo el plan <strong className="text-[color:var(--accent)]">ADVANCED</strong>.
+            se requiere como mínimo el plan <strong className="text-[color:var(--accent)]">APS Plus</strong>.
           </p>
 
           {/* Current Status Badge */}
@@ -135,7 +208,7 @@ export const PlansModal: React.FC<PlansModalProps> = ({
                 {currentPlan.period === 'day' ? 'Consumo hoy: ' : 'Consumo este mes: '}
               </span>
               <strong className={currentUsage >= currentPlan.limit ? 'text-amber-400' : 'text-emerald-400'}>
-                {`${currentUsage} / ${currentPlan.limit} mensajes`}
+                {`${currentUsage} / ${currentPlan.limit} usos`}
               </strong>
             </div>
           </div>
@@ -148,12 +221,55 @@ export const PlansModal: React.FC<PlansModalProps> = ({
           </div>
         )}
 
+        {billing.subscription?.status === 'authorized' && !currentUser?.isAdmin && (
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-400/30 bg-emerald-400/5 p-3.5 text-xs">
+            <div className="flex items-center gap-2.5">
+              <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-400" />
+              <div>
+                <span className="block font-bold text-white">
+                  Suscripción activa · {APS_PLANS[billing.subscription.plan]?.name ?? 'plan pago'}
+                </span>
+                <span className="text-[color:var(--text-secondary)]">
+                  {billing.subscription.current_period_end
+                    ? `Próximo cobro: ${new Date(billing.subscription.current_period_end).toLocaleDateString('es-AR')}`
+                    : 'Se renueva todos los meses.'}
+                </span>
+              </div>
+            </div>
+            {confirmCancel ? (
+              <div className="flex items-center gap-2">
+                <span className="text-[color:var(--text-secondary)]">¿Cancelar y volver a Basic?</span>
+                <button
+                  onClick={handleCancelSubscription}
+                  disabled={isCancelling}
+                  className="rounded-lg border border-red-400/50 bg-red-500/10 px-3 py-1.5 font-bold text-red-300 hover:bg-red-500/20 disabled:opacity-60"
+                >
+                  {isCancelling ? 'Cancelando…' : 'Sí, cancelar'}
+                </button>
+                <button
+                  onClick={() => setConfirmCancel(false)}
+                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-semibold text-[color:var(--text-secondary)] hover:bg-white/10"
+                >
+                  No
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmCancel(true)}
+                className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-semibold text-[color:var(--text-secondary)] hover:bg-white/10 hover:text-white"
+              >
+                Cancelar suscripción
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Alert / Notice if triggered by Hard Work or Quota limit */}
         {noticeMessage && (
           <div className="mb-6 flex items-start gap-3 rounded-2xl border border-[color:var(--accent)]/40 bg-[color:var(--accent)]/15 p-3.5 text-xs text-[color:var(--text-primary)]">
             <AlertCircle className="h-5 w-5 shrink-0 text-[color:var(--accent)] mt-0.5" />
             <div className="space-y-0.5">
-              <span className="font-bold block text-white font-serif-luxury">Aviso de Requisito de Plan:</span>
+              <span className="font-bold block text-white font-serif-luxury">Aviso:</span>
               <p className="text-[color:var(--text-secondary)] leading-relaxed">{noticeMessage}</p>
             </div>
           </div>
@@ -360,14 +476,22 @@ export const PlansModal: React.FC<PlansModalProps> = ({
                   ) : (
                     <button
                       onClick={() => handleStartCheckout(plan.id)}
+                      disabled={redirectingPlan !== null}
                       className={`w-full flex items-center justify-center gap-1.5 rounded-xl py-2.5 px-3 text-xs font-bold transition-all shadow-md active:scale-95 ${
                         plan.id === 'advanced'
                           ? 'border border-[color:var(--accent)]/50 bg-gradient-to-r from-[color:var(--accent)] to-[color:var(--accent-2)] text-black hover:brightness-110'
                           : 'border border-white/20 bg-white/10 text-white hover:bg-white/20'
                       }`}
                     >
-                      {plan.price === 0 ? (
+                      {redirectingPlan === plan.id ? (
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          <span>Abriendo Mercado Pago…</span>
+                        </>
+                      ) : plan.price === 0 ? (
                         <span>Cambiar a Basic</span>
+                      ) : !currentUser?.isAdmin && !billing.enabled ? (
+                        <span>Disponible pronto · {plan.priceLabel}</span>
                       ) : (
                         <>
                           <Zap className="h-3.5 w-3.5" />
@@ -386,7 +510,11 @@ export const PlansModal: React.FC<PlansModalProps> = ({
         <div className="mt-6 pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-3 text-[11px] text-[color:var(--text-muted)] font-mono-code">
           <span>APS Basic renueva 15 usos cada día. Los planes pagos renuevan mensualmente. APS Hard Work consume 5 usos y cada imagen 3.</span>
           <span className="text-[color:var(--accent)]">
-            {currentUser?.isAdmin ? 'Modo simulado (solo administradores) · sin cobro real' : 'Pagos próximamente · APS INTELLIGENCE'}
+            {currentUser?.isAdmin
+              ? 'Modo simulado (solo administradores) · sin cobro real'
+              : billing.enabled
+                ? 'Pago seguro con Mercado Pago · cancelás cuando quieras'
+                : 'Pagos próximamente · APS INTELLIGENCE'}
           </span>
         </div>
       </motion.div>

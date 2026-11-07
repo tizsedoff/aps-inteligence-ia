@@ -82,6 +82,19 @@ export default function App() {
   const [brand, setBrand] = useState<BrandProfile | null>(null);
   const sessionsKey = workspace === 'marca' ? 'aps_sessions_marca' : 'aps_sessions';
 
+  // Al volver de Mercado Pago (?pago=ok) se espera la confirmación y se actualiza el plan solo.
+  const [pendingPayment, setPendingPayment] = useState(() => {
+    try {
+      if (new URLSearchParams(window.location.search).get('pago') === 'ok') {
+        window.history.replaceState({}, '', window.location.pathname);
+        return true;
+      }
+    } catch {
+      /* sin acceso a la URL */
+    }
+    return false;
+  });
+
   const handleOpenPlans = (notice?: string) => {
     setPlanModalNotice(notice);
     setIsPlansModalOpen(true);
@@ -283,6 +296,39 @@ export default function App() {
       data.subscription.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    if (!pendingPayment || !authReady || !currentUser) return;
+    let stop = false;
+    const startPlan = currentUser.plan;
+    handleOpenPlans('Estamos confirmando tu pago con Mercado Pago. Tu plan se activa solo en unos segundos.');
+    (async () => {
+      for (let i = 0; i < 10 && !stop; i++) {
+        await new Promise((r) => setTimeout(r, 3000));
+        const { data } = await supabase.auth.getSession();
+        if (!data.session || stop) return;
+        try {
+          const acc = await fetchAccount(data.session.user);
+          if (stop) return;
+          if (acc.plan !== startPlan) {
+            setCurrentUser(acc);
+            setPlanModalNotice('¡Pago confirmado! Tu plan ya está activo.');
+            setPendingPayment(false);
+            return;
+          }
+        } catch {
+          /* reintenta en el próximo ciclo */
+        }
+      }
+      if (!stop) {
+        setPlanModalNotice('Todavía no recibimos la confirmación. Si ya pagaste, puede demorar unos minutos: tu plan se activa solo.');
+        setPendingPayment(false);
+      }
+    })();
+    return () => {
+      stop = true;
+    };
+  }, [pendingPayment, authReady, currentUser?.id]);
 
   // 3. Cookie Preferences State
   const [cookiePrefs, setCookiePrefs] = useState<CookiePreferences>(() => {
