@@ -921,7 +921,7 @@ export default function App() {
 
   if (!currentUser) {
     return (
-      <div className="relative min-h-screen w-screen overflow-x-hidden bg-[color:var(--surface-0)] text-[color:var(--text-primary)] font-sans">
+      <div className="relative min-h-dvh w-full overflow-x-hidden pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] bg-[color:var(--surface-0)] text-[color:var(--text-primary)] font-sans">
         <AuthGateway
           onLogin={handleLogin}
           onOpenTerms={() => setIsTermsOpen(true)}
@@ -940,7 +940,7 @@ export default function App() {
     <div
       onMouseMove={handleMouseMove}
       style={rootBgStyle}
-      className="relative isolate flex h-screen w-screen flex-col overflow-hidden text-[color:var(--text-primary)] transition-colors duration-300 font-sans"
+      className="relative isolate flex h-dvh w-full flex-col overflow-hidden pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] text-[color:var(--text-primary)] transition-colors duration-300 font-sans"
     >
       {/* Background Image Layer if selected */}
       {customization.bgType === 'image' && customization.bgImage && (

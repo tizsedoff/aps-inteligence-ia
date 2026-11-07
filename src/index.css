@@ -45,6 +45,7 @@ body {
   background-color: var(--bg-deep);
   color: var(--text-primary);
   min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
 }
 
@@ -402,4 +403,14 @@ body {
     width: 100%;
     opacity: 0.6;
   }
+}
+
+/* Zonas seguras del iPhone/Android (hora, notch, barra de inicio): los modales centrados no deben quedar debajo. */
+.fixed.inset-0.flex.items-center.justify-center {
+  padding-top: max(0.75rem, env(safe-area-inset-top));
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+.max-h-\[92vh\],
+.max-h-\[90vh\] {
+  max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 1.5rem) !important;
 }

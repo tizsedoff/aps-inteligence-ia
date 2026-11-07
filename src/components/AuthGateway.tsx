@@ -171,7 +171,7 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
           '--y': `${mousePos.y}%`,
         } as React.CSSProperties
       }
-      className="relative min-h-screen w-full flex flex-col justify-between overflow-x-hidden bg-[color:var(--surface-0)] text-[color:var(--text-primary)] font-sans selection:bg-[color:var(--accent)]/30 selection:text-white"
+      className="relative min-h-dvh w-full flex flex-col justify-between overflow-x-hidden pt-[env(safe-area-inset-top)] bg-[color:var(--surface-0)] text-[color:var(--text-primary)] font-sans selection:bg-[color:var(--accent)]/30 selection:text-white"
     >
       {/* Specular Fluid Ambient Light */}
       <div className="pointer-events-none fixed inset-0 refraction-glow -z-10" />

@@ -86,7 +86,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       />
 
       {/* Drawer */}
-      <div className="relative z-10 flex h-full w-84 max-w-[85vw] flex-col border-r border-white/15 bg-[color:var(--surface-0)]/95 p-5 shadow-2xl backdrop-blur-2xl">
+      <div className="relative z-10 flex h-full w-84 max-w-[85vw] flex-col border-r border-white/15 bg-[color:var(--surface-0)]/95 p-5 shadow-2xl backdrop-blur-2xl pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(1.25rem,env(safe-area-inset-bottom))]">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/10 pb-4">
           <div className="flex items-center gap-3">
