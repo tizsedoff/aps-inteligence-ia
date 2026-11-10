@@ -618,7 +618,7 @@ export default function App() {
       const plan = getUserPlan(currentUser);
       const periodLabel = plan.period === 'day' ? 'por día' : 'por mes';
       handleOpenPlans(
-        `Has alcanzado el límite de tu plan ${plan.name} (${plan.limit} mensajes ${periodLabel}). Mejora tu plan para continuar generando respuestas.`
+        `Has alcanzado el límite de tu plan ${plan.name} (${plan.limit.toLocaleString("es-AR")} usos ${periodLabel}). Mejora tu plan para continuar generando respuestas.`
       );
       return;
     }

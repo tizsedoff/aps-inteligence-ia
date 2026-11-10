@@ -808,10 +808,10 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
     if (isUserQuotaExceeded(currentUser)) {
       const plan = getUserPlan(currentUser);
       const periodLabel = plan.period === 'day' ? 'por día' : 'por mes';
-      addLog('stderr', `Has alcanzado el límite de tu plan ${plan.name} (${plan.limit} mensajes ${periodLabel}).`);
+      addLog('stderr', `Has alcanzado el límite de tu plan ${plan.name} (${plan.limit.toLocaleString("es-AR")} usos ${periodLabel}).`);
       addLog('system', '⚠ Mejora tu plan para continuar ejecutando órdenes en la terminal.');
       if (onOpenPlans) {
-        onOpenPlans(`Has alcanzado el límite de tu plan ${plan.name} (${plan.limit} mensajes ${periodLabel}). Mejora tu plan para continuar.`);
+        onOpenPlans(`Has alcanzado el límite de tu plan ${plan.name} (${plan.limit.toLocaleString("es-AR")} usos ${periodLabel}). Mejora tu plan para continuar.`);
       }
       setIsProcessing(false);
       return;

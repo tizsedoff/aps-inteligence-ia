@@ -306,7 +306,7 @@ export const PlansModal: React.FC<PlansModalProps> = ({
                     ¡Pago Simulado Confirmado con Éxito!
                   </h4>
                   <p className="text-xs text-[color:var(--text-secondary)]">
-                    Tu cuenta ha sido actualizada al plan <strong>{paymentSuccess}</strong>. Se ha desbloqueado tu cuota de mensajes y capacidades correspondientes.
+                    Tu cuenta ha sido actualizada al plan <strong>{paymentSuccess}</strong>. Ya tenés disponible tu cupo de usos y las capacidades del plan.
                   </p>
                 </div>
               ) : (
@@ -426,7 +426,7 @@ export const PlansModal: React.FC<PlansModalProps> = ({
                       )}
                     </div>
                     <div className="text-[11px] font-mono-code text-[color:var(--accent)] font-semibold mt-0.5">
-                      {plan.limit} usos / {plan.period === 'day' ? 'día' : 'mes'}
+                      {plan.limit.toLocaleString("es-AR")} usos / {plan.period === 'day' ? 'día' : 'mes'}
                     </div>
                   </div>
 
