@@ -8,6 +8,7 @@ import { reviewGeneratedCode, ReviewOutcome } from './llm/review.ts';
 import { buildFilesContext, sanitizeFilename, WorkFile } from './llm/codeTools.ts';
 import { runChatWithTools } from './llm/chatStream.ts';
 import { registerBilling } from './llm/billing.ts';
+import { trimHistory } from './llm/history.ts';
 import { requireUser } from './llm/auth.ts';
 
 dotenv.config();
@@ -269,8 +270,8 @@ app.post(['/api/chat/stream', '/chat/stream'], requireUser({ cost: 1, hardWork: 
     // Build contents payload
     const contents: any[] = [];
 
-    // History
-    for (const msg of messages) {
+    // History (recortado: ver llm/history.ts)
+    for (const msg of trimHistory(messages)) {
       const parts: any[] = [];
       if (msg.attachments && Array.isArray(msg.attachments)) {
         for (const att of msg.attachments) {

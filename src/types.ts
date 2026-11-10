@@ -31,6 +31,7 @@ export interface ChatMessage {
   timestamp: number;
   durationMs?: number;
   error?: boolean;
+  limitReached?: boolean; // el error es el límite del plan: se ofrece "Ver planes" en vez de reintentar
   codeChanges?: { filename: string; action: 'created' | 'modified' }[]; // cambios que el chat hizo en CÓDIGO
 }
 

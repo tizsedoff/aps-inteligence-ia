@@ -164,3 +164,11 @@ export function isUserQuotaExceeded(user?: UserAccount | null): boolean {
   const currentUsage = getUserCurrentUsage(user);
   return currentUsage >= plan.limit;
 }
+
+/** Texto único para "límite alcanzado": qué pasó, cuándo se renueva y cómo seguir ya. */
+export function limitReachedMessage(plan: PlanConfig): string {
+  const limit = plan.limit.toLocaleString('es-AR');
+  return plan.period === 'day'
+    ? `Llegaste al límite de hoy de tu plan ${plan.name} (${limit} usos). Se renueva mañana, o pasá a un plan pago para seguir ahora.`
+    : `Llegaste al límite de este mes de tu plan ${plan.name} (${limit} usos). Se renueva el mes próximo, o subí de plan para seguir ahora.`;
+}

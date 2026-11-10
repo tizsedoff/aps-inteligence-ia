@@ -1,3 +1,4 @@
+import { trimHistory } from '../llm/history';
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from './lib/supabase';
 import { fetchAccount, fetchUsage, syncMemories } from './lib/accounts';
@@ -34,6 +35,7 @@ import {
   canUserAccessHardWork,
   isUserQuotaExceeded,
   getUserPlan,
+  limitReachedMessage,
   getCurrentMonthKey,
 } from './constants/plans';
 import { apiFetch, apiErrorMessage } from './lib/api';
@@ -615,11 +617,7 @@ export default function App() {
     }
 
     if (isUserQuotaExceeded(currentUser)) {
-      const plan = getUserPlan(currentUser);
-      const periodLabel = plan.period === 'day' ? 'por día' : 'por mes';
-      handleOpenPlans(
-        `Has alcanzado el límite de tu plan ${plan.name} (${plan.limit.toLocaleString("es-AR")} usos ${periodLabel}). Mejora tu plan para continuar generando respuestas.`
-      );
+      handleOpenPlans(limitReachedMessage(getUserPlan(currentUser)));
       return;
     }
 
@@ -657,7 +655,7 @@ export default function App() {
     const startTime = Date.now();
 
     try {
-      const historyPayload = messages.map((m) => ({
+      const historyPayload = trimHistory(messages).map((m) => ({
         role: m.role,
         content: m.content,
         attachments: m.attachments?.map((a) => ({
@@ -692,7 +690,8 @@ export default function App() {
       });
 
       if (!res.ok) {
-        throw new Error(await apiErrorMessage(res));
+        const message = await apiErrorMessage(res);
+        throw Object.assign(new Error(message), { limitReached: res.status === 429 });
       }
 
       const reader = res.body?.getReader();
@@ -854,7 +853,17 @@ export default function App() {
         }
       }
     } catch (err: any) {
-      if (err.name !== 'AbortError') {
+      if (err.limitReached) {
+        // El servidor es la fuente de verdad del límite: se muestra el aviso y se abren los planes.
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === modelMessageId
+              ? { ...m, content: err.message, isThinkingActive: false, error: true, limitReached: true }
+              : m
+          )
+        );
+        handleOpenPlans(err.message);
+      } else if (err.name !== 'AbortError') {
         let cleanMsg = err.message || 'Error al comunicarse con APS INTELLIGENCE.';
         if (cleanMsg.includes('503') || cleanMsg.includes('high demand') || cleanMsg.includes('UNAVAILABLE')) {
           cleanMsg = 'El servidor de Google experimentó una sobrecarga temporal de alta demanda (503). Presiona el botón Reintentar.';
@@ -1037,6 +1046,7 @@ export default function App() {
             onSendToCli={handleSendToCli}
             onOpenCode={() => handleSelectView('cli')}
             onRetry={handleRetry}
+            onOpenPlans={() => handleOpenPlans()}
             isLoading={isLoading}
           />
 

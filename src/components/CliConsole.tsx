@@ -10,7 +10,7 @@ import {
 import { reportScroll } from '../lib/sceneBus';
 import { Tilt3D } from './Tilt3D';
 import { CliFile, CliExecutionResult, Attachment, UserAccount, ChatCodeChange } from '../types';
-import { canUserAccessHardWork, isUserQuotaExceeded, getUserPlan } from '../constants/plans';
+import { canUserAccessHardWork, isUserQuotaExceeded, getUserPlan, limitReachedMessage } from '../constants/plans';
 import {
   Play,
   Download,
@@ -807,11 +807,10 @@ export const CliConsole: React.FC<CliConsoleProps> = ({
 
     if (isUserQuotaExceeded(currentUser)) {
       const plan = getUserPlan(currentUser);
-      const periodLabel = plan.period === 'day' ? 'por día' : 'por mes';
-      addLog('stderr', `Has alcanzado el límite de tu plan ${plan.name} (${plan.limit.toLocaleString("es-AR")} usos ${periodLabel}).`);
+      addLog('stderr', limitReachedMessage(plan));
       addLog('system', '⚠ Mejora tu plan para continuar ejecutando órdenes en la terminal.');
       if (onOpenPlans) {
-        onOpenPlans(`Has alcanzado el límite de tu plan ${plan.name} (${plan.limit.toLocaleString("es-AR")} usos ${periodLabel}). Mejora tu plan para continuar.`);
+        onOpenPlans(limitReachedMessage(plan));
       }
       setIsProcessing(false);
       return;

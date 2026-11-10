@@ -35,6 +35,7 @@ interface ChatTimelineProps {
   onSendToCli: (code: string, language: string) => void;
   onOpenCode?: () => void;
   onRetry?: (messageId: string) => void;
+  onOpenPlans?: () => void;
   isLoading: boolean;
 }
 
@@ -48,6 +49,7 @@ export const ChatTimeline: React.FC<ChatTimelineProps> = ({
   onSendToCli,
   onOpenCode,
   onRetry,
+  onOpenPlans,
   isLoading,
 }) => {
   const endRef = useRef<HTMLDivElement>(null);
@@ -182,7 +184,9 @@ export const ChatTimeline: React.FC<ChatTimelineProps> = ({
             const isImageError = Boolean(messages[msgIdx - 1]?.isImageRequest);
             const errorText = msg.content.replace(/^\[Error:\s*/, '').replace(/\]$/, '');
             const isDemandError = /503|alta demanda|high demand|UNAVAILABLE/i.test(errorText);
-            const errorTitle = isDemandError
+            const errorTitle = msg.limitReached
+              ? 'Llegaste al límite de tu plan'
+              : isDemandError
               ? 'Alta demanda en este momento'
               : isImageError
               ? 'No se pudo crear la imagen'
@@ -308,19 +312,30 @@ export const ChatTimeline: React.FC<ChatTimelineProps> = ({
                     {msg.error ? (
                       <div
                         role="alert"
-                        className="rounded-2xl border border-red-500/35 bg-gradient-to-b from-red-500/10 to-black/50 p-4 space-y-3"
+                        className={`rounded-2xl border p-4 space-y-3 ${
+                          msg.limitReached
+                            ? 'border-amber-400/40 bg-gradient-to-b from-amber-400/10 to-black/50'
+                            : 'border-red-500/35 bg-gradient-to-b from-red-500/10 to-black/50'
+                        }`}
                       >
                         <div className="flex items-start gap-3">
-                          <AlertTriangle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
+                          <AlertTriangle className={`h-5 w-5 shrink-0 mt-0.5 ${msg.limitReached ? 'text-amber-300' : 'text-red-400'}`} />
                           <div className="min-w-0">
-                            <span className="font-bold block text-red-300 text-sm">{errorTitle}</span>
+                            <span className={`font-bold block text-sm ${msg.limitReached ? 'text-amber-200' : 'text-red-300'}`}>{errorTitle}</span>
                             <p className="text-white/85 leading-relaxed text-xs mt-1 break-words">
                               {errorText}
                             </p>
                           </div>
                         </div>
 
-                        {onRetry && (
+                        {msg.limitReached && onOpenPlans ? (
+                          <button
+                            onClick={onOpenPlans}
+                            className="flex items-center gap-2 rounded-xl border border-white/20 bg-gradient-to-r from-[color:var(--accent)] to-[color:var(--accent-2)] px-4 py-2 text-xs font-bold text-black shadow-lg hover:scale-105 active:scale-95 transition-all"
+                          >
+                            <span>Ver planes</span>
+                          </button>
+                        ) : onRetry && !msg.limitReached && (
                           <button
                             onClick={() => onRetry(msg.id)}
                             className="flex items-center gap-2 rounded-xl border border-white/20 bg-gradient-to-r from-[color:var(--accent)] to-[color:var(--accent-2)] px-4 py-2 text-xs font-bold text-black shadow-lg hover:scale-105 active:scale-95 transition-all"
