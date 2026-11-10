@@ -398,12 +398,12 @@ export const PlansModal: React.FC<PlansModalProps> = ({
               >
                 {/* Plan Badge */}
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="font-serif-luxury text-base font-bold text-white">
+                  <div className="flex flex-wrap items-center justify-between gap-1.5">
+                    <span className="font-serif-luxury text-base font-bold text-white whitespace-nowrap">
                       {plan.name}
                     </span>
                     <span
-                      className={`rounded-full px-2 py-0.5 text-[9px] font-mono-code font-bold uppercase ${
+                      className={`rounded-full px-2 py-0.5 text-[9px] font-mono-code font-bold uppercase whitespace-nowrap ${
                         unlocksHardWork
                           ? 'border border-[color:var(--accent)]/40 bg-[color:var(--accent)]/20 text-[color:var(--accent)]'
                           : 'border border-white/10 bg-white/5 text-[color:var(--text-muted)]'
@@ -417,7 +417,7 @@ export const PlansModal: React.FC<PlansModalProps> = ({
                   <div>
                     <div className="flex items-baseline gap-1">
                       <span className="text-2xl sm:text-3xl font-extrabold text-white font-serif-luxury">
-                        {plan.price === 0 ? 'Gratis' : `$${plan.price}`}
+                        {plan.price === 0 ? 'Gratis' : `US$${plan.price}`}
                       </span>
                       {plan.price > 0 && (
                         <span className="text-xs font-mono-code text-[color:var(--text-muted)]">
