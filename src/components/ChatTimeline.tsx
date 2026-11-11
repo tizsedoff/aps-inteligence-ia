@@ -347,7 +347,7 @@ export const ChatTimeline: React.FC<ChatTimelineProps> = ({
                       </div>
                     ) : msg.content ? (
                       <MarkdownRenderer content={msg.content} onSendToCli={onSendToCli} />
-                    ) : isPending ? (
+                    ) : isPending && !msg.isThinkingActive ? (
                       <AssistantPending kind={msg.isImageGeneration ? 'image' : 'text'} />
                     ) : null}
 

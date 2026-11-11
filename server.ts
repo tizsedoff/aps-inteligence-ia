@@ -331,6 +331,9 @@ app.post(['/api/chat/stream', '/chat/stream'], requireUser({ cost: 1, hardWork: 
           modelConfig.thinkingConfig = { thinkingLevel: ThinkingLevel.HIGH };
         } else if (model === 'APS INSTANT' || model === 'instant') {
           modelConfig.thinkingConfig = { thinkingLevel: ThinkingLevel.MINIMAL };
+        } else if (modelToTry === 'gemini-3.8-flash') {
+          // APS PRO: razonamiento liviano para responder más rápido (Hard Work y "pensamiento extendido" usan HIGH).
+          modelConfig.thinkingConfig = { thinkingLevel: ThinkingLevel.LOW };
         }
       }
       return modelConfig;

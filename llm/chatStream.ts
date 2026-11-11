@@ -55,7 +55,18 @@ export async function runChatWithTools(opts: ChatRunOptions): Promise<ChatRunRes
       try {
         const config = makeConfig(modelName);
         if (tools) config.tools = tools;
-        const stream = await ai.models.generateContentStream({ model: modelName, contents, config });
+        let stream;
+        try {
+          stream = await ai.models.generateContentStream({ model: modelName, contents, config });
+        } catch (err: any) {
+          // Si el modelo no acepta el nivel de razonamiento pedido, se reintenta el MISMO modelo sin
+          // ese ajuste (en vez de saltar a uno más débil).
+          const rejected = err?.status === 400 || /thinking/i.test(String(err?.message || ''));
+          if (!config.thinkingConfig || !rejected) throw err;
+          console.warn(`APS Engine: ${modelName} rechazó thinkingConfig; reintentando sin ese ajuste.`);
+          const { thinkingConfig: _omit, ...rest } = config;
+          stream = await ai.models.generateContentStream({ model: modelName, contents, config: rest });
+        }
         preferred = i;
         resolvedModel = modelName;
         return stream;

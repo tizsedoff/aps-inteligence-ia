@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Brain, ChevronDown, ChevronUp, Clock } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { LiquidOrb, useElapsedSeconds } from './LoadingStates';
 
@@ -9,82 +9,87 @@ interface ThinkingDrawerProps {
   durationMs?: number;
 }
 
+/**
+ * Estado de razonamiento: una línea liviana ("Pensando… 4 s"), sin cajas.
+ * Si el modelo envía texto de razonamiento, se puede desplegar; si no, no hay nada que abrir.
+ */
 export const ThinkingDrawer: React.FC<ThinkingDrawerProps> = ({
   thinking,
   isActive = false,
   durationMs,
 }) => {
-  const [isOpen, setIsOpen] = useState(isActive);
+  const [isOpen, setIsOpen] = useState(false);
   const elapsed = useElapsedSeconds(isActive);
 
   if (!thinking && !isActive) return null;
 
-  return (
-    <div className="mb-4 overflow-hidden rounded-xl border border-[color:var(--accent)]/25 bg-[color:var(--surface-1)]/70 shadow-lg backdrop-blur-xl">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex w-full items-center justify-between px-4 py-2.5 text-left text-xs font-medium text-[color:var(--accent)] transition-all hover:bg-[color:var(--accent)]/10"
+  const canOpen = !!thinking;
+  const label = isActive
+    ? 'Pensando'
+    : durationMs
+    ? `Pensó durante ${durationMs >= 10000 ? Math.round(durationMs / 1000) : (durationMs / 1000).toFixed(1)} s`
+    : 'Razonamiento';
+
+  const header = (
+    <>
+      {isActive ? (
+        <LiquidOrb className="aps-orb-sm" />
+      ) : (
+        <span className="h-1.5 w-1.5 rounded-full bg-white/70" aria-hidden="true" />
+      )}
+      <span
+        className={`text-[13px] ${
+          isActive ? 'text-white' : 'text-white/80'
+        }`}
       >
-        <div className="flex items-center gap-2.5">
-          <div className="relative flex h-5 w-5 items-center justify-center">
-            {isActive ? (
-              <LiquidOrb className="aps-orb-sm" />
-            ) : (
-              <Brain className="h-4 w-4 text-[color:var(--accent)]" />
-            )}
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="font-serif-luxury text-[color:var(--accent-soft)] font-semibold text-xs sm:text-[13px]">
-              Pensamiento extendido
-            </span>
-            <span className="hidden sm:inline text-[color:var(--text-secondary)] text-[11px]">
-              {isActive ? 'Razonando en profundidad' : 'Análisis completado'}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          {isActive ? (
-            <div className="flex items-center gap-1 text-[11px] font-mono-code text-[color:var(--text-secondary)]">
-              <Clock className="h-3 w-3 text-[color:var(--accent)]" />
-              <span>{elapsed} s</span>
-            </div>
-          ) : durationMs ? (
-            <div className="flex items-center gap-1 text-[11px] font-mono-code text-[color:var(--text-secondary)]">
-              <Clock className="h-3 w-3 text-[color:var(--accent)]" />
-              <span>{(durationMs / 1000).toFixed(1)} s</span>
-            </div>
-          ) : null}
-          {isOpen ? (
-            <ChevronUp className="h-3.5 w-3.5 text-[color:var(--accent)]" />
-          ) : (
-            <ChevronDown className="h-3.5 w-3.5 text-[color:var(--accent)]" />
+        {label}
+      </span>
+      {isActive && (
+        <>
+          <span className="aps-dots" aria-hidden="true">
+            <i />
+            <i />
+            <i />
+          </span>
+          {elapsed >= 3 && (
+            <span className="font-mono-code text-[11px] text-white/70">{elapsed} s</span>
           )}
-        </div>
-      </button>
+        </>
+      )}
+      {canOpen && (
+        <ChevronRight
+          className={`h-3.5 w-3.5 text-white/70 transition-transform ${isOpen ? 'rotate-90' : ''}`}
+        />
+      )}
+    </>
+  );
 
-      <AnimatePresence>
-        {isOpen && (
+  return (
+    <div className={isActive ? 'mb-0.5' : 'mb-3'} role={isActive ? 'status' : undefined} aria-live={isActive ? 'polite' : undefined}>
+      {canOpen ? (
+        <button
+          type="button"
+          onClick={() => setIsOpen((o) => !o)}
+          aria-expanded={isOpen}
+          className="flex items-center gap-2 rounded-lg py-1 pr-2 text-left transition-colors hover:text-white"
+        >
+          {header}
+        </button>
+      ) : (
+        <div className="flex items-center gap-2 py-1">{header}</div>
+      )}
+
+      <AnimatePresence initial={false}>
+        {canOpen && isOpen && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25, ease: 'easeInOut' }}
-            className="border-t border-[color:var(--accent)]/15 bg-[color:var(--surface-0)]/80 p-4 font-mono-code text-xs leading-relaxed text-[color:var(--text-secondary)]"
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="overflow-hidden"
           >
-            {isActive && (
-              <div className="mb-3 flex items-center gap-2 text-[11px] text-[color:var(--accent-hover)]">
-                <span>Explorando posibilidades y armando la respuesta</span>
-                <span className="aps-dots" aria-hidden="true">
-                  <i />
-                  <i />
-                  <i />
-                </span>
-              </div>
-            )}
-            <div className="max-h-64 overflow-y-auto whitespace-pre-wrap rounded-lg bg-[color:var(--surface-1)]/60 p-3 border border-[color:var(--accent)]/10 scrollbar-thin">
-              {thinking || 'Iniciando hilo de razonamiento lógico...'}
+            <div className="mt-1.5 max-h-56 overflow-y-auto whitespace-pre-wrap break-words border-l-2 border-white/40 pl-3 text-[12.5px] leading-relaxed text-white/85 scrollbar-thin">
+              {thinking}
             </div>
           </motion.div>
         )}
