@@ -84,6 +84,13 @@ export function requireUser(opts: RequireUserOptions) {
         used = data.used ?? 0;
         limit = data.limit ?? null;
         period = data.period ?? null;
+        if (data.allowed !== true && data.reason === 'capacity') {
+          // Tope global de la plataforma: no es culpa del usuario ni de su plan.
+          return res.status(503).json({
+            error: 'APS llegó a su capacidad de hoy. Tu cupo no se descontó: volvé a intentar mañana.',
+            code: 'capacity',
+          });
+        }
         if (data.allowed !== true) {
           const when = period === 'day' ? 'de hoy' : 'de este mes';
           return res.status(429).json({
