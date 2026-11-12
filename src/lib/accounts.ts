@@ -40,6 +40,23 @@ export async function fetchUsage(): Promise<UserUsage | undefined> {
   return { day: data.day, dayCount: 0, month: data.month, monthCount: used, count: used };
 }
 
+export interface AdminStats {
+  total_users: number;
+  new_24h: number;
+  new_7d: number;
+  active_24h: number;
+  by_plan: Record<string, number>;
+  global_used_today: number;
+  global_cap: number;
+}
+
+/** Números de la plataforma (solo administradores; para el resto la base responde 'forbidden'). */
+export async function fetchAdminStats(): Promise<AdminStats | null> {
+  const { data, error } = await supabase.rpc('aps_admin_stats');
+  if (error || !data) return null;
+  return data as AdminStats;
+}
+
 async function readProfile(userId: string): Promise<ProfileRow | null> {
   const { data, error } = await supabase.from('aps_profiles').select('*').eq('id', userId).maybeSingle();
   if (error) throw error;

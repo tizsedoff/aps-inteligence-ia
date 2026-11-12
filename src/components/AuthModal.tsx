@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { UserAccount, MemoryItem, PlanId } from '../types';
 import { PLANS_LIST, APS_PLANS, getUserPlanId, getCurrentMonthKey } from '../constants/plans';
 import { UserAvatar } from './UserAvatar';
+import { AdminStatsCard } from './AdminStatsCard';
 import { ApsLogo } from './ApsLogo';
 import { supabase, supabaseConfigured, SUPABASE_CONFIG_ERROR } from '../lib/supabase';
 import { fetchAccount, translateAuthError, updateProfileFields, syncMemories } from '../lib/accounts';
@@ -701,6 +702,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </span>
               </div>
             </div>
+
+            {currentUser.isAdmin && <AdminStatsCard />}
 
             {/* Quick Actions */}
             <div className="flex gap-3 pt-1">
