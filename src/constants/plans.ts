@@ -34,7 +34,6 @@ export const APS_PLANS: Record<PlanId, PlanConfig> = {
       '600 usos por mes (≈ 20 por día)',
       'Desbloquea APS HARD WORK (5 usos por pedido)',
       'Consola de desarrollo CLI',
-      'Imágenes: 3 usos cada una',
     ],
   },
   pro: {
@@ -52,7 +51,6 @@ export const APS_PLANS: Record<PlanId, PlanConfig> = {
       '1.200 usos por mes (≈ 40 por día)',
       'APS HARD WORK (5 usos por pedido)',
       'Consola CLI y archivos',
-      'Imágenes: 3 usos cada una',
     ],
   },
   promax: {
@@ -70,7 +68,6 @@ export const APS_PLANS: Record<PlanId, PlanConfig> = {
       '4.000 usos por mes (≈ 130 por día)',
       'APS HARD WORK (5 usos por pedido)',
       'Consola CLI y archivos',
-      'Imágenes: 3 usos cada una',
     ],
   },
 };

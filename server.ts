@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import { GoogleGenAI, ThinkingLevel, Type } from '@google/genai';
 import dotenv from 'dotenv';
 import path from 'path';
@@ -708,7 +708,13 @@ const IMAGE_MODEL_CANDIDATES: string[] = [
 ];
 const ALLOWED_ASPECT_RATIOS = ['1:1', '3:4', '4:3', '9:16', '16:9', '2:3', '3:2'];
 
-app.post(['/api/image/generate', '/image/generate'], requireUser({ cost: 3 }), async (req: Request, res: Response) => {
+// Apagado por defecto: sin cuota de imágenes en la API no se debe gastar ni descontar usos. IMAGES_ENABLED=1 lo reactiva.
+const imagesEnabled = (_req: Request, res: Response, next: NextFunction) =>
+  process.env.IMAGES_ENABLED === '1'
+    ? next()
+    : res.status(503).json({ success: false, error: 'La generación de imágenes está temporalmente deshabilitada.' });
+
+app.post(['/api/image/generate', '/image/generate'], imagesEnabled, requireUser({ cost: 3 }), async (req: Request, res: Response) => {
   try {
     const { prompt, attachments = [], aspectRatio } = req.body || {};
     if (typeof prompt !== 'string' || prompt.trim().length < 2) {

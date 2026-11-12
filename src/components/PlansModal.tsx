@@ -508,7 +508,7 @@ export const PlansModal: React.FC<PlansModalProps> = ({
 
         {/* Footer Note */}
         <div className="mt-6 pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-3 text-[11px] text-[color:var(--text-muted)] font-mono-code">
-          <span>APS Basic renueva 15 usos cada día. Los planes pagos renuevan mensualmente. APS Hard Work consume 5 usos y cada imagen 3.</span>
+          <span>APS Basic renueva 15 usos cada día. Los planes pagos renuevan mensualmente. APS Hard Work consume 5 usos.</span>
           <span className="text-[color:var(--accent)]">
             {currentUser?.isAdmin
               ? 'Modo simulado (solo administradores) · sin cobro real'

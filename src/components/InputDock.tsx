@@ -1,3 +1,4 @@
+import { IMAGE_GENERATION_ENABLED } from '../constants/features';
 import React, { useRef, useState, useEffect } from 'react';
 import { ApsModelId, InteractionMode, Attachment, VisualCustomization } from '../types';
 import { ApsLogo } from './ApsLogo';
@@ -268,7 +269,8 @@ export const InputDock: React.FC<InputDockProps> = ({
             />
           </div>
 
-          {/* Image generation toggle (Gemini) */}
+          {/* Image generation toggle (Gemini): oculto mientras no haya cuota de imágenes */}
+          {IMAGE_GENERATION_ENABLED && (
           <button
             onClick={() => setImageMode((v) => !v)}
             className={`flex items-center gap-1 rounded-full px-2.5 sm:px-3 py-1.5 text-xs font-bold uppercase transition-all ${
@@ -283,6 +285,7 @@ export const InputDock: React.FC<InputDockProps> = ({
             <ImagePlus className="h-3.5 w-3.5" />
             <span className="hidden md:inline text-[10px]">Imagen</span>
           </button>
+          )}
 
           {/* Extended Thinking Quick Indicator Toggle */}
           <button
