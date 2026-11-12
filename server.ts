@@ -370,6 +370,8 @@ app.post(['/api/chat/stream', '/chat/stream'], requireUser({ cost: 1, hardWork: 
       truncated: truncatedFiles,
       send: sendEvent,
       meta: { model, isHardWork },
+      // Si el modelo no empieza a responder a tiempo, se pasa al siguiente (Hard Work puede pensar más).
+      firstChunkMs: isHardWork ? 0 : tier === 'instant' ? 12_000 : 25_000,
     });
     const totalText = run.totalText;
     const totalThoughts = run.totalThoughts;

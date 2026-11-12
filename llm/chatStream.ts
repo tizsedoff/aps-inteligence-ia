@@ -20,6 +20,12 @@ export interface ChatRunOptions {
   truncated: Set<string>;
   send: Send;
   meta: { model: string; isHardWork: boolean };
+  /**
+   * Plazo (ms) para que un modelo EMPIECE a responder (primer fragmento). Si no llega a tiempo se lo
+   * abandona y se pasa al siguiente candidato, en vez de esperar minutos. No se aplica al último
+   * candidato. 0/undefined = sin plazo (p. ej. Hard Work, que puede pensar mucho antes de escribir).
+   */
+  firstChunkMs?: number;
 }
 
 export interface ChatRunResult {
@@ -30,6 +36,21 @@ export interface ChatRunResult {
 }
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Adelanta el primer fragmento del flujo y devuelve un flujo equivalente que lo incluye. */
+async function peekFirst(stream: AsyncIterable<any>): Promise<AsyncIterable<any>> {
+  const it = stream[Symbol.asyncIterator]();
+  const first = await it.next();
+  return (async function* () {
+    if (first.done) return;
+    yield first.value;
+    for (;;) {
+      const n = await it.next();
+      if (n.done) return;
+      yield n.value;
+    }
+  })();
+}
 
 export async function runChatWithTools(opts: ChatRunOptions): Promise<ChatRunResult> {
   const { ai, Type, candidates, makeConfig, files, truncated, send, meta } = opts;
@@ -52,12 +73,38 @@ export async function runChatWithTools(opts: ChatRunOptions): Promise<ChatRunRes
     let lastError: any = null;
     for (let i = preferred; i < candidates.length; i++) {
       const modelName = candidates[i];
+      const isLast = i === candidates.length - 1;
+      const deadline = !isLast && opts.firstChunkMs && opts.firstChunkMs > 0 ? opts.firstChunkMs : 0;
+
+      // Una llamada al modelo; con plazo, se aborta si no hay primer fragmento a tiempo.
+      const attempt = async (cfg: any) => {
+        if (!deadline) return ai.models.generateContentStream({ model: modelName, contents, config: cfg });
+        const ctrl = new AbortController();
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        const work = (async () => {
+          const s = await ai.models.generateContentStream({ model: modelName, contents, config: { ...cfg, abortSignal: ctrl.signal } });
+          return peekFirst(s);
+        })();
+        const timeout = new Promise<never>((_, reject) => {
+          timer = setTimeout(() => {
+            ctrl.abort();
+            reject(Object.assign(new Error(`Sin respuesta en ${Math.round(deadline / 1000)} s`), { status: 504 }));
+          }, deadline);
+        });
+        try {
+          return await Promise.race([work, timeout]);
+        } finally {
+          clearTimeout(timer);
+          work.catch(() => {});
+        }
+      };
+
       try {
         const config = makeConfig(modelName);
         if (tools) config.tools = tools;
         let stream;
         try {
-          stream = await ai.models.generateContentStream({ model: modelName, contents, config });
+          stream = await attempt(config);
         } catch (err: any) {
           // Si el modelo no acepta el nivel de razonamiento pedido, se reintenta el MISMO modelo sin
           // ese ajuste (en vez de saltar a uno más débil).
@@ -65,7 +112,7 @@ export async function runChatWithTools(opts: ChatRunOptions): Promise<ChatRunRes
           if (!config.thinkingConfig || !rejected) throw err;
           console.warn(`APS Engine: ${modelName} rechazó thinkingConfig; reintentando sin ese ajuste.`);
           const { thinkingConfig: _omit, ...rest } = config;
-          stream = await ai.models.generateContentStream({ model: modelName, contents, config: rest });
+          stream = await attempt(rest);
         }
         preferred = i;
         resolvedModel = modelName;
