@@ -37,6 +37,15 @@ export interface ChatRunResult {
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+// Modelos que acaban de fallar por sobrecarga (503/429) o por no responder a tiempo (504): se los saltea
+// un rato, así no se pierden segundos esperando el mismo error en cada mensaje. Vive en la memoria de la
+// instancia: en Vercel dura mientras la función siga "caliente".
+const COOLDOWN_MS = 120_000;
+const cooldownUntil = new Map<string, number>();
+const COOLDOWN_STATUSES = new Set([429, 503, 504]);
+export const resetCooldowns = () => cooldownUntil.clear();
+const inCooldown = (model: string) => (cooldownUntil.get(model) ?? 0) > Date.now();
+
 /** Adelanta el primer fragmento del flujo y devuelve un flujo equivalente que lo incluye. */
 async function peekFirst(stream: AsyncIterable<any>): Promise<AsyncIterable<any>> {
   const it = stream[Symbol.asyncIterator]();
@@ -74,6 +83,11 @@ export async function runChatWithTools(opts: ChatRunOptions): Promise<ChatRunRes
     for (let i = preferred; i < candidates.length; i++) {
       const modelName = candidates[i];
       const isLast = i === candidates.length - 1;
+      // Si hay otro candidato disponible, un modelo que falló hace poco por sobrecarga se saltea.
+      if (!isLast && inCooldown(modelName)) {
+        console.warn(`APS Engine: ${modelName} en pausa por sobrecarga reciente; se saltea.`);
+        continue;
+      }
       const deadline = !isLast && opts.firstChunkMs && opts.firstChunkMs > 0 ? opts.firstChunkMs : 0;
 
       // Una llamada al modelo; con plazo, se aborta si no hay primer fragmento a tiempo.
@@ -119,6 +133,7 @@ export async function runChatWithTools(opts: ChatRunOptions): Promise<ChatRunRes
         return stream;
       } catch (err: any) {
         lastError = err;
+        if (COOLDOWN_STATUSES.has(Number(err?.status))) cooldownUntil.set(modelName, Date.now() + COOLDOWN_MS);
         console.warn(`APS Engine: Model ${modelName} unavailable (${err?.status || err?.message}). Cascading to next candidate...`);
         await wait(400);
       }
