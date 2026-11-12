@@ -69,6 +69,15 @@ export function isProviderReady(id: ExternalProviderId): boolean {
   return Boolean(env(cfg.apiKeyEnv) && env(cfg.reviewModelEnv));
 }
 
+/** Dirección y clave de un proveedor (para el chat). null si falta la clave. */
+export function getProviderEndpoint(id: ExternalProviderId): { baseUrl: string; apiKey: string } | null {
+  const cfg = PROVIDERS[id];
+  if (!cfg) return null;
+  const apiKey = env(cfg.apiKeyEnv);
+  if (!apiKey) return null;
+  return { baseUrl: (env(cfg.baseUrlEnv) || cfg.defaultBaseUrl).replace(/\/+$/, ''), apiKey };
+}
+
 /** Orden de preferencia para revisar: REVIEW_PROVIDERS="groq,nvidia" (por defecto ese orden). */
 export function getReviewProviders(): ExternalProviderId[] {
   const order = (env('REVIEW_PROVIDERS') || 'groq,nvidia')

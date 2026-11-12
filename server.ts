@@ -7,6 +7,7 @@ import { parseModelJson } from './llm/providers.ts';
 import { reviewGeneratedCode, ReviewOutcome } from './llm/review.ts';
 import { buildFilesContext, sanitizeFilename, WorkFile } from './llm/codeTools.ts';
 import { runChatWithTools } from './llm/chatStream.ts';
+import { externalCandidates, withExternalModels } from './llm/openaiCompat.ts';
 import { registerBilling } from './llm/billing.ts';
 import { trimHistory } from './llm/history.ts';
 import { requireUser } from './llm/auth.ts';
@@ -250,8 +251,14 @@ app.post(['/api/chat/stream', '/chat/stream'], requireUser({ cost: 1, hardWork: 
       allowCodeEdits = false,
     } = req.body;
 
-    const ai = getGenAI();
-    const candidateModels = getModelCandidateList(model);
+    // Gemini siempre queda como respaldo; Groq/NVIDIA (si están configurados por APS_EXT_*) van primero.
+    const ai = withExternalModels(getGenAI());
+    const tier = model === 'APS HARD WORK' || model === 'hardwork' || extendedThinking
+      ? 'hard'
+      : model === 'APS INSTANT' || model === 'instant'
+      ? 'instant'
+      : 'pro';
+    const candidateModels = [...externalCandidates(tier), ...getModelCandidateList(model)];
     const targetModel = candidateModels[0];
 
     // Build trained system instructions matching model, interaction mode, terminal context, and user memories
