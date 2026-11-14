@@ -185,12 +185,22 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
       <header className="relative z-20 flex w-full items-center justify-between px-4 py-3 sm:px-8 border-b border-white/10 backdrop-blur-xl bg-black/40">
         <ApsLogo variant="full" />
 
-        <button
-          onClick={onOpenTerms}
-          className="text-xs text-[color:var(--text-secondary)] hover:text-white underline underline-offset-4 transition-colors"
-        >
-          Términos & Privacidad
-        </button>
+        <div className="flex items-center gap-4">
+          <a
+            href="https://aps-support.vercel.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-[color:var(--text-secondary)] hover:text-white underline underline-offset-4 transition-colors"
+          >
+            Ayuda
+          </a>
+          <button
+            onClick={onOpenTerms}
+            className="text-xs text-[color:var(--text-secondary)] hover:text-white underline underline-offset-4 transition-colors"
+          >
+            Términos & Privacidad
+          </button>
+        </div>
       </header>
 
       {/* Main Container */}

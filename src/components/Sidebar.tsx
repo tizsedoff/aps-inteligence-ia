@@ -18,6 +18,7 @@ import {
   Brain,
   Briefcase,
   Box,
+  LifeBuoy,
 } from 'lucide-react';
 
 import { getUserPlan, getUserMonthlyUsage } from '../constants/plans';
@@ -280,6 +281,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {scene3d ? 'Activado' : 'Apagado'}
             </span>
           </button>
+
+          {/* Soporte (sitio aparte, se abre en otra pestaña) */}
+          <a
+            href="https://aps-support.vercel.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={onClose}
+            className="flex w-full items-center gap-2.5 rounded-xl border border-white/10 bg-white/5 p-2.5 text-xs text-white hover:bg-white/10 transition-colors"
+          >
+            <LifeBuoy className="h-4 w-4 text-[color:var(--accent)]" />
+            <span>Ayuda y soporte</span>
+          </a>
 
           {/* Terms & Cookies */}
           <button
