@@ -309,6 +309,20 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
                   </div>
                 )}
 
+                {/* Contraseña incorrecta: derivar al soporte */}
+                {errorActionType === 'WRONG_PASSWORD' && (
+                  <div className="pt-2 border-t border-red-500/20">
+                    <a
+                      href="https://aps-support.vercel.app/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-white/20 bg-black/60 py-2 px-3 text-xs font-semibold text-white hover:bg-white/10 active:scale-95 transition-all"
+                    >
+                      Recuperar mi contraseña (soporte)
+                    </a>
+                  </div>
+                )}
+
                 {/* Specific Action when user needs to register during login */}
                 {errorActionType === 'SWITCH_TO_REGISTER' && (
                   <div className="pt-2 border-t border-red-500/20">
@@ -457,6 +471,18 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
                     className="w-full rounded-xl border border-white/15 bg-black/50 pl-10 pr-4 py-2.5 text-xs text-white placeholder-white/30 focus:border-[color:var(--accent)] focus:ring-1 focus:ring-[color:var(--accent)] focus:outline-none transition-all shadow-inner"
                   />
                 </div>
+                {mode === 'login' && (
+                  <div className="mt-1.5 text-right">
+                    <a
+                      href="https://aps-support.vercel.app/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] text-[color:var(--accent)] hover:underline"
+                    >
+                      ¿Olvidaste tu contraseña?
+                    </a>
+                  </div>
+                )}
               </div>
 
               {/* Confirm Password (when registering) */}
