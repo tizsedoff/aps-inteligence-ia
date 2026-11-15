@@ -5,6 +5,7 @@ import { UserAvatar } from './UserAvatar';
 import { AdminStatsCard } from './AdminStatsCard';
 import { ApsLogo } from './ApsLogo';
 import { supabase, supabaseConfigured, SUPABASE_CONFIG_ERROR } from '../lib/supabase';
+import { deletionRequestUrl } from '../constants/business';
 import { fetchAccount, translateAuthError, updateProfileFields, syncMemories } from '../lib/accounts';
 import {
   ShieldCheck,
@@ -273,7 +274,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     value={authName}
                     onChange={(e) => setAuthName(e.target.value)}
                     placeholder="Tu nombre completo"
-                    className="w-full rounded-xl border border-white/15 bg-black/60 pl-9 pr-3 py-2 text-xs text-white placeholder-white/30 focus:border-[color:var(--accent)] outline-none"
+                    className="w-full rounded-xl border border-white/15 bg-black/60 pl-9 pr-3 py-2 text-xs text-white placeholder-white/50 focus:border-[color:var(--accent)] outline-none"
                     required
                   />
                 </div>
@@ -289,7 +290,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   value={authEmail}
                   onChange={(e) => setAuthEmail(e.target.value)}
                   placeholder="ejemplo@correo.com"
-                  className="w-full rounded-xl border border-white/15 bg-black/60 pl-9 pr-3 py-2 text-xs text-white placeholder-white/30 focus:border-[color:var(--accent)] outline-none"
+                  className="w-full rounded-xl border border-white/15 bg-black/60 pl-9 pr-3 py-2 text-xs text-white placeholder-white/50 focus:border-[color:var(--accent)] outline-none"
                   required
                 />
               </div>
@@ -304,7 +305,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   value={authPassword}
                   onChange={(e) => setAuthPassword(e.target.value)}
                   placeholder="Mínimo 6 caracteres"
-                  className="w-full rounded-xl border border-white/15 bg-black/60 pl-9 pr-3 py-2 text-xs text-white placeholder-white/30 focus:border-[color:var(--accent)] outline-none"
+                  className="w-full rounded-xl border border-white/15 bg-black/60 pl-9 pr-3 py-2 text-xs text-white placeholder-white/50 focus:border-[color:var(--accent)] outline-none"
                   required
                 />
               </div>
@@ -722,6 +723,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 <Brain className="h-4 w-4" />
                 <span>Configurar Memoria</span>
               </button>
+            </div>
+
+            {/* Derecho de supresión: se tramita por correo con los datos ya cargados */}
+            <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-[11px] text-[color:var(--text-secondary)]">
+              <p className="mb-2">
+                Podés pedir que eliminemos tu cuenta y todos tus datos (perfil, memorias, marca, uso y suscripción).
+              </p>
+              <a
+                href={deletionRequestUrl(currentUser.email)}
+                className="inline-flex rounded-lg border border-red-500/30 px-3 py-1.5 font-medium text-red-300 hover:bg-red-950/40"
+              >
+                Eliminar mi cuenta y mis datos
+              </a>
             </div>
           </div>
         )}

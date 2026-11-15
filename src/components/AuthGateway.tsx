@@ -16,10 +16,12 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { motion } from 'motion/react';
+import type { LegalTab } from '../constants/legalDocs';
+import { LEGAL_VERSION } from '../constants/business';
 
 interface AuthGatewayProps {
   onLogin: (user: UserAccount) => void;
-  onOpenTerms: () => void;
+  onOpenTerms: (tab?: LegalTab) => void;
 }
 
 export type AuthErrorAction = 'NONE' | 'SWITCH_TO_REGISTER' | 'EMAIL_ALREADY_REGISTERED' | 'WRONG_PASSWORD';
@@ -30,6 +32,7 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [avatarImage, setAvatarImage] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
@@ -106,6 +109,10 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
       setError('Por favor ingresa tu nombre o apodo.');
       return;
     }
+    if (mode === 'register' && !acceptedTerms) {
+      setError('Para crear tu cuenta tenés que confirmar que tenés 18 años o más y aceptar los Términos y la Política de Privacidad.');
+      return;
+    }
 
     setLoading(true);
     try {
@@ -124,7 +131,10 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
         const { data, error: err } = await supabase.auth.signUp({
           email: cleanEmail,
           password,
-          options: { data: { name: displayName }, emailRedirectTo: window.location.origin },
+          options: {
+            data: { name: displayName, terms_accepted_at: new Date().toISOString(), terms_version: LEGAL_VERSION },
+            emailRedirectTo: window.location.origin,
+          },
         });
         if (err) {
           setError(translateAuthError(err));
@@ -195,7 +205,7 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
             Ayuda
           </a>
           <button
-            onClick={onOpenTerms}
+            onClick={() => onOpenTerms('terms')}
             className="text-xs text-[color:var(--text-secondary)] hover:text-white underline underline-offset-4 transition-colors"
           >
             Términos & Privacidad
@@ -244,7 +254,7 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
                 }}
                 className={`flex-1 rounded-xl py-2.5 text-xs font-serif-luxury font-bold tracking-wider transition-all duration-200 ${
                   mode === 'login'
-                    ? 'bg-gradient-to-r from-[color:var(--accent)] via-[color:var(--accent-2)] to-[color:var(--accent-2)] text-white shadow-lg scale-[1.01]'
+                    ? 'bg-gradient-to-r from-[color:var(--accent)] via-[color:var(--accent-2)] to-[color:var(--accent-2)] text-black shadow-lg scale-[1.01]'
                     : 'text-[color:var(--text-secondary)] hover:text-white'
                 }`}
               >
@@ -259,7 +269,7 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
                 }}
                 className={`flex-1 rounded-xl py-2.5 text-xs font-serif-luxury font-bold tracking-wider transition-all duration-200 ${
                   mode === 'register'
-                    ? 'bg-gradient-to-r from-[color:var(--accent)] via-[color:var(--accent-2)] to-[color:var(--accent-2)] text-white shadow-lg scale-[1.01]'
+                    ? 'bg-gradient-to-r from-[color:var(--accent)] via-[color:var(--accent-2)] to-[color:var(--accent-2)] text-black shadow-lg scale-[1.01]'
                     : 'text-[color:var(--text-secondary)] hover:text-white'
                 }`}
               >
@@ -361,32 +371,35 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
                 <>
                   {/* Name Input */}
                   <div>
-                    <label className="block text-[11px] font-mono-code font-medium text-[color:var(--text-secondary)] mb-1.5 uppercase tracking-wider">
+                    <label htmlFor="auth-name" className="block text-[11px] font-mono-code font-medium text-[color:var(--text-secondary)] mb-1.5 uppercase tracking-wider">
                       Nombre o Alias
                     </label>
                     <div className="relative">
                       <User className="absolute left-3.5 top-3 h-4 w-4 text-[color:var(--text-secondary)]" />
                       <input
+                        id="auth-name"
                         type="text"
+                        autoComplete="nickname"
                         required
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="Ingresa tu nombre o apodo"
-                        className="w-full rounded-xl border border-white/15 bg-black/50 pl-10 pr-4 py-2.5 text-xs text-white placeholder-white/30 focus:border-[color:var(--accent)] focus:ring-1 focus:ring-[color:var(--accent)] focus:outline-none transition-all shadow-inner"
+                        className="w-full rounded-xl border border-white/15 bg-black/50 pl-10 pr-4 py-2.5 text-xs text-white placeholder-white/50 focus:border-[color:var(--accent)] focus:ring-1 focus:ring-[color:var(--accent)] focus:outline-none transition-all shadow-inner"
                       />
                     </div>
                   </div>
 
                   {/* Profile Picture Upload */}
                   <div className="hidden sm:block">
-                    <label className="block text-[11px] font-mono-code font-medium text-[color:var(--text-secondary)] mb-1.5 uppercase tracking-wider">
+                    <span className="block text-[11px] font-mono-code font-medium text-[color:var(--text-secondary)] mb-1.5 uppercase tracking-wider">
                       Foto de Perfil (Opcional)
-                    </label>
+                    </span>
 
                     {/* Hidden file input */}
                     <input
                       type="file"
                       ref={fileInputRef}
+                      aria-label="Foto de perfil (opcional)"
                       accept="image/*"
                       onChange={handleImageFileChange}
                       className="hidden"
@@ -398,7 +411,7 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
                         {avatarImage ? (
                           <img
                             src={avatarImage}
-                            alt="Preview"
+                            alt="Vista previa de tu foto de perfil"
                             className="h-full w-full object-cover"
                           />
                         ) : (
@@ -412,6 +425,7 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
                             onClick={() => setAvatarImage('')}
                             className="absolute top-0.5 right-0.5 rounded-full bg-black/80 p-0.5 text-white/80 hover:text-white"
                             title="Quitar foto"
+                            aria-label="Quitar foto"
                           >
                             <X className="h-3 w-3" />
                           </button>
@@ -438,37 +452,41 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
 
               {/* Email Input */}
               <div>
-                <label className="block text-[11px] font-mono-code font-medium text-[color:var(--text-secondary)] mb-1.5 uppercase tracking-wider">
+                <label htmlFor="auth-email" className="block text-[11px] font-mono-code font-medium text-[color:var(--text-secondary)] mb-1.5 uppercase tracking-wider">
                   Correo Electrónico
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3.5 top-3 h-4 w-4 text-[color:var(--text-secondary)]" />
                   <input
                     ref={emailInputRef}
+                    id="auth-email"
                     type="email"
+                    autoComplete="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="tucorreo@ejemplo.com"
-                    className="w-full rounded-xl border border-white/15 bg-black/50 pl-10 pr-4 py-2.5 text-xs text-white placeholder-white/30 focus:border-[color:var(--accent)] focus:ring-1 focus:ring-[color:var(--accent)] focus:outline-none transition-all shadow-inner"
+                    className="w-full rounded-xl border border-white/15 bg-black/50 pl-10 pr-4 py-2.5 text-xs text-white placeholder-white/50 focus:border-[color:var(--accent)] focus:ring-1 focus:ring-[color:var(--accent)] focus:outline-none transition-all shadow-inner"
                   />
                 </div>
               </div>
 
               {/* Password Input */}
               <div>
-                <label className="block text-[11px] font-mono-code font-medium text-[color:var(--text-secondary)] mb-1.5 uppercase tracking-wider">
+                <label htmlFor="auth-password" className="block text-[11px] font-mono-code font-medium text-[color:var(--text-secondary)] mb-1.5 uppercase tracking-wider">
                   Contraseña
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-3.5 top-3 h-4 w-4 text-[color:var(--text-secondary)]" />
                   <input
+                    id="auth-password"
                     type="password"
+                    autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Mínimo 6 caracteres"
-                    className="w-full rounded-xl border border-white/15 bg-black/50 pl-10 pr-4 py-2.5 text-xs text-white placeholder-white/30 focus:border-[color:var(--accent)] focus:ring-1 focus:ring-[color:var(--accent)] focus:outline-none transition-all shadow-inner"
+                    className="w-full rounded-xl border border-white/15 bg-black/50 pl-10 pr-4 py-2.5 text-xs text-white placeholder-white/50 focus:border-[color:var(--accent)] focus:ring-1 focus:ring-[color:var(--accent)] focus:outline-none transition-all shadow-inner"
                   />
                 </div>
                 {mode === 'login' && (
@@ -488,18 +506,20 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
               {/* Confirm Password (when registering) */}
               {mode === 'register' && (
                 <div>
-                  <label className="block text-[11px] font-mono-code font-medium text-[color:var(--text-secondary)] mb-1.5 uppercase tracking-wider">
+                  <label htmlFor="auth-confirm" className="block text-[11px] font-mono-code font-medium text-[color:var(--text-secondary)] mb-1.5 uppercase tracking-wider">
                     Confirmar Contraseña
                   </label>
                   <div className="relative">
                     <Lock className="absolute left-3.5 top-3 h-4 w-4 text-[color:var(--text-secondary)]" />
                     <input
+                      id="auth-confirm"
                       type="password"
+                      autoComplete="new-password"
                       required
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="Repite tu contraseña"
-                      className="w-full rounded-xl border border-white/15 bg-black/50 pl-10 pr-4 py-2.5 text-xs text-white placeholder-white/30 focus:border-[color:var(--accent)] focus:ring-1 focus:ring-[color:var(--accent)] focus:outline-none transition-all shadow-inner"
+                      className="w-full rounded-xl border border-white/15 bg-black/50 pl-10 pr-4 py-2.5 text-xs text-white placeholder-white/50 focus:border-[color:var(--accent)] focus:ring-1 focus:ring-[color:var(--accent)] focus:outline-none transition-all shadow-inner"
                     />
                   </div>
                 </div>
@@ -534,11 +554,44 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
                 )}
               </div>
 
+              {/* Consentimiento: obligatorio y sin casilla premarcada */}
+              {mode === 'register' && (
+                <div className="flex items-start gap-2.5 text-[11px] leading-relaxed text-[color:var(--text-secondary)]">
+                  <input
+                    id="auth-terms"
+                    type="checkbox"
+                    checked={acceptedTerms}
+                    onChange={(e) => setAcceptedTerms(e.target.checked)}
+                    required
+                    className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-[color:var(--accent)]"
+                  />
+                  <label htmlFor="auth-terms" className="cursor-pointer">
+                    Tengo 18 años o más y acepto los{' '}
+                    <button
+                      type="button"
+                      onClick={() => onOpenTerms('terms')}
+                      className="text-[color:var(--accent)] underline"
+                    >
+                      Términos y Condiciones
+                    </button>{' '}
+                    y la{' '}
+                    <button
+                      type="button"
+                      onClick={() => onOpenTerms('privacy')}
+                      className="text-[color:var(--accent)] underline"
+                    >
+                      Política de Privacidad
+                    </button>
+                    .
+                  </label>
+                </div>
+              )}
+
               {/* Submit Button with App Signature Gradient */}
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full relative group overflow-hidden rounded-2xl border border-white/20 bg-gradient-to-r from-[color:var(--accent)] via-[color:var(--accent-2)] to-[color:var(--accent-2)] py-3.5 text-xs font-serif-luxury font-bold tracking-wider text-white shadow-xl hover:brightness-110 active:scale-[0.99] transition-all disabled:opacity-50 mt-2"
+                className="w-full relative group overflow-hidden rounded-2xl border border-white/20 bg-gradient-to-r from-[color:var(--accent)] via-[color:var(--accent-2)] to-[color:var(--accent-2)] py-3.5 text-xs font-serif-luxury font-bold tracking-wider text-black shadow-xl hover:brightness-110 active:scale-[0.99] transition-all disabled:opacity-50 mt-2"
               >
                 <div className="flex items-center justify-center gap-2">
                   {loading ? (
@@ -561,6 +614,12 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({ onLogin, onOpenTerms }
 
       {/* Footer */}
       <footer className="relative z-20 py-2 sm:py-4 [@media(max-height:760px)]:hidden text-center text-[10px] text-[color:var(--text-secondary)] border-t border-white/5 bg-black/40 backdrop-blur-md">
+        <nav aria-label="Información legal" className="mb-1 flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+          <button type="button" onClick={() => onOpenTerms('terms')} className="underline underline-offset-2 hover:text-white">Términos</button>
+          <button type="button" onClick={() => onOpenTerms('privacy')} className="underline underline-offset-2 hover:text-white">Privacidad</button>
+          <button type="button" onClick={() => onOpenTerms('cookies')} className="underline underline-offset-2 hover:text-white">Cookies</button>
+          <button type="button" onClick={() => onOpenTerms('refunds')} className="underline underline-offset-2 hover:text-white">Reembolsos</button>
+        </nav>
         <span>© {new Date().getFullYear()} APS INTELLIGENCE · Todos los derechos reservados.</span>
       </footer>
     </div>

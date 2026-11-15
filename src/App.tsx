@@ -17,6 +17,7 @@ import {
   ChatCodeChange,
 } from './types';
 import { DEFAULT_CUSTOMIZATION } from './constants/themePresets';
+import type { LegalTab } from './constants/legalDocs';
 import { Header } from './components/Header';
 import { ChatTimeline } from './components/ChatTimeline';
 import { InputDock } from './components/InputDock';
@@ -54,6 +55,11 @@ export default function App() {
   const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isTermsOpen, setIsTermsOpen] = useState(false);
+  const [legalTab, setLegalTab] = useState<LegalTab>('terms');
+  const openLegal = (tab: LegalTab = 'terms') => {
+    setLegalTab(tab);
+    setIsTermsOpen(true);
+  };
   const [isPlansModalOpen, setIsPlansModalOpen] = useState(false);
   const [planModalNotice, setPlanModalNotice] = useState<string | undefined>(undefined);
   const [isBrandOpen, setIsBrandOpen] = useState(false);
@@ -216,7 +222,8 @@ export default function App() {
   const handleUpdateCustomization = (updated: Partial<VisualCustomization>) => {
     setCustomization((prev) => {
       const next = { ...prev, ...updated };
-      localStorage.setItem('aps_customization', JSON.stringify(next));
+      // Solo se guarda en el dispositivo si el usuario permitió la personalización.
+      if (cookiePrefs.personalization) localStorage.setItem('aps_customization', JSON.stringify(next));
       return next;
     });
   };
@@ -345,8 +352,8 @@ export default function App() {
     return {
       accepted: false,
       necessary: true,
-      performance: true,
-      personalization: true,
+      performance: false,
+      personalization: false,
       timestamp: Date.now(),
     };
   });
@@ -933,10 +940,11 @@ export default function App() {
       <div className="relative min-h-dvh w-full overflow-x-hidden pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] bg-[color:var(--surface-0)] text-[color:var(--text-primary)] font-sans">
         <AuthGateway
           onLogin={handleLogin}
-          onOpenTerms={() => setIsTermsOpen(true)}
+          onOpenTerms={(tab) => openLegal(tab)}
         />
         <LegalModals
           isTermsOpen={isTermsOpen}
+          initialTab={legalTab}
           onCloseTerms={() => setIsTermsOpen(false)}
           cookiePrefs={cookiePrefs}
           onUpdateCookiePrefs={(p) => setCookiePrefs(p)}
@@ -987,7 +995,7 @@ export default function App() {
         currentUser={currentUser}
         onOpenAuth={() => setIsAuthOpen(true)}
         onOpenCustomizer={() => setIsCustomizerOpen(true)}
-        onOpenTerms={() => setIsTermsOpen(true)}
+        onOpenTerms={() => openLegal('terms')}
         onOpenSidebar={() => setSidebarOpen(true)}
         onNewChat={handleNewChat}
         onOpenPlans={handleOpenPlans}
@@ -1094,7 +1102,7 @@ export default function App() {
         currentUser={currentUser}
         onOpenAuth={() => setIsAuthOpen(true)}
         onOpenCustomizer={() => setIsCustomizerOpen(true)}
-        onOpenTerms={() => setIsTermsOpen(true)}
+        onOpenTerms={() => openLegal('terms')}
         onOpenPlans={handleOpenPlans}
         workspace={workspace}
         onSelectWorkspace={handleSelectWorkspace}
@@ -1147,6 +1155,7 @@ export default function App() {
       {/* Legal & Cookie Modals */}
       <LegalModals
         isTermsOpen={isTermsOpen}
+        initialTab={legalTab}
         onCloseTerms={() => setIsTermsOpen(false)}
         cookiePrefs={cookiePrefs}
         onUpdateCookiePrefs={(p) => setCookiePrefs(p)}
