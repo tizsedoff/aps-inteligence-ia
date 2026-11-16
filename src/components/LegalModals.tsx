@@ -298,10 +298,7 @@ export const LegalModals: React.FC<LegalModalsProps> = ({
                   <a className="text-[color:var(--accent)] underline" href={BUSINESS.whatsappUrl} target="_blank" rel="noopener noreferrer">
                     WhatsApp {BUSINESS.whatsappDisplay}
                   </a>{' '}
-                  ·{' '}
-                  <a className="text-[color:var(--accent)] underline" href={BUSINESS.supportUrl} target="_blank" rel="noopener noreferrer">
-                    Soporte
-                  </a>
+
                 </p>
               </div>
             </div>

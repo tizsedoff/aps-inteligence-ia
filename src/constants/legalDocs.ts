@@ -76,13 +76,13 @@ export const LEGAL_DOCS: LegalDoc[] = [
       {
         title: '9. Eliminación de la cuenta',
         paragraphs: [
-          'Podés pedir en cualquier momento la eliminación de tu cuenta y de tus datos desde Perfil → "Eliminar mi cuenta y mis datos", o escribiéndonos a los medios de contacto indicados abajo. Podemos suspender o eliminar cuentas que incumplan estos términos.',
+          'Podés eliminar tu cuenta y tus datos en cualquier momento desde Perfil → "Eliminar mi cuenta y mis datos". La eliminación es inmediata y no se puede deshacer. También podés pedirla escribiéndonos a los medios de contacto indicados abajo. Podemos suspender o eliminar cuentas que incumplan estos términos.',
         ],
       },
       {
         title: '10. Responsable, contacto y ley aplicable',
         paragraphs: [
-          `APS INTELLIGENCE es un producto de ${BUSINESS.name} (${BUSINESS.country}). Contacto: ${contact}. Soporte: ${BUSINESS.supportUrl}`,
+          `APS INTELLIGENCE es un producto de ${BUSINESS.name} (${BUSINESS.country}). Contacto: ${contact}.`,
           'Estos términos se rigen por las leyes de la República Argentina.',
         ],
       },
@@ -157,7 +157,7 @@ export const LEGAL_DOCS: LegalDoc[] = [
       {
         title: '6. Cuánto tiempo los conservamos',
         paragraphs: [
-          'Conservamos los datos de tu cuenta mientras esté activa. Si pedís su eliminación, borramos tu cuenta y los datos asociados (perfil, memorias, marca, uso y suscripción), salvo lo que una norma nos obligue a conservar. El historial de chats lo controlás vos desde tu dispositivo: lo borrás eliminando cada chat o limpiando los datos del navegador.',
+          'Conservamos los datos de tu cuenta mientras esté activa. Si eliminás tu cuenta, se borran la cuenta y los datos asociados (perfil, memorias, marca, uso y suscripción), salvo lo que una norma nos obligue a conservar. El historial de chats lo controlás vos desde tu dispositivo: lo borrás eliminando cada chat o limpiando los datos del navegador.',
         ],
       },
       {
@@ -167,7 +167,7 @@ export const LEGAL_DOCS: LegalDoc[] = [
         ],
         bullets: [
           'Desde la app podés editar tu nombre, foto, instrucciones, memorias y datos de marca.',
-          'Para acceder a tus datos o eliminar tu cuenta, usá Perfil → "Eliminar mi cuenta y mis datos" o escribinos a los contactos de abajo.',
+          'Para eliminar tu cuenta y tus datos usá Perfil → "Eliminar mi cuenta y mis datos": se borran de inmediato. Para acceder a tus datos escribinos a los contactos de abajo.',
           'Según la ley, el acceso se responde en 10 días corridos y la rectificación o supresión en 5 días hábiles.',
         ],
       },

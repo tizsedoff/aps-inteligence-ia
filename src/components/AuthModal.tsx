@@ -5,7 +5,7 @@ import { UserAvatar } from './UserAvatar';
 import { AdminStatsCard } from './AdminStatsCard';
 import { ApsLogo } from './ApsLogo';
 import { supabase, supabaseConfigured, SUPABASE_CONFIG_ERROR } from '../lib/supabase';
-import { deletionRequestUrl } from '../constants/business';
+import { BUSINESS, deletionRequestUrl } from '../constants/business';
 import { fetchAccount, translateAuthError, updateProfileFields, syncMemories } from '../lib/accounts';
 import {
   ShieldCheck,
@@ -82,6 +82,38 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [authName, setAuthName] = useState('');
   const [authError, setAuthError] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
+
+  // Eliminación de la propia cuenta
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteEmail, setDeleteEmail] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+
+  const handleDeleteAccount = async () => {
+    setDeleteError('');
+    setDeleting(true);
+    const { error } = await supabase.rpc('aps_delete_my_account');
+    if (error) {
+      setDeleting(false);
+      setDeleteError(
+        error.message?.includes('admin_protected')
+          ? 'Las cuentas de administrador no se pueden eliminar desde acá. Escribinos y lo resolvemos.'
+          : 'No pudimos eliminar la cuenta. Probá de nuevo o escribinos.'
+      );
+      return;
+    }
+    // La cuenta ya no existe: se limpia también lo guardado en este dispositivo.
+    try {
+      await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+      Object.keys(localStorage)
+        .filter((k) => (k.startsWith('aps_') && k !== 'aps_cookies') || k.startsWith('sb-'))
+        .forEach((k) => localStorage.removeItem(k));
+      sessionStorage.clear();
+    } catch {
+      // sin almacenamiento disponible
+    }
+    window.location.reload();
+  };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -725,17 +757,81 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </button>
             </div>
 
-            {/* Derecho de supresión: se tramita por correo con los datos ya cargados */}
+            {/* Derecho de supresión: borrado inmediato de la cuenta y de todos sus datos */}
             <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-[11px] text-[color:var(--text-secondary)]">
-              <p className="mb-2">
-                Podés pedir que eliminemos tu cuenta y todos tus datos (perfil, memorias, marca, uso y suscripción).
-              </p>
-              <a
-                href={deletionRequestUrl(currentUser.email)}
-                className="inline-flex rounded-lg border border-red-500/30 px-3 py-1.5 font-medium text-red-300 hover:bg-red-950/40"
-              >
-                Eliminar mi cuenta y mis datos
-              </a>
+              {!deleteOpen ? (
+                <>
+                  <p className="mb-2">
+                    Podés eliminar tu cuenta y todos tus datos (perfil, memorias, marca, uso y suscripción).
+                  </p>
+                  {currentUser.isAdmin ? (
+                    <p>
+                      Las cuentas de administrador no se eliminan desde acá. Escribinos a{' '}
+                      <a className="underline" href={deletionRequestUrl(currentUser.email)}>
+                        {BUSINESS.email}
+                      </a>
+                      .
+                    </p>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setDeleteOpen(true)}
+                      className="inline-flex rounded-lg border border-red-500/30 px-3 py-1.5 font-medium text-red-300 hover:bg-red-950/40"
+                    >
+                      Eliminar mi cuenta y mis datos
+                    </button>
+                  )}
+                </>
+              ) : (
+                <div role="alertdialog" aria-labelledby="delete-title" aria-describedby="delete-desc" className="space-y-2.5">
+                  <p id="delete-title" className="font-semibold text-red-300">
+                    Eliminar cuenta de forma permanente
+                  </p>
+                  <p id="delete-desc">
+                    Se borran tu cuenta y todos tus datos de APS. No se puede deshacer. Si tenés un plan pago, se pierde.
+                    Para confirmar, escribí tu correo: <strong className="text-white">{currentUser.email}</strong>
+                  </p>
+                  <label htmlFor="delete-email" className="sr-only">
+                    Escribí tu correo para confirmar
+                  </label>
+                  <input
+                    id="delete-email"
+                    type="email"
+                    autoComplete="off"
+                    value={deleteEmail}
+                    onChange={(e) => setDeleteEmail(e.target.value)}
+                    placeholder="tu correo"
+                    className="w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-xs text-white placeholder-white/50 focus:border-red-400 focus:outline-none"
+                  />
+                  {deleteError && (
+                    <p role="alert" className="text-red-300">
+                      {deleteError}
+                    </p>
+                  )}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      disabled={deleting || deleteEmail.trim().toLowerCase() !== currentUser.email.toLowerCase()}
+                      onClick={handleDeleteAccount}
+                      className="rounded-lg bg-red-600 px-3 py-1.5 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {deleting ? 'Eliminando…' : 'Eliminar definitivamente'}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={deleting}
+                      onClick={() => {
+                        setDeleteOpen(false);
+                        setDeleteEmail('');
+                        setDeleteError('');
+                      }}
+                      className="rounded-lg border border-white/20 px-3 py-1.5 text-white hover:bg-white/10"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
